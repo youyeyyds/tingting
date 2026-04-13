@@ -122,7 +122,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getCourses, getChapters, getAudios, getUsers, testConnection } from '@/api/cloud'
-import { getCurrentCredentials } from '@/utils/auth'
 
 const loading = ref(false)
 const connected = ref(false)
@@ -139,10 +138,7 @@ const recentCourses = ref([])
 
 // 检查连接状态
 async function checkConnection() {
-  const credentials = getCurrentCredentials()
-  if (credentials) {
-    connected.value = await testConnection(credentials.secretId, credentials.secretKey)
-  }
+  connected.value = await testConnection()
 }
 
 // 加载统计数据

@@ -45,8 +45,8 @@
     "disableSWC": true
   },
   "appid": "wxe9fdea8dc5f85390",
-  "projectname": "tingke",
-  "libVersion": "2.20.1",
+  "projectname": "tingting",
+  "libVersion": "3.15.0",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
     "search": {

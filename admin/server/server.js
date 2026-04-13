@@ -3,6 +3,9 @@
  * 处理前端请求并与微信云开发交互
  */
 
+// 加载环境变量（从项目根目录）
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -15,16 +18,30 @@ const CamClient = tencentcloud.cam.v20190116.Client;
 
 // ========== 配置 ==========
 
-const ENV_ID = 'cloud1-2g5y53suf638dfb9';
+let ENV_ID = process.env.TCB_ENV_ID || 'cloud1-2g5y53suf638dfb9';
+let DEFAULT_SECRET_ID = process.env.TCB_SECRET_ID || '';
+let DEFAULT_SECRET_KEY = process.env.TCB_SECRET_KEY || '';
 const CLOUD_PATH_PREFIX = 'audio/';
+
+// 本地头像存储路径
+const AVATAR_LOCAL_PATH = path.join(__dirname, 'uploads', 'avatars');
+const UPLOADS_PATH = path.join(__dirname, 'uploads');
 
 // ========== 初始化 ==========
 
 const app = express();
 
-// 配置 multer 正确处理中文文件名
+// 确保上传目录存在
+if (!fs.existsSync(UPLOADS_PATH)) {
+  fs.mkdirSync(UPLOADS_PATH, { recursive: true });
+}
+if (!fs.existsSync(AVATAR_LOCAL_PATH)) {
+  fs.mkdirSync(AVATAR_LOCAL_PATH, { recursive: true });
+}
+
+// 配置 multer 正确处理中文文件名（使用绝对路径）
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: UPLOADS_PATH,
   filename: (req, file, cb) => {
     const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
     cb(null, Date.now() + '_' + originalName);
@@ -33,23 +50,152 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// 头像上传专用配置（保存到 avatars 目录）
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // 确保目录存在
+    if (!fs.existsSync(AVATAR_LOCAL_PATH)) {
+      fs.mkdirSync(AVATAR_LOCAL_PATH, { recursive: true });
+    }
+    cb(null, AVATAR_LOCAL_PATH);
+  },
+  filename: (req, file, cb) => {
+    // 使用用户ID + 时间戳作为文件名，确保每次上传都是新文件
+    const userId = req.headers['x-upload-user-id'] || req.headers['x-user-id'] || 'unknown';
+    const ext = path.extname(Buffer.from(file.originalname, 'latin1').toString('utf8'));
+    const timestamp = Date.now();
+    cb(null, `${userId}_${timestamp}${ext}`);
+  }
+});
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: {
+    fileSize: 2 * 1024 * 1024  // 限制2MB
+  },
+  fileFilter: (req, file, cb) => {
+    // 只允许图片格式
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('只支持 JPG/PNG/WebP 格式的图片'));
+    }
+  }
+});
+
 // 中间件
 app.use(express.json());
 
-// 从请求头获取凭证并初始化云开发
-function getTcbFromRequest(req) {
-  const secretId = req.headers['x-secret-id'];
-  const secretKey = req.headers['x-secret-key'];
-  const envId = req.headers['x-env-id'] || ENV_ID;
+// 头像文件服务中间件（本地不存在时从云端下载）
+app.use('/avatars', async (req, res, next) => {
+  const filename = req.path.replace('/', '');  // 获取文件名
+  const localPath = path.join(AVATAR_LOCAL_PATH, filename);
 
-  if (!secretId || !secretKey) {
+  // 本地文件存在，直接响应
+  if (fs.existsSync(localPath)) {
+    return next();
+  }
+
+  // 本地文件不存在，尝试从云端下载
+  console.log('本地头像不存在，从云端下载:', filename);
+
+  try {
+    // 使用默认凭证初始化 tcb
+    const tcb = cloudbase.init({
+      env: ENV_ID,
+      secretId: DEFAULT_SECRET_ID,
+      secretKey: DEFAULT_SECRET_KEY
+    });
+
+    // 从文件名中提取 userId（格式：userId_timestamp.ext）
+    const match = filename.match(/^([^_]+)_\d+\.(.+)$/);
+    if (!match) {
+      console.error('无法从文件名提取 userId:', filename);
+      return res.status(404).send('头像不存在');
+    }
+
+    const userId = match[1];
+    console.log('提取的 userId:', userId);
+
+    // 从数据库查询用户的真实 avatarFileID
+    const db = tcb.database();
+    const userResult = await db.collection('users').doc(userId).get();
+    const user = userResult.data[0];
+
+    if (!user || !user.avatarFileID) {
+      console.error('用户没有云端头像:', userId);
+      return res.status(404).send('头像不存在');
+    }
+
+    const fileID = user.avatarFileID;
+    console.log('数据库中的 avatarFileID:', fileID);
+
+    // 获取临时下载链接
+    const urlResult = await tcb.getTempFileURL({
+      fileList: [fileID],
+      maxAge: 3600
+    });
+
+    console.log('获取临时链接结果:', JSON.stringify(urlResult.fileList));
+
+    if (urlResult.fileList && urlResult.fileList[0]?.tempFileURL && urlResult.fileList[0].code !== 'STORAGE_FILE_NONEXIST') {
+      const tempUrl = urlResult.fileList[0].tempFileURL;
+      console.log('临时链接获取成功:', tempUrl);
+
+      // 下载文件
+      const response = await fetch(tempUrl);
+      console.log('下载响应状态:', response.status);
+
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+
+        // 确保目录存在
+        if (!fs.existsSync(AVATAR_LOCAL_PATH)) {
+          fs.mkdirSync(AVATAR_LOCAL_PATH, { recursive: true });
+        }
+
+        // 保存到本地
+        fs.writeFileSync(localPath, Buffer.from(buffer));
+        console.log('云端头像已下载到本地:', filename);
+
+        // 继续响应静态文件
+        return next();
+      } else {
+        console.error('下载失败:', response.status);
+      }
+    } else {
+      console.error('获取临时链接失败:', JSON.stringify(urlResult.fileList));
+    }
+  } catch (e) {
+    console.error('从云端下载头像失败:', e.message);
+  }
+
+  // 云端下载也失败，返回404
+  res.status(404).send('头像不存在');
+});
+
+// 静态文件服务：头像目录
+app.use('/avatars', express.static(AVATAR_LOCAL_PATH));
+
+// 从请求头获取用户身份并初始化云开发（统一使用环境变量凭证）
+function getTcbFromRequest(req) {
+  // 检查用户是否已登录
+  const userId = req.headers['x-user-id'];
+  if (!userId) {
+    return null;  // 未登录
+  }
+
+  // 统一使用环境变量中的凭证
+  if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
+    console.error('环境变量未配置凭证');
     return null;
   }
 
   return cloudbase.init({
-    env: envId,
-    secretId: secretId,
-    secretKey: secretKey
+    env: ENV_ID,
+    secretId: DEFAULT_SECRET_ID,
+    secretKey: DEFAULT_SECRET_KEY
   });
 }
 
@@ -64,13 +210,28 @@ function error(msg) {
 
 // ========== 认证 API ==========
 
-// 测试连接
+// 连通测试（可接收新凭证进行测试）
 app.post('/api/auth/test', async (req, res) => {
   try {
-    const { secretId, secretKey, envId } = req.body;
+    // 如果请求体中有凭证，使用请求体凭证测试
+    // 否则使用环境变量凭证
+    let secretId, secretKey, envId;
+
+    if (req.body.secretId && req.body.secretKey) {
+      secretId = req.body.secretId;
+      secretKey = req.body.secretKey;
+      envId = req.body.envId || ENV_ID;
+    } else {
+      if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
+        return res.json(error('系统未配置凭证，请检查环境变量'));
+      }
+      secretId = DEFAULT_SECRET_ID;
+      secretKey = DEFAULT_SECRET_KEY;
+      envId = ENV_ID;
+    }
 
     const tcb = cloudbase.init({
-      env: envId || ENV_ID,
+      env: envId,
       secretId: secretId,
       secretKey: secretKey
     });
@@ -99,19 +260,15 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json(error('请输入密码'));
     }
 
-    // 使用系统配置的凭证
-    const secretId = req.headers['x-secret-id'];
-    const secretKey = req.headers['x-secret-key'];
-    const envId = req.headers['x-env-id'] || ENV_ID;
-
-    if (!secretId || !secretKey) {
-      return res.json(error('系统未配置凭证，请先在系统配置中设置'));
+    // 使用环境变量配置的凭证
+    if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
+      return res.json(error('系统未配置凭证，请检查环境变量'));
     }
 
     const tcb = cloudbase.init({
-      env: envId,
-      secretId: secretId,
-      secretKey: secretKey
+      env: ENV_ID,
+      secretId: DEFAULT_SECRET_ID,
+      secretKey: DEFAULT_SECRET_KEY
     });
 
     const db = tcb.database();
@@ -152,14 +309,37 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // 处理头像URL - 返回原始fileID，让前端动态获取临时链接
+    // 处理头像URL - 返回本地路径，如果本地不存在则从云端下载
     let avatarUrl = user.avatarUrl || '';
+    let avatarFileID = user.avatarFileID || '';
+
+    // 如果有云端 fileID 但本地文件不存在，尝试从云端下载
+    if (avatarFileID && avatarUrl && avatarUrl.startsWith('/avatars/')) {
+      const localPath = path.join(AVATAR_LOCAL_PATH, avatarUrl.replace('/avatars/', ''));
+      if (!fs.existsSync(localPath)) {
+        try {
+          const urlResult = await tcb.getTempFileURL({ fileList: [avatarFileID] });
+          if (urlResult.fileList && urlResult.fileList[0]?.tempFileURL) {
+            const tempUrl = urlResult.fileList[0].tempFileURL;
+            // 下载并保存到本地
+            const response = await fetch(tempUrl);
+            if (response.ok) {
+              const buffer = await response.arrayBuffer();
+              fs.writeFileSync(localPath, Buffer.from(buffer));
+            }
+          }
+        } catch (e) {
+          console.error('从云端下载头像失败:', e.message);
+        }
+      }
+    }
 
     res.json(success({
       userId: user._id,
       phone: user.phone,
       nickName: user.nickName,
       avatarUrl: avatarUrl,
+      avatarFileID: avatarFileID,
       roleName: roleName,
       roleCode: roleCode,
       permissions: permissions
@@ -169,21 +349,65 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// 获取当前用户最新信息
+app.get('/api/auth/current-user', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const userId = req.headers['x-user-id'];
+    if (!userId) return res.json(error('缺少用户ID'));
+
+    const db = tcb.database();
+
+    // 查询用户
+    const userResult = await db.collection('users').doc(userId).get();
+    if (userResult.data.length === 0) {
+      return res.json(error('用户不存在'));
+    }
+
+    const user = userResult.data[0];
+
+    // 获取角色信息
+    let roleName = '';
+    let roleCode = '';
+    let permissions = [];
+    if (user.role) {
+      const roleResult = await db.collection('roles').doc(user.role).get();
+      if (roleResult.data.length > 0) {
+        roleName = roleResult.data[0].name;
+        roleCode = roleResult.data[0].code;
+        permissions = roleResult.data[0].permissions || [];
+      }
+    }
+
+    res.json(success({
+      userId: user._id,
+      phone: user.phone,
+      nickName: user.nickName,
+      avatarUrl: user.avatarUrl || '',
+      avatarFileID: user.avatarFileID || '',
+      roleName: roleName,
+      roleCode: roleCode,
+      permissions: permissions
+    }));
+  } catch (err) {
+    res.json(error(err.message || '获取用户信息失败'));
+  }
+});
+
 // 获取账号信息
 app.get('/api/auth/account', async (req, res) => {
   try {
-    const secretId = req.headers['x-secret-id'];
-    const secretKey = req.headers['x-secret-key'];
-
-    if (!secretId || !secretKey) {
-      return res.json(error('未登录'));
+    if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
+      return res.json(error('系统未配置凭证'));
     }
 
     // 创建CAM客户端
     const client = new CamClient({
       credential: {
-        secretId: secretId,
-        secretKey: secretKey
+        secretId: DEFAULT_SECRET_ID,
+        secretKey: DEFAULT_SECRET_KEY
       },
       region: 'ap-guangzhou',
       profile: {
@@ -684,36 +908,98 @@ app.delete('/api/categories/:id', async (req, res) => {
 
 // ========== 用户 API ==========
 
-// 上传头像
-app.post('/api/users/avatar', upload.single('avatar'), async (req, res) => {
+// 上传头像（云端 + 本地同步）
+app.post('/api/users/avatar', (req, res, next) => {
+  console.log('=== 收到头像上传请求 ===');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('X-Upload-User-Id:', req.headers['x-upload-user-id']);
+  console.log('X-User-Id:', req.headers['x-user-id']);
+  next();
+}, avatarUpload.single('avatar'), async (req, res) => {
   try {
+    console.log('=== multer 处理完成 ===');
+    console.log('req.file:', req.file ? { path: req.file.path, filename: req.file.filename, size: req.file.size } : null);
+
     const tcb = getTcbFromRequest(req);
     if (!tcb) return res.json(error('未登录'));
 
     const file = req.file;
+    // 优先使用 X-Upload-User-Id（被编辑用户），其次使用 X-User-Id（当前登录用户）
+    const userId = req.headers['x-upload-user-id'] || req.headers['x-user-id'];
     if (!file) return res.json(error('请选择图片文件'));
+    if (!userId) return res.json(error('缺少用户ID'));
 
-    // 原始文件名（修复编码）
-    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const cloudPath = `avatars/${Date.now()}_${originalName}`;
+    // 检查文件是否存在
+    if (!fs.existsSync(file.path)) {
+      console.error('文件不存在:', file.path);
+      return res.json(error('文件保存失败'));
+    }
 
-    // 上传到云存储
+    // 先上传到云存储（使用新文件名）
+    const cloudPath = `avatars/${file.filename}`;
     const fileContent = fs.readFileSync(file.path);
+
+    console.log('开始上传云端:', cloudPath);
     const uploadResult = await tcb.uploadFile({
       cloudPath: cloudPath,
       fileContent: fileContent
     });
 
-    // 删除临时文件
-    fs.unlinkSync(file.path);
+    console.log('云端上传结果:', uploadResult.fileID ? '成功' : '失败');
 
     if (!uploadResult.fileID) {
+      // 云端上传失败，删除本地文件
+      fs.unlinkSync(file.path);
       return res.json(error('云存储上传失败'));
     }
 
-    // 返回 fileID，前端存储 fileID，获取用户时动态获取访问链接
-    res.json(success({ fileID: uploadResult.fileID }));
+    // 云端上传成功后，再删除旧头像（云端 + 本地）
+    const db = tcb.database();
+    const userResult = await db.collection('users').doc(userId).get();
+    const oldUser = userResult.data[0];
+
+    if (oldUser && oldUser.avatarFileID && oldUser.avatarFileID !== uploadResult.fileID) {
+      // 删除云端旧文件
+      try {
+        console.log('删除云端旧头像:', oldUser.avatarFileID);
+        await tcb.deleteFile({ fileList: [oldUser.avatarFileID] });
+      } catch (e) {
+        console.error('删除云端旧头像失败:', e.message);
+      }
+    }
+
+    // 删除本地旧文件（查找以 userId_ 开头的所有文件，排除新上传的）
+    try {
+      const localFiles = fs.readdirSync(AVATAR_LOCAL_PATH);
+      localFiles.forEach(f => {
+        // 匹配 userId_开头的文件，且不是刚上传的新文件
+        if (f.startsWith(userId + '_') && f !== file.filename) {
+          const oldPath = path.join(AVATAR_LOCAL_PATH, f);
+          try {
+            console.log('删除本地旧头像:', oldPath);
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            console.error('删除本地旧头像失败:', e.message);
+          }
+        }
+      });
+    } catch (e) {
+      console.error('读取本地头像目录失败:', e.message);
+    }
+
+    // 返回本地路径和云端 fileID
+    const localUrl = `/avatars/${file.filename}`;
+    console.log('上传成功，返回:', localUrl);
+    res.json(success({
+      localUrl: localUrl,
+      fileID: uploadResult.fileID
+    }));
   } catch (err) {
+    console.error('上传头像出错:', err.message);
+    // 只在出错时清理本地文件（云端上传失败时文件已被删除）
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     res.json(error(err.message));
   }
 });
@@ -721,20 +1007,17 @@ app.post('/api/users/avatar', upload.single('avatar'), async (req, res) => {
 // 获取用户列表
 app.get('/api/users', async (req, res) => {
   try {
-    const secretId = req.headers['x-secret-id'];
-    const secretKey = req.headers['x-secret-key'];
-    const envId = req.headers['x-env-id'] || ENV_ID;
     const currentUserId = req.headers['x-user-id'];
     const currentRoleCode = req.headers['x-role-code'];
 
-    if (!secretId || !secretKey) {
-      return res.json(error('未登录'));
+    if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
+      return res.json(error('系统未配置凭证'));
     }
 
     const tcb = cloudbase.init({
-      env: envId,
-      secretId: secretId,
-      secretKey: secretKey
+      env: ENV_ID,
+      secretId: DEFAULT_SECRET_ID,
+      secretKey: DEFAULT_SECRET_KEY
     });
 
     const db = tcb.database();
@@ -823,6 +1106,7 @@ app.post('/api/users', async (req, res) => {
       seq: newSeq,
       nickName: nickName,
       avatarUrl: data.avatarUrl || '',
+      avatarFileID: data.avatarFileID || '',
       phone: data.phone,
       password: hashedPassword,
       role: role,
@@ -845,24 +1129,11 @@ app.put('/api/users/:id', async (req, res) => {
     const id = req.params.id;
     const data = req.body;
 
-    // 如果更新头像，先删除旧头像
-    if (data.avatarUrl) {
-      const oldUser = await db.collection('users').doc(id).get();
-      const oldAvatarUrl = oldUser.data[0]?.avatarUrl;
-      // 如果旧头像存在且是 cloud:// 格式，且与新头像不同
-      if (oldAvatarUrl && oldAvatarUrl.startsWith('cloud://') && oldAvatarUrl !== data.avatarUrl) {
-        try {
-          await tcb.deleteFile({ fileList: [oldAvatarUrl] });
-        } catch (e) {
-          console.error('删除旧头像失败:', e.message);
-        }
-      }
-    }
-
     const updateData = {
       seq: data.seq,
       nickName: data.nickName,
       avatarUrl: data.avatarUrl,
+      avatarFileID: data.avatarFileID,
       phone: data.phone,
       role: data.role
     };
@@ -894,15 +1165,32 @@ app.delete('/api/users/:id', async (req, res) => {
     const db = tcb.database();
     const id = req.params.id;
 
-    // 先获取用户信息，删除头像文件
+    // 先获取用户信息，删除头像文件（云端 + 本地）
     const user = await db.collection('users').doc(id).get();
-    const avatarUrl = user.data[0]?.avatarUrl;
-    if (avatarUrl && avatarUrl.startsWith('cloud://')) {
-      try {
-        await tcb.deleteFile({ fileList: [avatarUrl] });
-      } catch (e) {
-        console.error('删除用户头像失败:', e.message);
+    const userData = user.data[0];
+
+    if (userData) {
+      // 删除云端头像
+      if (userData.avatarFileID) {
+        try {
+          await tcb.deleteFile({ fileList: [userData.avatarFileID] });
+        } catch (e) {
+          console.error('删除云端头像失败:', e.message);
+        }
       }
+
+      // 删除本地头像（可能存在不同扩展名）
+      const localBase = path.join(AVATAR_LOCAL_PATH, id);
+      ['.jpg', '.jpeg', '.png', '.webp'].forEach(ext => {
+        const localPath = localBase + ext;
+        if (fs.existsSync(localPath)) {
+          try {
+            fs.unlinkSync(localPath);
+          } catch (e) {
+            console.error('删除本地头像失败:', e.message);
+          }
+        }
+      });
     }
 
     // 删除用户
@@ -1097,9 +1385,74 @@ app.post('/api/menu-config', async (req, res) => {
   }
 });
 
+// ========== 环境配置 API ==========
+
+// 获取环境配置（允许未登录访问，用于登录页面配置）
+app.get('/api/env-config', async (req, res) => {
+  try {
+    res.json(success({
+      envId: ENV_ID,
+      secretId: DEFAULT_SECRET_ID,
+      secretKey: DEFAULT_SECRET_KEY
+    }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 保存环境配置（允许未登录访问，用于登录页面配置）
+app.post('/api/env-config', async (req, res) => {
+  try {
+    const { envId, secretId, secretKey } = req.body;
+
+    if (!envId || !secretId || !secretKey) {
+      return res.json(error('请填写完整配置'));
+    }
+
+    // 构建 .env 文件内容
+    const envContent = `# 腾讯云/微信云开发凭证
+# 请填写你的真实凭证，此文件不会被提交到 git
+
+# 前端使用（VITE_前缀）
+VITE_TCB_SECRET_ID=${secretId}
+VITE_TCB_SECRET_KEY=${secretKey}
+VITE_TCB_ENV_ID=${envId}
+
+# 后端使用（无前缀）
+TCB_SECRET_ID=${secretId}
+TCB_SECRET_KEY=${secretKey}
+TCB_ENV_ID=${envId}
+
+# 后端服务端口
+SERVER_PORT=3002
+`;
+
+    // 写入 .env 文件
+    const envPath = path.join(__dirname, '../../.env');
+    fs.writeFileSync(envPath, envContent, 'utf8');
+
+    // 更新当前进程的环境变量
+    process.env.TCB_ENV_ID = envId;
+    process.env.TCB_SECRET_ID = secretId;
+    process.env.TCB_SECRET_KEY = secretKey;
+
+    // 更新全局变量
+    ENV_ID = envId;
+    DEFAULT_SECRET_ID = secretId;
+    DEFAULT_SECRET_KEY = secretKey;
+
+    res.json(success({
+      saved: true,
+      message: '配置已保存，重启后端服务后生效'
+    }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 启动服务器 ==========
 
-const PORT = 3002;
+const PORT = process.env.SERVER_PORT || 3002;
 app.listen(PORT, () => {
   console.log(`后台服务已启动: http://localhost:${PORT}`);
   console.log('请确保前端服务也在运行 (npm run dev)');

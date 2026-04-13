@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { isAuthenticated, getCredentials } from '@/utils/auth'
+import { isAuthenticated } from '@/utils/auth'
 
 const routes = [
   {
@@ -70,22 +70,15 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  const hasCredentials = getCredentials() !== null
   const isLoggedIn = isAuthenticated()
 
-  // 如果没有配置凭证，跳转到设置页面
-  if (!hasCredentials && to.path !== '/setup') {
-    next('/setup')
-    return
-  }
-
-  // 如果已配置凭证但未登录，跳转到登录页
-  if (hasCredentials && !isLoggedIn && to.meta.requiresAuth) {
+  // 未登录时，跳转到登录页（除了登录页和配置页本身）
+  if (!isLoggedIn && to.meta.requiresAuth) {
     next('/login')
     return
   }
 
-  // 如果已登录，不允许访问登录页
+  // 已登录时，不允许访问登录页
   if (isLoggedIn && to.path === '/login') {
     next('/')
     return

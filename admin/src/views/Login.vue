@@ -3,7 +3,7 @@
     <el-card class="login-card">
       <template #header>
         <div class="login-header">
-          <h2>听听APP管理后台</h2>
+          <h2>听听管理后台</h2>
         </div>
       </template>
 
@@ -34,7 +34,7 @@
           </el-button>
         </el-form-item>
 
-        <!-- 连通测试和重新配置按钮 -->
+        <!-- 连通测试和环境配置按钮 -->
         <div class="action-buttons">
           <el-button
             type="primary"
@@ -73,7 +73,7 @@
         <p>提示：</p>
         <ol>
           <li>请使用已在系统中注册的手机号登录</li>
-          <li>首次使用请先在系统配置中设置云开发凭证</li>
+          <li>连接失败时可通过"环境配置"更新云开发凭证</li>
         </ol>
       </div>
     </el-card>
@@ -84,7 +84,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getCredentials, saveUser } from '@/utils/auth'
+import { saveUser } from '@/utils/auth'
 import { loginByPhone, testConnection } from '@/api/cloud'
 
 const router = useRouter()
@@ -113,21 +113,13 @@ const rules = {
   ]
 }
 
-// 检查系统是否已配置凭证
-const credentials = getCredentials()
-
 // 测试云环境连接
 async function testCloudConnection() {
-  if (!credentials) {
-    connectionStatus.value = { type: 'danger', text: '未配置凭证' }
-    return
-  }
-
   testingConnection.value = true
   connectionStatus.value = null
 
   try {
-    const result = await testConnection(credentials.secretId, credentials.secretKey, credentials.envId)
+    const result = await testConnection()
 
     if (result.success) {
       connectionStatus.value = { type: 'success', text: '云环境连接正常' }
@@ -143,13 +135,6 @@ async function testCloudConnection() {
 
 // 页面加载时自动检查连接
 onMounted(async () => {
-  if (!credentials) {
-    error.value = '系统未配置凭证，请联系管理员先配置系统'
-    connectionStatus.value = { type: 'danger', text: '未配置凭证' }
-    return
-  }
-
-  // 自动检查云环境连接
   await testCloudConnection()
 })
 
@@ -161,16 +146,11 @@ async function handleLogin() {
     return
   }
 
-  if (!credentials) {
-    error.value = '系统未配置凭证，请联系管理员'
-    return
-  }
-
   // 如果连接状态显示失败，先测试连接
   if (connectionStatus.value?.type === 'danger') {
     await testCloudConnection()
     if (connectionStatus.value?.type === 'danger') {
-      error.value = '云环境连接失败，请检查配置'
+      error.value = '云环境连接失败，请点击"环境配置"检查凭证'
       return
     }
   }
@@ -202,7 +182,7 @@ async function handleLogin() {
   }
 }
 
-// 跳转到setup页面
+// 跳转到环境配置页面
 function goToSetup() {
   router.push('/setup')
 }

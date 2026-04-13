@@ -30,7 +30,7 @@
         <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="avatarUrl" label="头像" width="80" align="center">
           <template #default="{ row }">
-            <el-avatar :src="getValidAvatarUrl(row.avatarUrl)" :size="40" @error="() => {}">
+            <el-avatar :src="getAvatarUrl(row.avatarUrl)" :size="40">
               <el-icon :size="24"><UserFilled /></el-icon>
             </el-avatar>
           </template>
@@ -93,12 +93,12 @@
               :before-upload="beforeAvatarUpload"
               :http-request="handleAvatarUpload"
             >
-              <el-avatar v-if="getValidAvatarUrl(form.avatarUrl)" :src="getValidAvatarUrl(form.avatarUrl)" :size="80" />
-              <el-avatar v-else :size="80">
-                <el-icon :size="50"><UserFilled /></el-icon>
+              <el-avatar v-if="getAvatarUrl(form.avatarUrl)" :src="getAvatarUrl(form.avatarUrl)" :size="95" />
+              <el-avatar v-else :size="95">
+                <el-icon :size="60"><UserFilled /></el-icon>
               </el-avatar>
             </el-upload>
-            <div class="avatar-tip">点击上传头像，支持 jpg/png 格式</div>
+            <div class="avatar-tip">点击上传头像，支持 JPG/PNG/WebP，不超过 2MB</div>
           </div>
         </el-form-item>
         <el-form-item v-if="isAdmin" label="角色" prop="role">
@@ -136,7 +136,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, UserFilled } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getUsers, createUser, updateUser, deleteUser, getRoles, batchUpdateSeq, uploadAvatar, getFileTempUrl } from '@/api/cloud'
+import { getUsers, createUser, updateUser, deleteUser, getRoles, batchUpdateSeq, uploadAvatar } from '@/api/cloud'
 import { getCurrentUser, saveUser } from '@/utils/auth'
 
 const loading = ref(false)
@@ -157,6 +157,7 @@ const roles = ref([])
 const form = reactive({
   seq: 1,
   avatarUrl: '',
+  avatarFileID: '',
   nickName: '',
   phone: '',
   password: '',
@@ -228,6 +229,7 @@ function showEditDialog(row) {
   Object.assign(form, {
     seq: row.seq || 1,
     avatarUrl: row.avatarUrl || '',
+    avatarFileID: row.avatarFileID || '',
     nickName: row.nickName,
     phone: row.phone || '',
     password: '',
@@ -242,6 +244,7 @@ function resetForm() {
   Object.assign(form, {
     seq: 1,
     avatarUrl: '',
+    avatarFileID: '',
     nickName: '',
     phone: '',
     password: '',
@@ -250,13 +253,13 @@ function resetForm() {
   })
 }
 
-// 上传头像前验证
+// 上传头像前验证（限制格式和大小）
 function beforeAvatarUpload(file) {
-  const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg'
-  const isLt2M = file.size / 1024 / 1024 < 2
+  const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg' || file.type === 'image/webp'
+  const isLt2M = file.size / 1024 / 1024 < 2  // 限制2MB
 
   if (!isImage) {
-    ElMessage.error('头像图片只能是 JPG/PNG 格式!')
+    ElMessage.error('头像图片只能是 JPG/PNG/WebP 格式!')
     return false
   }
   if (!isLt2M) {
@@ -269,10 +272,40 @@ function beforeAvatarUpload(file) {
 // 上传头像
 async function handleAvatarUpload(options) {
   try {
-    const res = await uploadAvatar(options.file)
+    // 传递被编辑用户的ID（新增时传当前ID，编辑时传表单中的用户ID）
+    const uploadUserId = isEdit.value ? currentId.value : currentUser?.userId
+    const res = await uploadAvatar(options.file, uploadUserId)
     if (res.success) {
-      form.avatarUrl = res.data.fileID
-      ElMessage.success('头像上传成功')
+      form.avatarUrl = res.data.localUrl
+      form.avatarFileID = res.data.fileID
+
+      // 如果是编辑模式，立即更新用户数据（不用等点击确认）
+      if (isEdit.value && currentId.value) {
+        // 更新数据库
+        const updateRes = await updateUser(currentId.value, {
+          avatarUrl: res.data.localUrl,
+          avatarFileID: res.data.fileID
+        })
+        if (updateRes.success) {
+          // 刷新用户列表
+          await loadUsers()
+          ElMessage.success('头像更新成功')
+        } else {
+          ElMessage.error('头像保存失败: ' + updateRes.error)
+        }
+      } else {
+        ElMessage.success('头像上传成功')
+      }
+
+      // 如果上传的是当前用户头像，立即更新顶部显示
+      if (uploadUserId === currentUser?.userId) {
+        saveUser({
+          ...currentUser,
+          avatarUrl: res.data.localUrl,
+          avatarFileID: res.data.fileID
+        })
+        window.dispatchEvent(new Event('user-info-updated'))
+      }
     } else {
       ElMessage.error('上传失败: ' + res.error)
     }
@@ -385,48 +418,19 @@ async function handleDelete(row) {
   }
 }
 
-// 检查头像URL是否有效，如果是cloud://则请求临时链接
-const avatarUrlCache = reactive({})
-function getValidAvatarUrl(url) {
-  if (!url) return ''
-  // http/https 开头的有效URL，检查是否过期（403时重新获取）
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    // 如果是临时链接且已缓存，直接返回
-    // 否则需要验证是否有效（这里简化处理，遇到403时会重新请求）
-    return url
+// 获取头像URL（兼容新旧格式）
+function getAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return ''
+  // 本地路径直接返回
+  if (avatarUrl.startsWith('/avatars/')) {
+    return avatarUrl
   }
-  // cloud:// 格式需要动态获取临时链接
-  if (url.startsWith('cloud://')) {
-    // 如果已经有缓存的临时链接，直接返回
-    if (avatarUrlCache[url]) {
-      return avatarUrlCache[url]
-    }
-    // 否则异步获取临时链接
-    getAvatarTempUrl(url)
-    return ''
+  // http/https 直接返回
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl
   }
+  // cloud:// 格式不显示（旧格式，需要用户重新上传头像）
   return ''
-}
-
-// 异步获取头像临时链接
-async function getAvatarTempUrl(fileID) {
-  try {
-    const res = await getFileTempUrl(fileID)
-    if (res.success && res.data.tempFileURL) {
-      avatarUrlCache[fileID] = res.data.tempFileURL
-    }
-  } catch (e) {
-    console.error('获取头像临时链接失败:', e)
-  }
-}
-
-// 处理头像加载失败（403时重新获取临时链接）
-function handleAvatarError(event, user) {
-  if (user.avatarUrl && user.avatarUrl.startsWith('cloud://')) {
-    // 清除缓存，重新获取
-    delete avatarUrlCache[user.avatarUrl]
-    getAvatarTempUrl(user.avatarUrl)
-  }
 }
 
 // 格式化日期
@@ -540,7 +544,8 @@ onMounted(async () => {
 
 .avatar-upload {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .avatar-uploader {
@@ -549,8 +554,8 @@ onMounted(async () => {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -560,15 +565,11 @@ onMounted(async () => {
   border-color: #409eff;
 }
 
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-}
-
 .avatar-tip {
-  margin-left: 15px;
+  margin-top: 10px;
   color: #999;
   font-size: 12px;
+  line-height: 1.4;
 }
 
 .form-tip {

@@ -14,42 +14,20 @@ const api = axios.create({
   timeout: 30000
 })
 
-// 请求拦截器 - 添加凭证
+// 请求拦截器 - 只添加用户身份信息（不传递敏感凭证）
 api.interceptors.request.use(config => {
-  // 从 localStorage 获取凭证
-  const credentials = getCredentialsFromStorage()
-  if (credentials) {
-    config.headers['X-Secret-Id'] = credentials.secretId
-    config.headers['X-Secret-Key'] = credentials.secretKey
-    config.headers['X-Env-Id'] = credentials.envId
-  }
-
   // 获取当前登录用户信息
   const user = getCurrentUserFromStorage()
   if (user) {
     config.headers['X-User-Id'] = user.userId
     config.headers['X-Role-Code'] = user.roleCode || ''
   }
-
   return config
 })
 
-// 从存储获取凭证
-function getCredentialsFromStorage() {
-  const stored = localStorage.getItem('tingke_admin_auth')
-  if (stored) {
-    try {
-      return JSON.parse(stored)
-    } catch {
-      return null
-    }
-  }
-  return null
-}
-
 // 从存储获取当前用户
 function getCurrentUserFromStorage() {
-  const stored = localStorage.getItem('tingke_admin_user')
+  const stored = localStorage.getItem('tingting_admin_user')
   if (stored) {
     try {
       return JSON.parse(stored)
@@ -64,18 +42,12 @@ function getCurrentUserFromStorage() {
 
 /**
  * 测试云开发连接
- * @param {string} secretId
- * @param {string} secretKey
- * @param {string} envId
+ * @param {object} credentials 可选凭证对象 { secretId, secretKey, envId }
  * @returns {Promise<object>}
  */
-export async function testConnection(secretId, secretKey, envId) {
+export async function testConnection(credentials = null) {
   try {
-    const response = await api.post('/auth/test', {
-      secretId,
-      secretKey,
-      envId: envId || 'cloud1-2g5y53suf638dfb9'
-    })
+    const response = await api.post('/auth/test', credentials || {})
     return response.data
   } catch (error) {
     console.error('连接测试失败:', error)
@@ -334,13 +306,17 @@ export async function deleteUser(id) {
 /**
  * 上传头像
  * @param {File} file 图片文件
+ * @param {string} userId 用户ID
  */
-export async function uploadAvatar(file) {
+export async function uploadAvatar(file, userId) {
   const formData = new FormData()
   formData.append('avatar', file)
 
   const response = await api.post('/users/avatar', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'X-Upload-User-Id': userId
+    }
   })
   return response.data
 }
@@ -371,6 +347,34 @@ export async function getMenuConfig() {
  */
 export async function saveMenuConfig(menuOrder) {
   const response = await api.post('/menu-config', { menuOrder })
+  return response.data
+}
+
+/**
+ * 获取环境配置
+ * @returns {Promise<object>}
+ */
+export async function getEnvConfig() {
+  const response = await api.get('/env-config')
+  return response.data
+}
+
+/**
+ * 保存环境配置
+ * @param {object} config 配置对象
+ * @returns {Promise<object>}
+ */
+export async function saveEnvConfig(config) {
+  const response = await api.post('/env-config', config)
+  return response.data
+}
+
+/**
+ * 获取当前登录用户最新信息
+ * @returns {Promise<object>}
+ */
+export async function getCurrentUserInfo() {
+  const response = await api.get('/auth/current-user')
   return response.data
 }
 

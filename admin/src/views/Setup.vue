@@ -3,19 +3,26 @@
     <el-card class="setup-card">
       <template #header>
         <div class="setup-header">
-          <h2>听听课程管理后台</h2>
-          <p>首次使用，请配置云开发凭证</p>
+          <span>环境配置</span>
         </div>
       </template>
 
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+      <!-- 连接状态显示 -->
+      <div v-if="connectionStatus" class="connection-status">
+        <el-tag :type="connectionStatus.type" size="small">
+          {{ connectionStatus.text }}
+        </el-tag>
+      </div>
+
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="setup-form">
         <el-form-item label="云环境ID" prop="envId">
-          <el-input v-model="form.envId" placeholder="如: cloud1-2g5y53suf638dfb9" />
+          <el-input v-model="form.envId" placeholder="请输入云环境ID" />
           <div class="form-tip">微信云开发环境ID，可在云开发控制台查看</div>
         </el-form-item>
 
         <el-form-item label="SecretId" prop="secretId">
           <el-input v-model="form.secretId" placeholder="请输入 SecretId" />
+          <div class="form-tip">腾讯云子用户的 SecretId</div>
         </el-form-item>
 
         <el-form-item label="SecretKey" prop="secretKey">
@@ -25,45 +32,47 @@
             placeholder="请输入 SecretKey"
             show-password
           />
+          <div class="form-tip">腾讯云子用户的 SecretKey</div>
         </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSetup" style="width: 100%">
-            {{ loading ? '配置中...' : '保存配置并测试' }}
-          </el-button>
+        <el-form-item label-width="100px" class="button-row">
+          <div class="button-group">
+            <el-button class="btn-half orange-btn" :loading="testing" @click="handleTest">
+              连通测试
+            </el-button>
+            <el-button type="primary" class="btn-half orange-btn" :loading="saving" @click="handleSave">
+              保存配置
+            </el-button>
+          </div>
         </el-form-item>
 
-        <el-form-item style="margin-bottom: 0">
-          <el-button class="back-btn" @click="goBack" style="width: 100%">
-            返回登录页
+        <el-form-item label-width="100px">
+          <el-button class="btn-full blue-btn" @click="goToLogin">
+            返回登录
           </el-button>
         </el-form-item>
       </el-form>
 
-      <el-alert
-        v-if="error"
-        :title="error"
-        type="error"
-        :closable="false"
-        style="margin-top: 16px"
-      />
-
-      <el-alert
-        v-if="success"
-        title="配置成功，正在跳转到登录页..."
-        type="success"
-        :closable="false"
-        style="margin-top: 16px"
-      />
-
-      <div class="setup-guide">
+      <div class="setup-tip">
         <el-divider />
-        <h4>配置说明</h4>
-        <ol>
+        <h4>1. 获取云环境ID</h4>
+        <ul>
+          <li>登录微信云开发控制台，在环境设置中查看环境ID</li>
+        </ul>
+
+        <h4>2. 创建子用户并获取凭证</h4>
+        <ul>
           <li>访问 <a href="https://console.cloud.tencent.com/cam" target="_blank">腾讯云访问管理</a></li>
-          <li>创建子用户，授权策略：<code>QcloudTCBFullAccess</code>（云开发全读写访问）和 <code>QcloudCAMReadOnlyAccess</code>（用户与权限只读访问）</li>
+          <li>创建子用户，授权策略：<code>QcloudTCBFullAccess</code>（云开发全读写访问）和 <code>QcloudCamReadOnlyAccess</code>（用户与权限只读访问权限）</li>
           <li>创建完成后获取 SecretId 和 SecretKey</li>
-        </ol>
+        </ul>
+
+        <h4>3. 安全提示</h4>
+        <ul>
+          <li>凭证保存在项目根目录的 <code>.env</code> 文件</li>
+          <li>请妥善保管 SecretKey，不要泄露</li>
+          <li>建议定期更换子用户凭证</li>
+        </ul>
       </div>
     </el-card>
   </div>
@@ -73,14 +82,13 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { saveCredentials } from '@/utils/auth'
-import { testConnection } from '@/api/cloud'
+import { testConnection, saveEnvConfig } from '@/api/cloud'
 
 const router = useRouter()
 const formRef = ref(null)
-const loading = ref(false)
-const error = ref('')
-const success = ref(false)
+const testing = ref(false)
+const saving = ref(false)
+const connectionStatus = ref(null)
 
 const form = reactive({
   envId: '',
@@ -94,48 +102,85 @@ const rules = {
   secretKey: [{ required: true, message: '请输入 SecretKey', trigger: 'blur' }]
 }
 
-async function handleSetup() {
+// 连通测试
+async function handleTest() {
   try {
     await formRef.value.validate()
   } catch {
     return
   }
 
-  loading.value = true
-  error.value = ''
+  testing.value = true
+  connectionStatus.value = null
 
   try {
-    // 先测试连接
-    const result = await testConnection(form.secretId, form.secretKey, form.envId)
-
-    if (!result.success) {
-      error.value = '连接失败：' + (result.error || '请检查凭证是否正确')
-      return
+    // 使用用户输入的新凭证测试
+    const result = await testConnection({
+      envId: form.envId,
+      secretId: form.secretId,
+      secretKey: form.secretKey
+    })
+    if (result.success) {
+      connectionStatus.value = { type: 'success', text: '连接成功' }
+    } else {
+      connectionStatus.value = { type: 'danger', text: '连接失败' }
     }
+  } catch (err) {
+    connectionStatus.value = { type: 'danger', text: '连接失败' }
+  } finally {
+    testing.value = false
+  }
+}
 
-    // 保存配置
-    saveCredentials({
+// 保存配置（先测试连接，成功才保存）
+async function handleSave() {
+  try {
+    await formRef.value.validate()
+  } catch {
+    return
+  }
+
+  saving.value = true
+  connectionStatus.value = null
+
+  try {
+    // 先进行连通测试
+    const testResult = await testConnection({
       envId: form.envId,
       secretId: form.secretId,
       secretKey: form.secretKey
     })
 
-    success.value = true
-    ElMessage.success('配置成功')
+    if (!testResult.success) {
+      connectionStatus.value = { type: 'danger', text: '连接失败' }
+      ElMessage.error('连接失败，配置未保存')
+      return
+    }
 
-    // 延迟跳转到登录页
-    setTimeout(() => {
-      router.push('/login')
-    }, 1000)
+    connectionStatus.value = { type: 'success', text: '连接成功' }
+
+    // 连接成功后再保存配置
+    const result = await saveEnvConfig({
+      envId: form.envId,
+      secretId: form.secretId,
+      secretKey: form.secretKey
+    })
+
+    if (result.success) {
+      ElMessage.success('配置已保存')
+    } else {
+      ElMessage.error('保存失败: ' + result.error)
+    }
   } catch (err) {
-    error.value = '配置失败: ' + (err.message || '未知错误')
+    connectionStatus.value = { type: 'danger', text: '连接失败' }
+    ElMessage.error('连接失败，配置未保存')
   } finally {
-    loading.value = false
+    saving.value = false
   }
 }
 
-// 返回登录页
-function goBack() {
+// 返回登录
+function goToLogin() {
   router.push('/login')
 }
 </script>
@@ -150,56 +195,127 @@ function goBack() {
 }
 
 .setup-card {
-  width: 450px;
+  width: 680px;
 }
 
-.setup-header h2 {
-  margin: 0;
-  color: #FF6B00;
+.setup-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
 }
 
-.setup-header p {
-  margin: 8px 0 0;
-  color: #666;
-  font-size: 14px;
+.connection-status {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.setup-form {
+  margin-top: 12px;
+  max-width: 450px;
 }
 
 .form-tip {
   font-size: 12px;
   color: #999;
-  margin-top: 5px;
+  margin-top: 8px;
+  line-height: 1.5;
+  width: 100%;
 }
 
-.setup-guide h4 {
-  color: #333;
-  margin: 0 0 10px;
+.button-row {
+  margin-bottom: 12px;
 }
 
-.setup-guide ol {
-  margin: 8px 0;
-  padding-left: 20px;
-  color: #666;
+.button-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
 }
 
-.setup-guide li {
-  margin: 5px 0;
+.btn-full {
+  width: 100%;
 }
 
-.setup-guide a {
-  color: #FF6B00;
+.btn-half {
+  flex: 1;
+  width: calc(50% - 6px);
 }
 
-.back-btn {
+.blue-btn {
   background-color: #4a90d9;
   border-color: #4a90d9;
   color: #fff;
 }
 
-.back-btn:hover,
-.back-btn:focus {
+.blue-btn:hover,
+.blue-btn:focus {
   background-color: #5aa0e9;
   border-color: #5aa0e9;
   color: #fff;
+}
+
+.orange-btn {
+  background-color: #FF6B00;
+  border-color: #FF6B00;
+  color: #fff;
+}
+
+.orange-btn:hover,
+.orange-btn:focus {
+  background-color: #ff8533;
+  border-color: #ff8533;
+  color: #fff;
+}
+
+.setup-tip {
+  font-size: 13px;
+  color: #666;
+}
+
+.setup-tip h4 {
+  color: #333;
+  margin: 24px 0 8px;
+}
+
+.setup-tip ol {
+  margin: 6px 0;
+  padding-left: 20px;
+  color: #666;
+}
+
+.setup-tip ul {
+  margin: 4px 0;
+  padding-left: 20px;
+  color: #666;
+  list-style-type: disc;
+}
+
+.setup-tip li {
+  margin: 4px 0;
+}
+
+.setup-tip ol > li > ul {
+  margin-top: 4px;
+}
+
+.setup-tip a {
+  color: #FF6B00;
+}
+
+.setup-tip code {
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.setup-card :deep(.el-form-item__content) {
+  flex-wrap: wrap;
+}
+
+.setup-card :deep(.el-form-item) {
+  margin-bottom: 24px;
 }
 
 .setup-card :deep(.el-form-item__error) {

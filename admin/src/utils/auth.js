@@ -1,43 +1,17 @@
 /**
  * 认证工具
- * 管理登录状态和凭证存储
+ * 管理登录状态和用户信息
+ * 注意：云开发凭证由后端环境变量配置，前端不再存储凭证
  */
 
-const AUTH_KEY = 'tingke_admin_auth'
-const USER_KEY = 'tingke_admin_user'
+const USER_KEY = 'tingting_admin_user'
 
-// 默认云环境ID
-const DEFAULT_ENV_ID = 'cloud1-2g5y53suf638dfb9'
-
-// 获取存储的凭证（系统配置）
-export function getCredentials() {
-  const stored = localStorage.getItem(AUTH_KEY)
-  if (stored) {
-    try {
-      const creds = JSON.parse(stored)
-      if (!creds.envId) {
-        creds.envId = DEFAULT_ENV_ID
-      }
-      return creds
-    } catch {
-      return null
-    }
-  }
-  return null
-}
-
-// 保存凭证（系统配置）
-export function saveCredentials(credentials) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(credentials))
-}
-
-// 清除凭证（仅在需要更换凭证时使用）
+// 清除所有登录信息
 export function clearCredentials() {
-  localStorage.removeItem(AUTH_KEY)
   localStorage.removeItem(USER_KEY)
 }
 
-// 退出登录（只清除用户信息，保留凭证配置）
+// 退出登录
 export function logout() {
   localStorage.removeItem(USER_KEY)
 }
@@ -62,16 +36,5 @@ export function saveUser(user) {
 
 // 检查是否已登录
 export function isAuthenticated() {
-  return getCurrentUser() !== null && getCredentials() !== null
-}
-
-// 获取当前凭证
-export function getCurrentCredentials() {
-  return getCredentials()
-}
-
-// 获取云环境ID
-export function getEnvId() {
-  const creds = getCredentials()
-  return creds?.envId || DEFAULT_ENV_ID
+  return getCurrentUser() !== null
 }

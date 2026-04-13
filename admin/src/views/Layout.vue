@@ -10,7 +10,7 @@
             <rect x="8" y="16" width="3" height="6" rx="1" fill="#fff"/>
             <rect x="21" y="16" width="3" height="6" rx="1" fill="#fff"/>
           </svg>
-          <h1>听听APP管理后台</h1>
+          <h1>听听管理后台</h1>
         </div>
 
         <el-menu
@@ -45,7 +45,7 @@
           </div>
           <div class="header-right">
             <span class="user-info">
-              <el-avatar :src="getValidAvatarUrl(user?.avatarUrl)" :size="24">
+              <el-avatar :src="getAvatarUrl(user?.avatarUrl)" :size="24">
                 <el-icon :size="14"><UserFilled /></el-icon>
               </el-avatar>
               <span class="user-name">你好，{{ user?.nickName || '用户' }}！</span>
@@ -69,12 +69,12 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled } from '@element-plus/icons-vue'
 import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
-import { getFileTempUrl, getMenuConfig } from '@/api/cloud'
+import { getMenuConfig } from '@/api/cloud'
 
 const router = useRouter()
 const route = useRoute()
@@ -112,10 +112,20 @@ const menuIcons = {
 
 const menuOrder = ref(['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'])
 
-// 头像缓存
-const avatarUrlCache = reactive({})
-// 当前用户头像的临时链接（响应式）
-const currentUserAvatarUrl = ref('')
+// 获取头像URL（兼容新旧格式）
+function getAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return ''
+  // 本地路径直接返回
+  if (avatarUrl.startsWith('/avatars/')) {
+    return avatarUrl
+  }
+  // http/https 直接返回
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl
+  }
+  // cloud:// 格式不显示（旧格式，需要用户重新上传头像）
+  return ''
+}
 
 // 检查是否有某个权限
 function hasPermission(permission) {
@@ -127,61 +137,7 @@ function hasPermission(permission) {
   return userPermissions.value.includes(permission)
 }
 
-// 检查头像URL是否有效
-function getValidAvatarUrl(url) {
-  if (!url) return ''
-  // cloud:// 格式，动态获取临时链接
-  if (url.startsWith('cloud://')) {
-    if (avatarUrlCache[url]) {
-      return avatarUrlCache[url]
-    }
-    // 异步获取
-    getAvatarTempUrl(url)
-    return currentUserAvatarUrl.value || ''
-  }
-  // https://...tcb.qcloud.la 格式，尝试恢复 fileID
-  if (url.includes('tcb.qcloud.la')) {
-    // 尝试从链接中提取路径并构建 fileID
-    try {
-      const urlWithoutSign = url.split('?')[0]
-      const urlObj = new URL(urlWithoutSign)
-      const filePath = urlObj.pathname // 如: /avatars/xxx.jpg
-      const fileID = `cloud://cloud1-2g5y53suf638dfb9${filePath}`
-
-      // 如果已缓存，返回缓存
-      if (avatarUrlCache[fileID]) {
-        return avatarUrlCache[fileID]
-      }
-      // 异步获取新临时链接
-      getAvatarTempUrl(fileID)
-      return currentUserAvatarUrl.value || ''
-    } catch (e) {
-      // 解析失败，返回空
-      return ''
-    }
-  }
-  // 其他 http/https 格式，直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  return ''
-}
-
-// 异步获取头像临时链接
-async function getAvatarTempUrl(fileID) {
-  try {
-    const res = await getFileTempUrl(fileID)
-    if (res.success && res.data.tempFileURL) {
-      avatarUrlCache[fileID] = res.data.tempFileURL
-      // 更新当前用户头像的临时链接
-      currentUserAvatarUrl.value = res.data.tempFileURL
-    }
-  } catch (e) {
-    console.error('获取头像临时链接失败:', e)
-  }
-}
-
-// 初始化时获取当前用户头像临时链接
+// 初始化
 onMounted(async () => {
   // 加载菜单配置
   try {
@@ -192,30 +148,11 @@ onMounted(async () => {
   } catch (err) {
     console.error('加载菜单配置失败:', err)
   }
-
-  // 获取当前用户头像临时链接
-  const avatarUrl = user.value?.avatarUrl
-  if (avatarUrl) {
-    if (avatarUrl.startsWith('cloud://')) {
-      await getAvatarTempUrl(avatarUrl)
-    } else if (avatarUrl.includes('tcb.qcloud.la')) {
-      // 从过期链接中提取 fileID
-      try {
-        const urlWithoutSign = avatarUrl.split('?')[0]
-        const urlObj = new URL(urlWithoutSign)
-        const filePath = urlObj.pathname
-        const fileID = `cloud://cloud1-2g5y53suf638dfb9${filePath}`
-        await getAvatarTempUrl(fileID)
-      } catch (e) {
-        console.error('恢复头像fileID失败:', e)
-      }
-    }
-  }
 })
 
 // 监听 storage 变化，更新用户信息（跨标签页）
 window.addEventListener('storage', (e) => {
-  if (e.key === 'tingke_admin_user') {
+  if (e.key === 'tingting_admin_user') {
     user.value = getCurrentUser()
   }
 })

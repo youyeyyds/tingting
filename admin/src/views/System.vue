@@ -25,7 +25,7 @@
       <template #header>
         <div class="card-header">
           <span>账号信息</span>
-          <el-button size="small" @click="loadAccountInfo" :loading="loadingAccount">
+          <el-button @click="loadAccountInfo" :loading="loadingAccount">
             刷新
           </el-button>
         </div>
@@ -60,14 +60,22 @@
       <el-empty v-else-if="!loadingAccount" description="暂无账号信息" />
     </el-card>
 
-    <!-- 系统配置 -->
+    <!-- 环境配置 -->
     <el-card style="margin-top: 20px">
       <template #header>
         <div class="card-header">
           <span>环境配置</span>
-          <el-button type="primary" :loading="testing" @click="handleTest">
-            连通测试
-          </el-button>
+          <div>
+            <el-button type="primary" :loading="testing" @click="handleTest">
+              连通测试
+            </el-button>
+            <el-button type="primary" :loading="saving" @click="handleSave">
+              保存配置
+            </el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -91,26 +99,16 @@
           />
           <div class="form-tip">腾讯云子用户的 SecretKey</div>
         </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" :loading="saving" @click="handleSave">
-            保存配置
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
       </el-form>
-    </el-card>
 
-    <!-- 测试结果 -->
-    <el-card v-if="testResult" style="margin-top: 20px">
-      <template #header>
-        <span>测试结果</span>
-      </template>
+      <!-- 测试结果 -->
       <el-alert
+        v-if="testResult"
         :title="testResult.success ? '连接成功' : '连接失败'"
         :type="testResult.success ? 'success' : 'error'"
         :closable="false"
         show-icon
+        style="margin-top: 15px"
       >
         <template #default>
           <div v-if="testResult.success">
@@ -122,6 +120,20 @@
           </div>
         </template>
       </el-alert>
+
+      <el-alert
+        v-if="saveResult"
+        title="配置已保存"
+        type="warning"
+        :closable="false"
+        show-icon
+        style="margin-top: 15px"
+      >
+        <template #default>
+          <p>{{ saveResult.message }}</p>
+          <p>如需立即生效，请手动重启后端服务</p>
+        </template>
+      </el-alert>
     </el-card>
 
     <!-- 配置说明 -->
@@ -131,20 +143,22 @@
       </template>
       <div class="config-guide">
         <h4>1. 获取云环境ID</h4>
-        <p>登录微信云开发控制台，在环境设置中查看环境ID</p>
+        <ul>
+          <li>登录微信云开发控制台，在环境设置中查看环境ID</li>
+        </ul>
 
         <h4>2. 创建子用户并获取凭证</h4>
-        <ol>
+        <ul>
           <li>访问 <a href="https://console.cloud.tencent.com/cam" target="_blank">腾讯云访问管理</a></li>
-          <li>创建子用户，授权策略：<code>QcloudTCBFullAccess</code>（云开发全读写访问）和 <code>QcloudCAMReadOnlyAccess</code>（用户与权限只读访问）</li>
+          <li>创建子用户，授权策略：<code>QcloudTCBFullAccess</code>（云开发全读写访问）和 <code>QcloudCamReadOnlyAccess</code>（用户与权限只读访问权限）</li>
           <li>创建完成后获取 SecretId 和 SecretKey</li>
-        </ol>
+        </ul>
 
         <h4>3. 安全提示</h4>
         <ul>
-          <li>请妥善保管 SecretKey，不要泄露给他人</li>
+          <li>凭证保存在项目根目录的 <code>.env</code> 文件</li>
+          <li>请妥善保管 SecretKey，不要泄露</li>
           <li>建议定期更换子用户凭证</li>
-          <li>如发现凭证泄露，请立即在腾讯云控制台禁用</li>
         </ul>
       </div>
     </el-card>
@@ -154,14 +168,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { saveCredentials, getCredentials, clearCredentials } from '@/utils/auth'
-import { testConnection, getAccountInfo, getMenuConfig, saveMenuConfig } from '@/api/cloud'
+import { testConnection, getAccountInfo, getMenuConfig, saveMenuConfig, getEnvConfig, saveEnvConfig } from '@/api/cloud'
 import Sortable from 'sortablejs'
 
 const formRef = ref(null)
 const testing = ref(false)
 const saving = ref(false)
 const testResult = ref(null)
+const saveResult = ref(null)
 const loadingAccount = ref(false)
 const accountInfo = ref(null)
 const menuListRef = ref(null)
@@ -193,15 +207,24 @@ const rules = {
 
 // 加载当前配置
 onMounted(async () => {
-  const credentials = getCredentials()
-  if (credentials) {
-    form.envId = credentials.envId || ''
-    form.secretId = credentials.secretId || ''
-    form.secretKey = credentials.secretKey || ''
-  }
+  loadEnvConfig()
   loadAccountInfo()
   loadMenuConfig()
 })
+
+// 加载环境配置
+async function loadEnvConfig() {
+  try {
+    const result = await getEnvConfig()
+    if (result.success) {
+      form.envId = result.data.envId || ''
+      form.secretId = result.data.secretId || ''
+      form.secretKey = result.data.secretKey || ''
+    }
+  } catch (err) {
+    console.error('加载环境配置失败:', err)
+  }
+}
 
 // 加载菜单配置
 async function loadMenuConfig() {
@@ -213,6 +236,23 @@ async function loadMenuConfig() {
     initMenuSortable()
   } catch (err) {
     console.error('加载菜单配置失败:', err)
+  }
+}
+
+// 加载账号信息
+async function loadAccountInfo() {
+  loadingAccount.value = true
+  try {
+    const result = await getAccountInfo()
+    if (result.success) {
+      accountInfo.value = result.data
+    } else {
+      accountInfo.value = null
+    }
+  } catch (err) {
+    accountInfo.value = null
+  } finally {
+    loadingAccount.value = false
   }
 }
 
@@ -248,36 +288,14 @@ function initMenuSortable() {
   })
 }
 
-// 加载账号信息
-async function loadAccountInfo() {
-  loadingAccount.value = true
-  try {
-    const result = await getAccountInfo()
-    if (result.success) {
-      accountInfo.value = result.data
-    } else {
-      accountInfo.value = null
-    }
-  } catch (err) {
-    accountInfo.value = null
-  } finally {
-    loadingAccount.value = false
-  }
-}
-
 // 连通测试
 async function handleTest() {
-  try {
-    await formRef.value.validate()
-  } catch {
-    return
-  }
-
   testing.value = true
   testResult.value = null
+  saveResult.value = null
 
   try {
-    const connected = await testConnection(form.secretId, form.secretKey, form.envId)
+    const connected = await testConnection()
     if (connected.success) {
       testResult.value = {
         success: true,
@@ -308,34 +326,24 @@ async function handleSave() {
   }
 
   saving.value = true
+  testResult.value = null
+  saveResult.value = null
 
   try {
-    // 先测试连接
-    const connected = await testConnection(form.secretId, form.secretKey, form.envId)
-    if (!connected.success) {
-      ElMessage.error('连接测试失败，请检查配置是否正确')
-      testResult.value = {
-        success: false,
-        error: connected.error || '连接失败'
-      }
-      return
-    }
-
-    // 保存配置
-    saveCredentials({
+    const result = await saveEnvConfig({
       envId: form.envId,
       secretId: form.secretId,
       secretKey: form.secretKey
     })
 
-    ElMessage.success('配置已保存')
-    testResult.value = {
-      success: true,
-      count: connected.data?.count || 0
+    if (result.success) {
+      saveResult.value = result.data
+      ElMessage.success('配置已保存到 .env 文件')
+      // 刷新账号信息
+      await loadAccountInfo()
+    } else {
+      ElMessage.error('保存失败: ' + result.error)
     }
-
-    // 等待账号信息刷新完成
-    await loadAccountInfo()
   } catch (err) {
     ElMessage.error('保存失败: ' + (err.message || '未知错误'))
   } finally {
@@ -343,19 +351,12 @@ async function handleSave() {
   }
 }
 
-// 重置表单
-function handleReset() {
-  const credentials = getCredentials()
-  if (credentials) {
-    form.envId = credentials.envId || ''
-    form.secretId = credentials.secretId || ''
-    form.secretKey = credentials.secretKey || ''
-  } else {
-    form.envId = ''
-    form.secretId = ''
-    form.secretKey = ''
-  }
+// 重置配置
+async function handleReset() {
+  await loadEnvConfig()
   testResult.value = null
+  saveResult.value = null
+  ElMessage.info('已重置为当前配置')
 }
 </script>
 
@@ -374,7 +375,7 @@ function handleReset() {
 
 .config-guide h4 {
   color: #333;
-  margin: 15px 0 8px;
+  margin: 24px 0 8px;
 }
 
 .config-guide p {
@@ -395,6 +396,13 @@ function handleReset() {
 
 .config-guide a {
   color: #FF6B00;
+}
+
+.config-guide code {
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
 }
 
 .account-tip {
