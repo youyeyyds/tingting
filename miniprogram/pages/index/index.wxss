@@ -1,0 +1,188 @@
+/* index.wxss */
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 固定顶部 */
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+}
+
+/* 状态栏占位 */
+.status-bar {
+  background: #fff;
+}
+
+/* 标题栏 */
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  position: relative;
+}
+
+.login-btn {
+  position: absolute;
+  left: 30rpx;
+  width: 130rpx;
+}
+
+.login-text {
+  color: #FF6B00;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.title-text {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 课程列表 */
+.course-list {
+  flex: 1;
+  padding-bottom: 100rpx;
+  overflow-x: hidden;
+}
+
+.course-list-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* BANNER */
+.banner {
+  width: 100%;
+  height: 280rpx;
+  margin-bottom: 20rpx;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+}
+
+.course-card {
+  width: 690rpx;
+  display: flex;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.course-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.course-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-left: 20rpx;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.course-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-author {
+  font-size: 26rpx;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-meta {
+  display: flex;
+  align-items: center;
+}
+
+.meta-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.list-bottom {
+  height: 20rpx;
+}
+
+/* 空状态提示 */
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 30rpx;
+  margin-top: 40rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #999;
+}
+
+/* 底部导航栏 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80rpx;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex;
+  background: #fff;
+  border-top: 1rpx solid #eee;
+  z-index: 100;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 16rpx;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.tab-text {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.tab-item.active .tab-text {
+  color: #FF6B00;
+}

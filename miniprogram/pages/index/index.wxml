@@ -1,0 +1,59 @@
+<!--index.wxml-->
+<view class="page-container">
+  <!-- 固定顶部区域 -->
+  <view class="header-fixed">
+    <!-- 状态栏占位 -->
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+    <!-- 标题栏 -->
+    <view class="title-bar" style="height: {{navBarHeight}}px;">
+      <view class="login-btn" bindtap="handleLogin">
+        <text class="login-text">{{isLoggedIn ? 'Log out' : 'Log in'}}</text>
+      </view>
+      <text class="title-text">听听</text>
+    </view>
+  </view>
+
+  <!-- 课程列表 -->
+  <scroll-view class="course-list" scroll-y="true" enhanced="true" bounces="false" style="padding-top: {{headerHeight}}px;">
+    <view class="course-list-inner">
+      <!-- BANNER -->
+      <view class="banner">
+        <image class="banner-image" src="https://picsum.photos/seed/banner/750/300" mode="aspectFill" />
+      </view>
+
+      <view class="course-card" wx:for="{{courses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onCourseTap">
+        <image class="course-image" src="{{item.cover}}" mode="aspectFill" />
+        <view class="course-info">
+          <view class="course-title">{{item.title}}</view>
+          <view class="course-author">{{item.author}}</view>
+          <view class="course-meta">
+            <text class="meta-text">{{item.categoryName}} · {{item.chapters}}章 · {{item.progress == 0 ? '未学习' : (item.progress == 100 ? '已学完' : '已学' + item.progress + '%')}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态提示 -->
+      <view class="empty-tip" wx:if="{{!loading && courses.length === 0}}">
+        <text class="empty-text">暂无课程数据</text>
+      </view>
+
+      <view class="list-bottom"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部导航栏 -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" data-index="0" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 0 ? '/icons/svg/home-active.svg' : '/icons/svg/home.svg'}}" mode="aspectFit" />
+      <text class="tab-text">首页</text>
+    </view>
+    <view class="tab-item {{activeTab === 1 ? 'active' : ''}}" data-index="1" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 1 ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" />
+      <text class="tab-text">收藏</text>
+    </view>
+    <view class="tab-item {{activeTab === 2 ? 'active' : ''}}" data-index="2" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 2 ? '/icons/svg/mine-active.svg' : '/icons/svg/mine.svg'}}" mode="aspectFit" />
+      <text class="tab-text">我的</text>
+    </view>
+  </view>
+</view>

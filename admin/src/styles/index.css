@@ -1,0 +1,41 @@
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Element Plus 样式覆盖 */
+.el-card {
+  border-radius: 8px;
+}
+
+.el-button--primary {
+  background-color: #FF6B00;
+  border-color: #FF6B00;
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: #e55a00;
+  border-color: #e55a00;
+}
+
+.el-menu-item.is-active {
+  color: #FF6B00 !important;
+}
+
+/* 分页样式 */
+.el-pagination {
+  margin-top: 20px;
+  justify-content: flex-end;
+}

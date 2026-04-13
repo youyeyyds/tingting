@@ -1,0 +1,19 @@
+{
+  "name": "tingke-admin-server",
+  "version": "1.0.0",
+  "description": "听听课程管理后台服务",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@cloudbase/manager-node": "^5.1.0",
+    "@cloudbase/node-sdk": "^2.7.0",
+    "bcryptjs": "^3.0.3",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "music-metadata": "^7.14.0",
+    "sortablejs": "^1.15.7",
+    "tencentcloud-sdk-nodejs": "^4.1.211"
+  }
+}

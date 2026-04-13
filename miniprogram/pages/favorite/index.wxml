@@ -1,0 +1,31 @@
+<!--favorite/index.wxml-->
+<view class="page-container">
+  <!-- 状态栏占位 -->
+  <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+  <view class="header" style="height: {{navBarHeight}}px;">
+    <text class="header-title">收藏</text>
+  </view>
+
+  <view class="content">
+    <view class="empty-state">
+      <image class="empty-icon" src="/icons/svg/favorite.svg" mode="aspectFit" />
+      <text class="empty-text">暂无收藏课程</text>
+    </view>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" data-index="0" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 0 ? '/icons/svg/home-active.svg' : '/icons/svg/home.svg'}}" mode="aspectFit" />
+      <text class="tab-text">首页</text>
+    </view>
+    <view class="tab-item {{activeTab === 1 ? 'active' : ''}}" data-index="1" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 1 ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" />
+      <text class="tab-text">收藏</text>
+    </view>
+    <view class="tab-item {{activeTab === 2 ? 'active' : ''}}" data-index="2" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 2 ? '/icons/svg/mine-active.svg' : '/icons/svg/mine.svg'}}" mode="aspectFit" />
+      <text class="tab-text">我的</text>
+    </view>
+  </view>
+</view>

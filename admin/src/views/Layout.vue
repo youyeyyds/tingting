@@ -1,0 +1,347 @@
+<template>
+  <div class="layout-container">
+    <!-- 侧边栏 -->
+    <el-container class="layout-main">
+      <el-aside width="220px" class="layout-aside">
+        <div class="logo">
+          <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="14" fill="#FF6B00"/>
+            <path d="M10 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <rect x="8" y="16" width="3" height="6" rx="1" fill="#fff"/>
+            <rect x="21" y="16" width="3" height="6" rx="1" fill="#fff"/>
+          </svg>
+          <h1>听听APP管理后台</h1>
+        </div>
+
+        <el-menu
+          :default-active="activeMenu"
+          router
+          background-color="#304156"
+          text-color="#bfcbd9"
+          active-text-color="#FF6B00"
+        >
+          <el-menu-item index="/">
+            <el-icon><HomeFilled /></el-icon>
+            <span>首页</span>
+          </el-menu-item>
+
+          <template v-for="key in menuOrder" :key="key">
+            <el-menu-item v-if="hasPermission(key)" :index="'/' + key">
+              <el-icon>
+                <component :is="menuIcons[key]" />
+              </el-icon>
+              <span>{{ menuLabels[key] }}</span>
+            </el-menu-item>
+          </template>
+        </el-menu>
+      </el-aside>
+
+      <!-- 主内容区 -->
+      <el-container>
+        <!-- 顶部栏 -->
+        <el-header class="layout-header">
+          <div class="header-left">
+            <span class="breadcrumb">{{ breadcrumb }}</span>
+          </div>
+          <div class="header-right">
+            <span class="user-info">
+              <el-avatar :src="getValidAvatarUrl(user?.avatarUrl)" :size="24">
+                <el-icon :size="14"><UserFilled /></el-icon>
+              </el-avatar>
+              <span class="user-name">你好，{{ user?.nickName || '用户' }}！</span>
+              <el-tag v-if="user?.roleCode === 'admin'" type="danger" size="small">管理员</el-tag>
+              <el-tag v-else-if="user?.roleName" type="primary" size="small">{{ user.roleName }}</el-tag>
+            </span>
+            <el-button type="danger" size="small" @click="handleLogout">
+              <el-icon><SwitchButton /></el-icon>
+              退出
+            </el-button>
+          </div>
+        </el-header>
+
+        <!-- 内容区 -->
+        <el-main class="layout-content">
+          <router-view />
+        </el-main>
+      </el-container>
+    </el-container>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled } from '@element-plus/icons-vue'
+import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
+import { getFileTempUrl, getMenuConfig } from '@/api/cloud'
+
+const router = useRouter()
+const route = useRoute()
+
+// 当前登录用户（响应式）
+const storedUser = getCurrentUser()
+const user = ref(storedUser)
+
+// 是否是管理员
+const isAdmin = computed(() => user.value?.roleCode === 'admin')
+
+// 获取用户权限列表
+const userPermissions = computed(() => user.value?.permissions || [])
+
+// 菜单配置
+const menuLabels = {
+  courses: '课程管理',
+  chapters: '章节管理',
+  audios: '音频管理',
+  categories: '分类管理',
+  users: '用户管理',
+  roles: '角色管理',
+  system: '系统配置'
+}
+
+const menuIcons = {
+  courses: Reading,
+  chapters: Document,
+  audios: Headset,
+  categories: Folder,
+  users: User,
+  roles: Lock,
+  system: Setting
+}
+
+const menuOrder = ref(['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'])
+
+// 头像缓存
+const avatarUrlCache = reactive({})
+// 当前用户头像的临时链接（响应式）
+const currentUserAvatarUrl = ref('')
+
+// 检查是否有某个权限
+function hasPermission(permission) {
+  // 管理员有所有权限
+  if (isAdmin.value) return true
+  // 如果没有权限列表，只显示首页
+  if (userPermissions.value.length === 0) return false
+  // 检查用户权限列表
+  return userPermissions.value.includes(permission)
+}
+
+// 检查头像URL是否有效
+function getValidAvatarUrl(url) {
+  if (!url) return ''
+  // cloud:// 格式，动态获取临时链接
+  if (url.startsWith('cloud://')) {
+    if (avatarUrlCache[url]) {
+      return avatarUrlCache[url]
+    }
+    // 异步获取
+    getAvatarTempUrl(url)
+    return currentUserAvatarUrl.value || ''
+  }
+  // https://...tcb.qcloud.la 格式，尝试恢复 fileID
+  if (url.includes('tcb.qcloud.la')) {
+    // 尝试从链接中提取路径并构建 fileID
+    try {
+      const urlWithoutSign = url.split('?')[0]
+      const urlObj = new URL(urlWithoutSign)
+      const filePath = urlObj.pathname // 如: /avatars/xxx.jpg
+      const fileID = `cloud://cloud1-2g5y53suf638dfb9${filePath}`
+
+      // 如果已缓存，返回缓存
+      if (avatarUrlCache[fileID]) {
+        return avatarUrlCache[fileID]
+      }
+      // 异步获取新临时链接
+      getAvatarTempUrl(fileID)
+      return currentUserAvatarUrl.value || ''
+    } catch (e) {
+      // 解析失败，返回空
+      return ''
+    }
+  }
+  // 其他 http/https 格式，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  return ''
+}
+
+// 异步获取头像临时链接
+async function getAvatarTempUrl(fileID) {
+  try {
+    const res = await getFileTempUrl(fileID)
+    if (res.success && res.data.tempFileURL) {
+      avatarUrlCache[fileID] = res.data.tempFileURL
+      // 更新当前用户头像的临时链接
+      currentUserAvatarUrl.value = res.data.tempFileURL
+    }
+  } catch (e) {
+    console.error('获取头像临时链接失败:', e)
+  }
+}
+
+// 初始化时获取当前用户头像临时链接
+onMounted(async () => {
+  // 加载菜单配置
+  try {
+    const result = await getMenuConfig()
+    if (result.success && result.data.menuOrder) {
+      menuOrder.value = result.data.menuOrder
+    }
+  } catch (err) {
+    console.error('加载菜单配置失败:', err)
+  }
+
+  // 获取当前用户头像临时链接
+  const avatarUrl = user.value?.avatarUrl
+  if (avatarUrl) {
+    if (avatarUrl.startsWith('cloud://')) {
+      await getAvatarTempUrl(avatarUrl)
+    } else if (avatarUrl.includes('tcb.qcloud.la')) {
+      // 从过期链接中提取 fileID
+      try {
+        const urlWithoutSign = avatarUrl.split('?')[0]
+        const urlObj = new URL(urlWithoutSign)
+        const filePath = urlObj.pathname
+        const fileID = `cloud://cloud1-2g5y53suf638dfb9${filePath}`
+        await getAvatarTempUrl(fileID)
+      } catch (e) {
+        console.error('恢复头像fileID失败:', e)
+      }
+    }
+  }
+})
+
+// 监听 storage 变化，更新用户信息（跨标签页）
+window.addEventListener('storage', (e) => {
+  if (e.key === 'tingke_admin_user') {
+    user.value = getCurrentUser()
+  }
+})
+
+// 监听自定义事件，更新用户信息（同页面）
+window.addEventListener('user-info-updated', () => {
+  user.value = getCurrentUser()
+})
+
+// 监听菜单排序更新事件
+window.addEventListener('menu-order-updated', (e) => {
+  if (e.detail) {
+    menuOrder.value = e.detail
+  }
+})
+
+// 当前激活的菜单
+const activeMenu = computed(() => route.path)
+
+// 面包屑
+const breadcrumb = computed(() => {
+  const map = {
+    '/': '首页',
+    '/courses': '课程管理',
+    '/chapters': '章节管理',
+    '/audios': '音频管理',
+    '/categories': '分类管理',
+    '/users': '用户管理',
+    '/roles': '角色管理',
+    '/system': '系统配置'
+  }
+  return map[route.path] || '首页'
+})
+
+// 退出登录
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    logout()
+    ElMessage.success('已退出登录')
+    router.push('/login')
+  } catch {
+    // 用户取消
+  }
+}
+</script>
+
+<style scoped>
+.layout-container {
+  height: 100vh;
+}
+
+.layout-main {
+  height: 100%;
+}
+
+.layout-aside {
+  background-color: #304156;
+  overflow-x: hidden;
+}
+
+.logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #263445;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.logo h1 {
+  color: #FF6B00;
+  font-size: 18px;
+  margin: 0;
+  line-height: 28px;
+}
+
+.el-menu {
+  border-right: none;
+}
+
+.layout-header {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.breadcrumb {
+  font-size: 16px;
+  color: #333;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: nowrap;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #333;
+}
+
+.layout-content {
+  background-color: #f5f5f5;
+  padding: 20px;
+  overflow-y: auto;
+}
+</style>
