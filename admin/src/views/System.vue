@@ -73,7 +73,7 @@
               保存配置
             </el-button>
             <el-button @click="handleReset">
-              重置
+              恢复
             </el-button>
           </div>
         </div>
@@ -183,15 +183,15 @@ const menuListRef = ref(null)
 // 菜单配置
 const menuLabels = {
   courses: '课程管理',
-  chapters: '章节管理',
   audios: '音频管理',
+  headlines: '头条管理',
   categories: '分类管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'
 }
 
-const menuOrder = ref(['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'])
 
 const form = reactive({
   envId: '',
@@ -231,7 +231,8 @@ async function loadMenuConfig() {
   try {
     const result = await getMenuConfig()
     if (result.success && result.data.menuOrder) {
-      menuOrder.value = result.data.menuOrder
+      // 过滤掉无效的菜单项
+      menuOrder.value = result.data.menuOrder.filter(key => menuLabels[key])
     }
     initMenuSortable()
   } catch (err) {
@@ -351,12 +352,12 @@ async function handleSave() {
   }
 }
 
-// 重置配置
+// 恢复配置
 async function handleReset() {
   await loadEnvConfig()
   testResult.value = null
   saveResult.value = null
-  ElMessage.info('已重置为当前配置')
+  ElMessage.info('已恢复为当前配置')
 }
 </script>
 

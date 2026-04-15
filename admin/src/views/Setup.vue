@@ -90,6 +90,11 @@ const testing = ref(false)
 const saving = ref(false)
 const connectionStatus = ref(null)
 
+// 连通测试频率控制
+const testClickCount = ref(0)
+const testClickTimer = ref(null)
+const testCooldown = ref(false)
+
 const form = reactive({
   envId: '',
   secretId: '',
@@ -104,6 +109,40 @@ const rules = {
 
 // 连通测试
 async function handleTest() {
+  // 冷静期，禁止测试
+  if (testCooldown.value) {
+    return
+  }
+
+  // 清除之前的计时器
+  if (testClickTimer.value) {
+    clearTimeout(testClickTimer.value)
+  }
+
+  // 记录点击次数（先计数，再验证）
+  testClickCount.value++
+
+  // 10秒内点击超过5次
+  if (testClickCount.value > 5) {
+    connectionStatus.value = { type: 'warning', text: '都TM连接正常了，还按！' }
+    testCooldown.value = true
+    testing.value = true  // 让按钮显示 loading 状态
+    testClickCount.value = 0
+
+    // 10秒后恢复
+    setTimeout(() => {
+      testCooldown.value = false
+      testing.value = false
+      connectionStatus.value = null
+    }, 10000)
+    return
+  }
+
+  // 10秒内没有继续点击，重置计数
+  testClickTimer.value = setTimeout(() => {
+    testClickCount.value = 0
+  }, 10000)
+
   try {
     await formRef.value.validate()
   } catch {
@@ -195,7 +234,7 @@ function goToLogin() {
 }
 
 .setup-card {
-  width: 680px;
+  width: 600px;
 }
 
 .setup-header {

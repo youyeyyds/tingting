@@ -43,7 +43,8 @@ Page({
       name: 'courseFunctions',
       data: {
         type: 'getCourses',
-        limit: 20
+        limit: 20,
+        filterDraft: true  // 过滤草稿状态课程
       }
     })
     .then(res => {

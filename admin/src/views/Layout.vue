@@ -2,7 +2,7 @@
   <div class="layout-container">
     <!-- 侧边栏 -->
     <el-container class="layout-main">
-      <el-aside width="220px" class="layout-aside">
+      <el-aside width="180px" class="layout-aside">
         <div class="logo">
           <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
             <circle cx="16" cy="16" r="14" fill="#FF6B00"/>
@@ -72,7 +72,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled } from '@element-plus/icons-vue'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets } from '@element-plus/icons-vue'
 import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
@@ -92,8 +92,8 @@ const userPermissions = computed(() => user.value?.permissions || [])
 // 菜单配置
 const menuLabels = {
   courses: '课程管理',
-  chapters: '章节管理',
   audios: '音频管理',
+  headlines: '头条管理',
   categories: '分类管理',
   users: '用户管理',
   roles: '角色管理',
@@ -102,15 +102,15 @@ const menuLabels = {
 
 const menuIcons = {
   courses: Reading,
-  chapters: Document,
   audios: Headset,
+  headlines: Tickets,
   categories: Folder,
   users: User,
   roles: Lock,
   system: Setting
 }
 
-const menuOrder = ref(['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'])
 
 // 获取头像URL（兼容新旧格式）
 function getAvatarUrl(avatarUrl) {
@@ -143,7 +143,8 @@ onMounted(async () => {
   try {
     const result = await getMenuConfig()
     if (result.success && result.data.menuOrder) {
-      menuOrder.value = result.data.menuOrder
+      // 过滤掉无效的菜单项
+      menuOrder.value = result.data.menuOrder.filter(key => menuLabels[key])
     }
   } catch (err) {
     console.error('加载菜单配置失败:', err)
@@ -165,7 +166,7 @@ window.addEventListener('user-info-updated', () => {
 // 监听菜单排序更新事件
 window.addEventListener('menu-order-updated', (e) => {
   if (e.detail) {
-    menuOrder.value = e.detail
+    menuOrder.value = e.detail.filter(key => menuLabels[key])
   }
 })
 
@@ -177,12 +178,16 @@ const breadcrumb = computed(() => {
   const map = {
     '/': '首页',
     '/courses': '课程管理',
-    '/chapters': '章节管理',
     '/audios': '音频管理',
+    '/headlines': '头条管理',
     '/categories': '分类管理',
     '/users': '用户管理',
     '/roles': '角色管理',
     '/system': '系统配置'
+  }
+  // 课程章节页面
+  if (route.path.startsWith('/courses/') && route.path.includes('/chapters')) {
+    return '章节管理'
   }
   return map[route.path] || '首页'
 })

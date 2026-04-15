@@ -30,14 +30,19 @@ const routes = [
         component: () => import('@/views/Courses.vue')
       },
       {
-        path: 'chapters',
-        name: 'Chapters',
+        path: 'courses/:id/chapters',
+        name: 'CourseChapters',
         component: () => import('@/views/Chapters.vue')
       },
       {
         path: 'audios',
         name: 'Audios',
         component: () => import('@/views/Audios.vue')
+      },
+      {
+        path: 'headlines',
+        name: 'Headlines',
+        component: () => import('@/views/Headlines.vue')
       },
       {
         path: 'categories',

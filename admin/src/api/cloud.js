@@ -201,6 +201,40 @@ export async function deleteAudio(id) {
   return response.data
 }
 
+// ========== 头条 API ==========
+
+/**
+ * 获取头条列表
+ */
+export async function getHeadlines() {
+  const response = await api.get('/headlines')
+  return response.data
+}
+
+/**
+ * 创建头条
+ */
+export async function createHeadline(data) {
+  const response = await api.post('/headlines', data)
+  return response.data
+}
+
+/**
+ * 更新头条
+ */
+export async function updateHeadline(id, data) {
+  const response = await api.put(`/headlines/${id}`, data)
+  return response.data
+}
+
+/**
+ * 删除头条
+ */
+export async function deleteHeadline(id) {
+  const response = await api.delete(`/headlines/${id}`)
+  return response.data
+}
+
 // ========== 分类 API ==========
 
 /**

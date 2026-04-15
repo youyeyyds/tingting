@@ -38,12 +38,12 @@
         <el-table-column prop="permissions" label="权限" min-width="300">
           <template #default="{ row }">
             <div class="permission-header">
-              <el-tag :type="(row.permissions || []).length === Object.keys(permissionLabels).length ? 'success' : 'warning'" size="small">
-                {{ (row.permissions || []).length }}/{{ Object.keys(permissionLabels).length }}
+              <el-tag :type="(row.permissions || []).length === menuOrder.length ? 'success' : 'warning'" size="small">
+                {{ (row.permissions || []).length }}/{{ menuOrder.length }}
               </el-tag>
             </div>
             <div class="permission-tags">
-              <el-tag v-for="perm in row.permissions" :key="perm" class="permission-tag">
+              <el-tag v-for="perm in getOrderedPermissions(row.permissions)" :key="perm" class="permission-tag">
                 {{ permissionLabels[perm] || perm }}
               </el-tag>
               <span v-if="!row.permissions || row.permissions.length === 0" class="no-permission">无权限</span>
@@ -80,13 +80,9 @@
         </el-form-item>
         <el-form-item label="权限" prop="permissions">
           <el-checkbox-group v-model="form.permissions">
-            <el-checkbox value="courses">课程管理</el-checkbox>
-            <el-checkbox value="chapters">章节管理</el-checkbox>
-            <el-checkbox value="audios">音频管理</el-checkbox>
-            <el-checkbox value="categories">分类管理</el-checkbox>
-            <el-checkbox value="users">用户管理</el-checkbox>
-            <el-checkbox value="roles">角色管理</el-checkbox>
-            <el-checkbox value="system">系统配置</el-checkbox>
+            <el-checkbox v-for="perm in menuOrder" :key="perm" :value="perm">
+              {{ permissionLabels[perm] }}
+            </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -105,7 +101,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getRoles, createRole, updateRole, deleteRole, batchUpdateSeq } from '@/api/cloud'
+import { getRoles, createRole, updateRole, deleteRole, batchUpdateSeq, getMenuConfig } from '@/api/cloud'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -117,14 +113,37 @@ const tableRef = ref(null)
 
 const roles = ref([])
 
+// 菜单排序（从系统配置获取）
+const defaultMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system']
+const menuOrder = ref(defaultMenuOrder)
+
 const permissionLabels = {
   courses: '课程管理',
-  chapters: '章节管理',
   audios: '音频管理',
+  headlines: '头条管理',
   categories: '分类管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'
+}
+
+// 根据菜单排序返回有序的权限列表
+function getOrderedPermissions(permissions) {
+  if (!permissions || permissions.length === 0) return []
+  return menuOrder.value.filter(p => permissions.includes(p))
+}
+
+// 加载菜单配置
+async function loadMenuConfig() {
+  try {
+    const result = await getMenuConfig()
+    if (result.success && result.data.menuOrder) {
+      // 过滤掉无效的菜单项（只保留权限相关的）
+      menuOrder.value = result.data.menuOrder.filter(key => permissionLabels[key])
+    }
+  } catch (err) {
+    console.error('加载菜单配置失败:', err)
+  }
 }
 
 const form = reactive({
@@ -173,7 +192,8 @@ function showEditDialog(row) {
     name: row.name,
     code: row.code,
     description: row.description || '',
-    permissions: row.permissions || []
+    // 过滤掉无效的权限项
+    permissions: (row.permissions || []).filter(p => permissionLabels[p])
   })
   dialogVisible.value = true
 }
@@ -288,8 +308,16 @@ function initSortable() {
 }
 
 onMounted(async () => {
+  await loadMenuConfig()
   await loadRoles()
   initSortable()
+})
+
+// 监听菜单排序更新事件
+window.addEventListener('menu-order-updated', (e) => {
+  if (e.detail) {
+    menuOrder.value = e.detail.filter(key => permissionLabels[key])
+  }
 })
 </script>
 

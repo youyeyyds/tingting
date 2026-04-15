@@ -17,10 +17,11 @@
         stripe
         ref="tableRef"
         row-key="_id"
+        @row-click="goToChapters"
       >
         <el-table-column label="" width="50">
           <template #default>
-            <span class="drag-handle">
+            <span class="drag-handle" @click.stop>
               <span class="drag-line"></span>
               <span class="drag-line"></span>
               <span class="drag-line"></span>
@@ -30,13 +31,15 @@
         <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="cover" label="封面" width="100">
           <template #default="{ row }">
-            <el-image
-              v-if="row.cover"
-              :src="row.cover"
-              style="width: 80px; height: 80px"
-              fit="cover"
-            />
-            <span v-else>-</span>
+            <div @click.stop>
+              <el-image
+                v-if="row.cover"
+                :src="row.cover"
+                style="width: 80px; height: 80px"
+                fit="cover"
+              />
+              <span v-else>-</span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="title" label="课程名称" min-width="200" />
@@ -45,6 +48,23 @@
         <el-table-column prop="chapters" label="章节数" width="80">
           <template #default="{ row }">{{ row.chapters || 0 }} 章</template>
         </el-table-column>
+        <el-table-column prop="totalDuration" label="总时长" width="100">
+          <template #default="{ row }">
+            {{ formatTotalDuration(calcTotalDuration(row._id)) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="progress" label="学习进度" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="calcCourseProgress(row._id) === 0" type="info">未学习</el-tag>
+            <el-tag v-else-if="isCourseCompleted(row._id)" type="success">已学完</el-tag>
+            <el-tag v-else>已学{{ calcCourseProgress(row._id) }}%</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="onlineTime" label="上线时间" width="120">
+          <template #default="{ row }">
+            {{ row.onlineTime ? row.onlineTime.substring(0, 10) : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : 'info'">
@@ -52,10 +72,16 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <div @click.stop>
+              <el-button size="small" type="primary" @click="goToChapters(row)">章节</el-button>
+              <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
+              <el-button size="small" :type="row.status === 'published' ? '' : 'success'" @click="toggleStatus(row)">
+                {{ row.status === 'published' ? '下架' : '发布' }}
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -98,6 +124,16 @@
             placeholder="请输入课程简介"
           />
         </el-form-item>
+        <el-form-item label="上线时间" prop="onlineTime">
+          <el-date-picker
+            v-model="form.onlineTime"
+            type="date"
+            placeholder="请选择上线时间"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio value="published">已发布</el-radio>
@@ -118,10 +154,12 @@
 
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getCourses, createCourse, updateCourse, deleteCourse, getCategories, batchUpdateSeq } from '@/api/cloud'
+import { getCourses, createCourse, updateCourse, deleteCourse, getCategories, batchUpdateSeq, getChapters } from '@/api/cloud'
 
+const router = useRouter()
 const loading = ref(false)
 const submitLoading = ref(false)
 const dialogVisible = ref(false)
@@ -132,6 +170,7 @@ const tableRef = ref(null)
 
 const courses = ref([])
 const categories = ref([])
+const chapters = ref([])
 
 const form = reactive({
   seq: 1,
@@ -140,6 +179,7 @@ const form = reactive({
   category: '',
   cover: '',
   description: '',
+  onlineTime: '',
   status: 'published'
 })
 
@@ -165,6 +205,86 @@ async function loadCourses() {
   }
 }
 
+// 加载章节列表（用于计算课程学习进度）
+async function loadChapters() {
+  try {
+    const res = await getChapters()
+    if (res.success) {
+      chapters.value = res.data
+    }
+  } catch (err) {
+    console.error('加载章节失败:', err)
+  }
+}
+
+// 计算章节学习进度
+function calcChapterProgress(chapter) {
+  const lastPlayTime = Number(chapter.lastPlayTime) || 0
+  const playCount = Number(chapter.playCount) || 0
+  const duration = Number(chapter.duration) || 0
+
+  // 播放量>=1，进度为100%
+  if (playCount >= 1) return 100
+
+  // 上次播放为0且播放量为0，进度为0%
+  if (lastPlayTime === 0 && playCount === 0) return 0
+
+  // 上次播放>0且播放量为0，进度=上次播放/时长
+  if (lastPlayTime > 0 && duration > 0) {
+    const percent = Math.round((lastPlayTime / duration) * 100)
+    return Math.min(percent, 100)
+  }
+
+  return 0
+}
+
+// 计算课程学习进度（基于章节）
+function calcCourseProgress(courseId) {
+  const courseChapters = chapters.value.filter(c => c.course === courseId)
+  if (courseChapters.length === 0) return 0
+
+  // 计算所有章节的平均进度
+  const totalProgress = courseChapters.reduce((sum, chapter) => {
+    return sum + calcChapterProgress(chapter)
+  }, 0)
+
+  return Math.round(totalProgress / courseChapters.length)
+}
+
+// 检查课程是否已学完
+function isCourseCompleted(courseId) {
+  const courseChapters = chapters.value.filter(c => c.course === courseId)
+  if (courseChapters.length === 0) return false
+
+  // 所有章节都已学完
+  return courseChapters.every(chapter => {
+    const progress = calcChapterProgress(chapter)
+    return progress === 100
+  })
+}
+
+// 计算课程总时长（秒）
+function calcTotalDuration(courseId) {
+  const courseChapters = chapters.value.filter(c => c.course === courseId)
+  return courseChapters.reduce((sum, chapter) => {
+    return sum + (Number(chapter.duration) || 0)
+  }, 0)
+}
+
+// 格式化总时长（秒转为 HH:MM:SS 或 MM:SS）
+function formatTotalDuration(seconds) {
+  if (!seconds || seconds === 0) return '0:00'
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
+}
+
 // 加载分类列表
 async function loadCategories() {
   try {
@@ -181,6 +301,11 @@ async function loadCategories() {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
+  // 计算下一个序号并生成默认封面
+  const maxSeq = courses.value.length > 0 ? Math.max(...courses.value.map(c => c.seq || 0)) : 0
+  const nextSeq = maxSeq + 1
+  form.seq = nextSeq
+  form.cover = `https://picsum.photos/seed/course${nextSeq}/400/400`
   dialogVisible.value = true
 }
 
@@ -195,6 +320,7 @@ function showEditDialog(row) {
     category: row.category,
     cover: row.cover,
     description: row.description,
+    onlineTime: row.onlineTime || '',
     status: row.status || 'published'
   })
   dialogVisible.value = true
@@ -209,6 +335,7 @@ function resetForm() {
     category: '',
     cover: '',
     description: '',
+    onlineTime: '',
     status: 'published'
   })
 }
@@ -265,6 +392,29 @@ async function handleDelete(row) {
   }
 }
 
+// 切换课程状态（发布/下架）
+async function toggleStatus(row) {
+  const newStatus = row.status === 'published' ? 'draft' : 'published'
+  const actionText = newStatus === 'published' ? '发布' : '下架'
+
+  try {
+    const res = await updateCourse(row._id, { ...row, status: newStatus })
+    if (res.success) {
+      ElMessage.success(`${actionText}成功`)
+      loadCourses()
+    } else {
+      ElMessage.error(`${actionText}失败: ` + res.error)
+    }
+  } catch (err) {
+    ElMessage.error(`${actionText}失败`)
+  }
+}
+
+// 跳转到章节管理
+function goToChapters(row) {
+  router.push(`/courses/${row._id}/chapters`)
+}
+
 // 初始化拖拽排序
 function initSortable() {
   nextTick(() => {
@@ -314,6 +464,7 @@ function initSortable() {
 
 onMounted(async () => {
   await loadCategories()
+  await loadChapters()
   await loadCourses()
   initSortable()
 })
@@ -345,5 +496,9 @@ onMounted(async () => {
 
 .drag-handle:hover .drag-line {
   background: #FF6B00;
+}
+
+:deep(.el-table__row) {
+  cursor: pointer;
 }
 </style>

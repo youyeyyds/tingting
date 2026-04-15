@@ -566,6 +566,7 @@ app.post('/api/courses', async (req, res) => {
       category: data.category,
       cover: data.cover,
       description: data.description,
+      onlineTime: data.onlineTime || '',
       status: data.status || 'published'
     });
 
@@ -592,6 +593,7 @@ app.put('/api/courses/:id', async (req, res) => {
       category: data.category,
       cover: data.cover,
       description: data.description,
+      onlineTime: data.onlineTime || '',
       status: data.status
     });
 
@@ -659,8 +661,12 @@ app.post('/api/chapters', async (req, res) => {
       course: data.course,
       seq: data.seq || 1,
       title: data.title,
-      audio: data.audio || '',
-      status: data.status || 'published'
+      audioUrl: data.audioUrl || '',
+      audioFileSize: data.audioFileSize || 0,
+      duration: data.duration || 0,
+      lastPlayTime: data.lastPlayTime || 0,
+      playCount: data.playCount || 0,
+      favorite: data.favorite || false
     });
 
     res.json(success({ id: result.id }));
@@ -679,15 +685,27 @@ app.put('/api/chapters/:id', async (req, res) => {
     const id = req.params.id;
     const data = req.body;
 
-    await db.collection('chapters').doc(id).update({
+    console.log('更新章节 ID:', id);
+    console.log('更新数据:', JSON.stringify(data));
+
+    const updateData = {
       seq: data.seq,
       title: data.title,
-      audio: data.audio,
-      status: data.status
-    });
+      audioUrl: data.audioUrl || '',
+      audioFileSize: data.audioFileSize || 0,
+      duration: data.duration ?? 0,
+      lastPlayTime: data.lastPlayTime ?? 0,
+      playCount: data.playCount ?? 0,
+      favorite: data.favorite ?? false
+    };
+
+    console.log('实际更新字段:', JSON.stringify(updateData));
+
+    await db.collection('chapters').doc(id).update(updateData);
 
     res.json(success({ updated: true }));
   } catch (err) {
+    console.error('更新章节失败:', err.message);
     res.json(error(err.message));
   }
 });
@@ -719,7 +737,7 @@ app.get('/api/audios', async (req, res) => {
     if (!tcb) return res.json(error('未登录'));
 
     const db = tcb.database();
-    const result = await db.collection('audios').orderBy('_createTime', 'desc').get();
+    const result = await db.collection('audios').orderBy('_createTime', 'asc').get();
 
     res.json(success(result.data));
   } catch (err) {
@@ -735,10 +753,13 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
 
     const db = tcb.database();
     const file = req.file;
-    const { courseId, seq, title } = req.body;
 
     if (!file) return res.json(error('请选择音频文件'));
-    if (!courseId) return res.json(error('请选择课程'));
+
+    // 获取上传表单参数
+    const courseId = req.body.courseId || '';
+    const seq = parseInt(req.body.seq) || 0;
+    const title = req.body.title || '';
 
     // 获取音频元数据
     const metadata = await musicMetadata.parseFile(file.path);
@@ -747,7 +768,7 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
 
     // 原始文件名（修复编码）
     const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const cloudPath = `${CLOUD_PATH_PREFIX}${originalName}`;
+    const cloudPath = `${CLOUD_PATH_PREFIX}${Date.now()}_${originalName}`;
 
     // 上传到云存储
     const fileContent = fs.readFileSync(file.path);
@@ -763,31 +784,28 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
       return res.json(error('云存储上传失败'));
     }
 
+    // 使用表单提供的标题，否则使用文件名
+    const audioTitle = title || originalName.replace(/\.(mp3|m4a|wav|ogg|flac|aac)$/, '');
+
     // 写入 audios 集合
     const audioResult = await db.collection('audios').add({
-      title: title || originalName.replace(/\.(mp3|m4a|wav)$/, ''),
+      title: audioTitle,
+      course: courseId,
+      seq: seq,
       audioFile: uploadResult.fileID,
       duration: duration,
-      fileSize: fileSize
+      fileSize: fileSize,
+      createTime: new Date(),
+      _createTime: new Date()
     });
 
-    // 写入 chapters 集合
-    const chapterSeq = seq ? parseInt(seq) : 0;
-    const chapterTitle = title || originalName.replace(/^(\d+)\.\s*/, '').replace(/\.(mp3|m4a|wav)$/, '');
-
-    await db.collection('chapters').add({
-      course: courseId,
-      seq: chapterSeq,
-      title: chapterTitle,
-      audio: audioResult.id,
-      status: 'published'
-    });
-
+    // 返回音频信息
     res.json(success({
       audioId: audioResult.id,
       fileID: uploadResult.fileID,
       duration: duration,
-      fileSize: fileSize
+      fileSize: fileSize,
+      fileName: originalName
     }));
   } catch (err) {
     res.json(error(err.message));
@@ -810,18 +828,101 @@ app.delete('/api/audios/:id', async (req, res) => {
     if (audioData && audioData.audioFile) {
       // 删除云存储文件
       await tcb.deleteFile({ fileList: [audioData.audioFile] });
+
+      // 清除关联章节的 audioUrl（而不是删除章节）
+      const chapters = await db.collection('chapters').where({ audioUrl: audioData.audioFile }).get();
+      if (chapters.data.length > 0) {
+        for (const chapter of chapters.data) {
+          await db.collection('chapters').doc(chapter._id).update({
+            audioUrl: '',
+            audioFileSize: 0
+          });
+        }
+      }
     }
 
     // 删除 audios 记录
     await db.collection('audios').doc(id).remove();
 
-    // 删除关联的章节（如果有）
-    const chapters = await db.collection('chapters').where({ audio: id }).get();
-    if (chapters.data.length > 0) {
-      for (const chapter of chapters.data) {
-        await db.collection('chapters').doc(chapter._id).remove();
-      }
-    }
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// ========== 头条 API ==========
+
+// 获取头条列表
+app.get('/api/headlines', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const result = await db.collection('headlines').orderBy('seq', 'asc').get();
+
+    res.json(success(result.data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 创建头条
+app.post('/api/headlines', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const data = req.body;
+
+    const result = await db.collection('headlines').add({
+      seq: data.seq || 1,
+      title: data.title,
+      image: data.image || '',
+      link: data.link || '',
+      _createTime: new Date()
+    });
+
+    res.json(success({ _id: result.id }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 更新头条
+app.put('/api/headlines/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+    const data = req.body;
+
+    await db.collection('headlines').doc(id).update({
+      seq: data.seq,
+      title: data.title,
+      image: data.image || '',
+      link: data.link || ''
+    });
+
+    res.json(success({ updated: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 删除头条
+app.delete('/api/headlines/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+
+    await db.collection('headlines').doc(id).remove();
 
     res.json(success({ deleted: true }));
   } catch (err) {
@@ -1316,13 +1417,13 @@ app.get('/api/menu-config', async (req, res) => {
       if (result.data.length > 0) {
         res.json(success({ menuOrder: result.data[0].value }));
       } else {
-        const defaultOrder = ['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'];
+        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
         res.json(success({ menuOrder: defaultOrder }));
       }
     } catch (e) {
       // 集合不存在，返回默认配置
       if (e.message && e.message.includes('not exist')) {
-        const defaultOrder = ['courses', 'chapters', 'audios', 'categories', 'users', 'roles', 'system'];
+        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
         res.json(success({ menuOrder: defaultOrder }));
       } else {
         throw e;
