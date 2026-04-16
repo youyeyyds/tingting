@@ -972,6 +972,54 @@ app.delete('/api/headlines/:id', async (req, res) => {
   }
 });
 
+// 获取轮播配置
+app.get('/api/banner-config', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const result = await db.collection('config').where({ key: 'banner' }).limit(1).get();
+
+    if (result.data.length > 0) {
+      res.json(success(result.data[0].value || { speed: 3 }));
+    } else {
+      res.json(success({ speed: 3 }));
+    }
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 保存轮播配置
+app.post('/api/banner-config', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { speed } = req.body;
+
+    // 查询是否已有配置
+    const existing = await db.collection('config').where({ key: 'banner' }).limit(1).get();
+
+    if (existing.data.length > 0) {
+      await db.collection('config').doc(existing.data[0]._id).update({
+        value: { speed }
+      });
+    } else {
+      await db.collection('config').add({
+        key: 'banner',
+        value: { speed }
+      });
+    }
+
+    res.json(success({ saved: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 分类 API ==========
 
 // 获取分类列表

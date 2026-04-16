@@ -269,7 +269,7 @@ const rules = {
 function formatDuration(seconds) {
   if (!seconds) return '-'
   const min = Math.floor(seconds / 60)
-  const sec = seconds % 60
+  const sec = Math.floor(seconds % 60)
   return `${min}:${sec.toString().padStart(2, '0')}`
 }
 
@@ -599,8 +599,8 @@ async function handleSubmit() {
       audioFileSize: form.audioFileSize
     }
 
-    // 如果上次播放>=时长且播放量=0，自动设置播放量为1
-    if (submitData.lastPlayTime >= submitData.duration && submitData.playCount === 0) {
+    // 如果上次播放>=时长且时长>0且播放量=0，自动设置播放量为1
+    if (submitData.lastPlayTime >= submitData.duration && submitData.duration > 0 && submitData.playCount === 0) {
       submitData.playCount = 1
     }
 

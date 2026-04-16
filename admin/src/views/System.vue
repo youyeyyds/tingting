@@ -6,8 +6,6 @@
         <span>菜单排序</span>
       </template>
 
-      <div class="menu-tip">拖拽调整左侧菜单的显示顺序（首页始终在最前面），调整后自动保存</div>
-
       <div ref="menuListRef" class="menu-list">
         <div v-for="key in menuOrder" :key="key" class="menu-item">
           <span class="drag-handle">
@@ -410,12 +408,6 @@ async function handleReset() {
   font-size: 12px;
   color: #999;
   margin-left: 5px;
-}
-
-.menu-tip {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 15px;
 }
 
 .menu-list {

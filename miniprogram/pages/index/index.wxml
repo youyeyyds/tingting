@@ -15,11 +15,13 @@
 
   <!-- 课程列表 -->
   <scroll-view class="course-list" scroll-y="true" enhanced="true" bounces="false" style="padding-top: {{headerHeight}}px;">
-    <view class="course-list-inner">
-      <!-- BANNER -->
-      <view class="banner">
-        <image class="banner-image" src="https://picsum.photos/seed/banner/750/300" mode="aspectFill" />
-      </view>
+    <view class="course-list-inner {{headlines.length === 0 ? 'no-banner' : ''}}">
+      <!-- 头条轮播 BANNER（有头条时才显示） -->
+      <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+        <swiper-item wx:for="{{headlines}}" wx:key="_id" data-link="{{item.link}}" bindtap="onHeadlineTap">
+          <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
 
       <view class="course-card" wx:for="{{courses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onCourseTap">
         <image class="course-image" src="{{item.cover}}" mode="aspectFill" />
@@ -56,4 +58,7 @@
       <text class="tab-text">我的</text>
     </view>
   </view>
+
+  <!-- 迷你播放器 -->
+  <mini-player id="miniPlayer" />
 </view>

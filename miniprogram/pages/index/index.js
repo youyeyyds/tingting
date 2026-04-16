@@ -8,128 +8,124 @@ Page({
     headerHeight: 0,
     isLoggedIn: false,
     courses: [],
+    headlines: [],
+    bannerSpeed: 3000,
     loading: true,
     activeTab: 0
   },
 
   onLoad() {
-    // 获取系统状态栏高度和胶囊按钮信息
     const systemInfo = wx.getSystemInfoSync();
     const menuButton = wx.getMenuButtonBoundingClientRect();
-
-    // 胶囊按钮高度 + 上下间距
     const navBarHeight = (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height;
-
-    // 顶部总高度：状态栏 + 标题栏
-    const headerHeight = systemInfo.statusBarHeight + navBarHeight;
 
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight,
       navBarHeight: navBarHeight,
-      headerHeight: headerHeight
+      headerHeight: systemInfo.statusBarHeight + navBarHeight
     });
     this.checkLoginStatus();
+    this.loadHeadlines();
     this.loadCourses();
   },
 
   onShow() {
+    const app = getApp();
+    const systemInfo = wx.getSystemInfoSync();
+    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
     this.checkLoginStatus();
+    this.loadHeadlines();
     this.loadCourses();
   },
 
-  // 从云函数获取课程列表（绕过数据库权限）
+  onHide() {
+    const app = getApp();
+    app.globalData.tabBarHeight = 0;
+  },
+
+  loadHeadlines() {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getHeadlines' }
+    })
+    .then(res => {
+      if (res.result.success) {
+        this.setData({
+          headlines: res.result.data,
+          bannerSpeed: (res.result.speed || 3) * 1000
+        });
+      }
+    })
+    .catch(err => console.error('获取头条失败', err));
+  },
+
   loadCourses() {
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'getCourses',
         limit: 20,
-        filterDraft: true  // 过滤草稿状态课程
+        filterDraft: true
       }
     })
     .then(res => {
-      console.log('云函数返回', res);
       if (res.result.success) {
-        console.log('获取课程列表成功', res.result.data);
-        console.log('数据条数', res.result.data.length);
         this.setData({
           courses: res.result.data,
           loading: false
         });
       } else {
-        console.error('云函数执行失败', res.result.errMsg);
-        this.setData({
-          loading: false
-        });
+        console.error('获取课程失败', res.result.errMsg);
+        this.setData({ loading: false });
       }
     })
     .catch(err => {
       console.error('调用云函数失败', err);
-      this.setData({
-        loading: false
-      });
+      this.setData({ loading: false });
     });
   },
 
   checkLoginStatus() {
-    const isLoggedIn = app.globalData.isLoggedIn || false;
-    this.setData({ isLoggedIn });
+    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
   },
 
   handleLogin() {
     if (this.data.isLoggedIn) {
-      // 退出登录
       app.globalData.isLoggedIn = false;
       app.globalData.userInfo = null;
       this.setData({ isLoggedIn: false });
-      wx.showToast({
-        title: '已退出',
-        icon: 'success'
-      });
+      wx.showToast({ title: '已退出', icon: 'success' });
     } else {
-      // 登录
       wx.getUserProfile({
         desc: '用于完善用户资料',
         success: (res) => {
           app.globalData.isLoggedIn = true;
           app.globalData.userInfo = res.userInfo;
           this.setData({ isLoggedIn: true });
-          wx.showToast({
-            title: '登录成功',
-            icon: 'success'
-          });
+          wx.showToast({ title: '登录成功', icon: 'success' });
         },
-        fail: () => {
-          wx.showToast({
-            title: '登录取消',
-            icon: 'none'
-          });
-        }
+        fail: () => wx.showToast({ title: '登录取消', icon: 'none' })
       });
     }
   },
 
-  onSearch() {
-    wx.showToast({
-      title: '搜索功能开发中',
-      icon: 'none'
-    });
+  onCourseTap(e) {
+    wx.navigateTo({ url: `/pages/chapter/index?id=${e.currentTarget.dataset.id}` });
   },
 
-  onCourseTap(e) {
-    const { id } = e.currentTarget.dataset;
-    wx.showToast({
-      title: '课程详情开发中',
-      icon: 'none'
-    });
+  onHeadlineTap(e) {
+    const link = e.currentTarget.dataset.link;
+    if (link) {
+      wx.setClipboardData({
+        data: link,
+        success: () => wx.showToast({ title: '链接已复制', icon: 'success' })
+      });
+    }
   },
 
   onTabChange(e) {
-    const { index } = e.currentTarget.dataset;
+    const index = e.currentTarget.dataset.index;
     if (index === 0) return;
-    const pages = ['', 'favorite', 'mine'];
-    wx.redirectTo({
-      url: `/pages/${pages[index]}/index`
-    });
+    wx.redirectTo({ url: `/pages/${['', 'favorite', 'mine'][index]}/index` });
   }
 });

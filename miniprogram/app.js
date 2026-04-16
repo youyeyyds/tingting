@@ -12,6 +12,11 @@ App({
   },
   globalData: {
     userInfo: null,
-    isLoggedIn: false
+    isLoggedIn: false,
+    currentPagePath: '',
+    tabBarHeight: 0,
+    playingCourse: null,
+    playingChapter: null,
+    playingIndex: 0
   }
 });

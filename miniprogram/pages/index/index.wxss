@@ -62,6 +62,10 @@
   align-items: center;
 }
 
+.course-list-inner.no-banner {
+  padding-top: 20rpx;
+}
+
 /* BANNER */
 .banner {
   width: 100%;

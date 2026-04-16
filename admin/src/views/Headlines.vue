@@ -4,10 +4,18 @@
       <template #header>
         <div class="card-header">
           <span>头条列表</span>
-          <el-button type="primary" @click="showAddDialog">
-            <el-icon><Plus /></el-icon>
-            新增头条
-          </el-button>
+          <div class="header-right">
+            <div class="speed-setting" @dblclick.stop>
+              <span class="speed-label">轮播速度：</span>
+              <el-input-number v-model="bannerSpeed" :min="1" :step="1" size="small" />
+              <span class="speed-unit">秒</span>
+              <el-button @click="saveBannerSpeed">保存</el-button>
+            </div>
+            <el-button type="primary" @click="showAddDialog">
+              <el-icon><Plus /></el-icon>
+              新增头条
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -101,7 +109,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getHeadlines, createHeadline, updateHeadline, deleteHeadline, batchUpdateSeq } from '@/api/cloud'
+import { getHeadlines, createHeadline, updateHeadline, deleteHeadline, batchUpdateSeq, getBannerConfig, saveBannerConfig } from '@/api/cloud'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -112,6 +120,7 @@ const formRef = ref(null)
 const tableRef = ref(null)
 
 const headlines = ref([])
+const bannerSpeed = ref(3) // 轮播速度，默认3秒
 
 const form = reactive({
   seq: 1,
@@ -139,6 +148,32 @@ async function loadHeadlines() {
     ElMessage.error('加载头条失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载轮播速度
+async function loadBannerSpeed() {
+  try {
+    const res = await getBannerConfig()
+    if (res.success && res.data.speed) {
+      bannerSpeed.value = res.data.speed
+    }
+  } catch (err) {
+    console.error('加载轮播速度失败:', err)
+  }
+}
+
+// 保存轮播速度
+async function saveBannerSpeed() {
+  try {
+    const res = await saveBannerConfig({ speed: bannerSpeed.value })
+    if (res.success) {
+      ElMessage.success('轮播速度已保存')
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
   }
 }
 
@@ -287,6 +322,7 @@ function formatDate(dateStr) {
 
 onMounted(() => {
   loadHeadlines()
+  loadBannerSpeed()
 })
 </script>
 
@@ -295,6 +331,28 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.speed-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speed-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.speed-unit {
+  font-size: 14px;
+  color: #666;
 }
 
 .drag-handle {

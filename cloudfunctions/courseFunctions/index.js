@@ -5,6 +5,46 @@ cloud.init({
 
 const db = cloud.database();
 
+// ========== 公共函数 ==========
+
+// 计算章节学习进度
+const calcChapterProgress = (chapter) => {
+  const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+  const playCount = Number(chapter.playCount) || 0;
+  const duration = Number(chapter.duration) || 0;
+
+  // 播放量>=1，进度为100%
+  if (playCount >= 1) return 100;
+
+  // 上次播放为0且播放量为0，进度为0%
+  if (lastPlayTime === 0 && playCount === 0) return 0;
+
+  // 上次播放>0且时长>0，进度=上次播放/时长
+  if (lastPlayTime > 0 && duration > 0) {
+    const percent = Math.round((lastPlayTime / duration) * 100);
+    return Math.min(percent, 100);
+  }
+
+  return 0;
+};
+
+// 格式化时长
+const formatDuration = (seconds) => {
+  if (!seconds || seconds <= 0) return '--';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// 获取进度文本
+const getProgressText = (progress) => {
+  if (progress === 100) return '已学完';
+  if (progress === 0) return '未学习';
+  return '已学' + progress + '%';
+};
+
+// ========== 云函数功能 ==========
+
 // 获取openid
 const getOpenId = async () => {
   const wxContext = cloud.getWXContext();
@@ -65,27 +105,6 @@ const getCourses = async (event) => {
       categoryMap[cat._id] = cat.name;
     });
 
-    // 计算章节学习进度
-    const calcChapterProgress = (chapter) => {
-      const lastPlayTime = Number(chapter.lastPlayTime) || 0;
-      const playCount = Number(chapter.playCount) || 0;
-      const duration = Number(chapter.duration) || 0;
-
-      // 播放量>=1，进度为100%
-      if (playCount >= 1) return 100;
-
-      // 上次播放为0且播放量为0，进度为0%
-      if (lastPlayTime === 0 && playCount === 0) return 0;
-
-      // 上次播放>0且播放量为0，进度=上次播放/时长
-      if (lastPlayTime > 0 && duration > 0) {
-        const percent = Math.round((lastPlayTime / duration) * 100);
-        return Math.min(percent, 100);
-      }
-
-      return 0;
-    };
-
     // 关联分类名称、章节数、学习进度到课程
     const courses = coursesRes.data.map(course => {
       // 获取该课程的章节
@@ -121,6 +140,137 @@ const getCourses = async (event) => {
   }
 };
 
+// 获取头条列表
+const getHeadlines = async () => {
+  try {
+    // 获取头条列表
+    const headlinesRes = await db.collection("headlines")
+      .orderBy("seq", "asc")
+      .limit(10)
+      .get();
+
+    // 获取轮播配置
+    let speed = 3; // 默认3秒
+    try {
+      const configRes = await db.collection("config").where({ key: 'banner' }).limit(1).get();
+      if (configRes.data.length > 0 && configRes.data[0].value && configRes.data[0].value.speed) {
+        speed = configRes.data[0].value.speed;
+      }
+    } catch (e) {
+      console.error('获取轮播配置失败:', e);
+    }
+
+    return {
+      success: true,
+      data: headlinesRes.data,
+      speed: speed
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
+// 获取课程详情（包含章节）
+const getCourseDetail = async (event) => {
+  try {
+    const { courseId } = event;
+
+    // 获取课程信息
+    const courseRes = await db.collection("courses").doc(courseId).get();
+    if (!courseRes.data) {
+      return {
+        success: false,
+        errMsg: '课程不存在'
+      };
+    }
+    const course = courseRes.data;
+
+    // 获取分类名称
+    let categoryName = course.category;
+    try {
+      const catRes = await db.collection("categories").doc(course.category).get();
+      if (catRes.data) {
+        categoryName = catRes.data.name;
+      }
+    } catch (e) {}
+
+    // 获取章节列表
+    const chaptersRes = await db.collection("chapters")
+      .where({ course: courseId })
+      .orderBy("seq", "asc")
+      .get();
+
+    // 计算课程进度
+    let progress = 0;
+    const chapterCount = chaptersRes.data.length;
+    if (chapterCount > 0) {
+      const totalProgress = chaptersRes.data.reduce((sum, ch) => sum + calcChapterProgress(ch), 0);
+      progress = Math.round(totalProgress / chapterCount);
+    }
+
+    // 处理章节数据
+    const processedChapters = chaptersRes.data.map(chapter => {
+      const chapterProgress = calcChapterProgress(chapter);
+      return {
+        ...chapter,
+        progress: chapterProgress,
+        progressText: getProgressText(chapterProgress),
+        durationText: formatDuration(Number(chapter.duration) || 0),
+        lastPlayTime: Number(chapter.lastPlayTime) || 0
+      };
+    });
+
+    return {
+      success: true,
+      course: {
+        ...course,
+        categoryName: categoryName,
+        chapterCount: chapterCount,
+        progress: progress,
+        progressText: getProgressText(progress)
+      },
+      chapters: processedChapters
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
+// 更新章节学习进度
+const updateChapterProgress = async (event) => {
+  try {
+    const { chapterId, lastPlayTime, playCount } = event;
+
+    const updateData = {
+      lastPlayTime: lastPlayTime
+    };
+
+    // 如果 playCount > 0，更新播放量
+    if (playCount > 0) {
+      updateData.playCount = playCount;
+    }
+
+    await db.collection("chapters").doc(chapterId).update({
+      data: updateData
+    });
+
+    return {
+      success: true
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   switch (event.type) {
@@ -130,6 +280,12 @@ exports.main = async (event, context) => {
       return await getCategories();
     case "getCourses":
       return await getCourses(event);
+    case "getHeadlines":
+      return await getHeadlines();
+    case "getCourseDetail":
+      return await getCourseDetail(event);
+    case "updateChapterProgress":
+      return await updateChapterProgress(event);
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }

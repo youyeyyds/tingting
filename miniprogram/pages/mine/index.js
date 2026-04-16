@@ -22,7 +22,13 @@ Page({
   },
 
   onShow() {
+    const systemInfo = wx.getSystemInfoSync();
+    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
     this.checkLoginStatus();
+  },
+
+  onHide() {
+    app.globalData.tabBarHeight = 0;
   },
 
   checkLoginStatus() {

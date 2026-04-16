@@ -1,0 +1,48 @@
+<!--mini-player/index.wxml-->
+<view class="mini-player {{show ? 'show' : ''}}" style="bottom: calc(30rpx + {{tabBarHeight}}px);" catchtouchmove="preventMove">
+  <!-- 章节封面 -->
+  <image class="chapter-cover" src="{{courseCover}}" mode="aspectFill" />
+
+  <!-- 章节信息 -->
+  <view class="chapter-info">
+    <view class="chapter-title">{{currentChapter.title}}</view>
+    <view class="chapter-meta">
+      <text class="course-name">{{courseName}}</text>
+      <text class="dot">·</text>
+      <text class="chapter-seq">第{{currentChapter.seq}}章</text>
+    </view>
+  </view>
+
+  <!-- 播放列表图标 -->
+  <view class="playlist-btn">
+    <view class="playlist-icon">
+      <view class="playlist-line"></view>
+      <view class="playlist-line"></view>
+      <view class="playlist-line"></view>
+      <view class="playlist-line"></view>
+    </view>
+  </view>
+
+  <!-- 倍速 -->
+  <view class="speed-btn" catchtap="onSpeedChange">
+    <text class="speed-text">{{playbackRate}}x</text>
+  </view>
+
+  <!-- 播放按钮 -->
+  <view class="play-btn" catchtap="onPlayPause">
+    <view class="play-icon {{isPlaying ? 'pause' : ''}}">
+      <view class="pause-bar pause-bar-left" wx:if="{{isPlaying}}"></view>
+      <view class="pause-bar pause-bar-right" wx:if="{{isPlaying}}"></view>
+    </view>
+  </view>
+
+  <!-- 关闭按钮 -->
+  <view class="close-btn" catchtap="close">
+    <text class="close-text">×</text>
+  </view>
+
+  <!-- 进度条 -->
+  <view class="progress-bar">
+    <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+  </view>
+</view>

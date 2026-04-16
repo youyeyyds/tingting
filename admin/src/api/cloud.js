@@ -244,6 +244,22 @@ export async function deleteHeadline(id) {
   return response.data
 }
 
+/**
+ * 获取轮播配置
+ */
+export async function getBannerConfig() {
+  const response = await api.get('/banner-config')
+  return response.data
+}
+
+/**
+ * 保存轮播配置
+ */
+export async function saveBannerConfig(data) {
+  const response = await api.post('/banner-config', data)
+  return response.data
+}
+
 // ========== 分类 API ==========
 
 /**

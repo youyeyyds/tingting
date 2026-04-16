@@ -1,4 +1,6 @@
 // favorite/index.js
+const app = getApp();
+
 Page({
   data: {
     statusBarHeight: 0,
@@ -14,6 +16,15 @@ Page({
       statusBarHeight: systemInfo.statusBarHeight,
       navBarHeight: navBarHeight
     });
+  },
+
+  onShow() {
+    const systemInfo = wx.getSystemInfoSync();
+    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
+  },
+
+  onHide() {
+    app.globalData.tabBarHeight = 0;
   },
 
   onTabChange(e) {

@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/chapter/index",
     "pages/favorite/index",
     "pages/mine/index"
   ],
@@ -11,6 +12,7 @@
     "navigationBarTitleText": "听课APP",
     "navigationBarTextStyle": "black"
   },
+  "requiredBackgroundModes": ["audio"],
   "sitemapLocation": "sitemap.json",
   "style": "v2",
   "lazyCodeLoading": "requiredComponents"

@@ -1,0 +1,88 @@
+<!--chapter.wxml-->
+<view class="page-container">
+  <!-- 顶部导航栏 -->
+  <view class="header-fixed">
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="back-btn" bindtap="handleBack">
+        <view class="back-arrow"></view>
+        <text class="back-text">返回</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <scroll-view class="content-scroll" scroll-y="true" style="padding-top: {{headerHeight}}px;">
+    <view class="content-inner">
+      <!-- 课程信息区 -->
+      <view class="course-info-section">
+        <image class="course-cover" src="{{course.cover}}" mode="aspectFill" />
+        <view class="course-details">
+          <view class="course-title">{{course.title}}</view>
+          <view class="course-author">{{course.author}}</view>
+          <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
+          <view class="play-btn" bindtap="handleContinuePlay">
+            <view class="play-triangle"></view>
+            <text class="play-text">继续播放</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 筛选和排序 -->
+      <view class="filter-bar">
+        <view class="filter-left">
+          <text class="filter-label">只看未学完</text>
+          <switch class="filter-switch" checked="{{showUnfinishedOnly}}" color="#FF6B00" bindchange="onFilterChange" />
+        </view>
+        <view class="filter-right">
+          <text class="sort-arrow">{{sortOrder === 'asc' ? '↑' : '↓'}}</text>
+          <text class="sort-btn" bindtap="onSortChange">{{sortOrder === 'asc' ? '正序' : '倒序'}}</text>
+        </view>
+      </view>
+
+      <!-- 章节列表 -->
+      <view class="chapter-list" style="min-height: {{listMinHeight}}px;">
+        <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap">
+          <view class="chapter-info">
+            <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 && !item.isPlaying ? 'completed' : ''}}">
+              <text class="chapter-seq">{{item.seq}}</text>
+              <text class="chapter-sep">|</text>
+              <text class="chapter-name">{{item.title}}</text>
+            </view>
+            <view class="chapter-meta-line">
+              <block wx:if="{{item.progress > 0}}">
+                <text class="chapter-progress">{{item.progressText}}</text>
+                <text class="chapter-sep-meta">|</text>
+              </block>
+              <text class="chapter-duration">{{item.durationText}}</text>
+            </view>
+          </view>
+          <view class="chapter-actions">
+            <!-- 播放图标 -->
+            <block wx:if="{{item.isPlaying}}">
+              <!-- 音频跳动动画 -->
+              <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onPlayTap">
+                <view class="audio-bar audio-bar-1"></view>
+                <view class="audio-bar audio-bar-2"></view>
+                <view class="audio-bar audio-bar-3"></view>
+              </view>
+            </block>
+            <block wx:else>
+              <image class="action-icon" src="/icons/svg/play.svg" mode="aspectFit" data-id="{{item._id}}" catchtap="onPlayTap" />
+            </block>
+            <image class="action-icon" src="{{item.isFavorite ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" data-id="{{item._id}}" catchtap="onFavoriteTap" />
+          </view>
+          <view class="chapter-divider" wx:if="{{index < filteredChapters.length}}"></view>
+        </view>
+
+        <!-- 空状态提示 -->
+        <view class="empty-tip" wx:if="{{!loading && filteredChapters.length === 0}}">
+          <text class="empty-text">暂无章节数据</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 迷你播放器 -->
+  <mini-player id="miniPlayer" chapters="{{chapters}}" course="{{course}}" />
+</view>

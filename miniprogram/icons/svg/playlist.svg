@@ -1,0 +1,7 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 播放列表图标: 3条横线 + 小三角形 -->
+  <rect x="3" y="4" width="14" height="2" rx="1" fill="#999"/>
+  <rect x="3" y="10" width="14" height="2" rx="1" fill="#999"/>
+  <rect x="3" y="16" width="10" height="2" rx="1" fill="#999"/>
+  <path d="M16 14L20 18L16 22V14Z" fill="#FF6B00"/>
+</svg>
