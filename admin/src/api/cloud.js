@@ -163,6 +163,15 @@ export async function deleteChapter(id) {
   return response.data
 }
 
+/**
+ * 删除章节的音频文件
+ * @param {string} chapterId 章节ID
+ */
+export async function deleteAudioFile(chapterId) {
+  const response = await api.delete(`/chapters/${chapterId}/audio`)
+  return response.data
+}
+
 // ========== 音频 API ==========
 
 /**

@@ -129,10 +129,17 @@
             >
               <el-button type="primary">上传音频</el-button>
             </el-upload>
+            <!-- 新选择的文件 -->
             <div v-if="form.audioFile" class="audio-info">
               <span class="audio-name">{{ form.audioFile.name }}</span>
               <span class="audio-size">{{ formatFileSize(form.audioFileSize) }}</span>
-              <el-button type="danger" size="small" @click="clearAudio">删除</el-button>
+              <el-button type="info" size="small" @click="clearAudio">清除</el-button>
+            </div>
+            <!-- 已有音频（编辑时） -->
+            <div v-else-if="form.audioUrl && existingAudioName" class="audio-info">
+              <span class="audio-name">{{ existingAudioName }}</span>
+              <span class="audio-size">{{ formatFileSize(form.audioFileSize) }}</span>
+              <el-button type="danger" size="small" @click="deleteExistingAudio">删除</el-button>
             </div>
             <div v-if="audioLoading" class="audio-loading">
               <el-icon class="is-loading"><Loading /></el-icon>
@@ -153,6 +160,13 @@
             <el-input-number v-model="form.lastPlayTime" :min="0" :max="form.duration || 0" />
           </div>
           <div class="form-tip">取值范围：0 ~ 时长（{{ form.duration || 0 }}秒）</div>
+          <el-slider
+            v-model="form.lastPlayTime"
+            :min="0"
+            :max="form.duration || 0"
+            :disabled="!form.duration"
+            style="margin-top: 10px; max-width: 300px"
+          />
         </el-form-item>
         <el-form-item label="播放量" prop="playCount">
           <div @dblclick.stop>
@@ -196,7 +210,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Upload, Loading, VideoPlay } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getChapters, createChapter, updateChapter, deleteChapter, getCourses, batchUpdateSeq, uploadAudio, getFileTempUrl } from '@/api/cloud'
+import { getChapters, createChapter, updateChapter, deleteChapter, getCourses, batchUpdateSeq, uploadAudio, getFileTempUrl, deleteAudioFile } from '@/api/cloud'
 
 const router = useRouter()
 const route = useRoute()
@@ -215,6 +229,8 @@ const selectedCourse = ref('')
 const audioAccept = '.mp3,.m4a,.wav,.ogg,.flac,.aac'
 const audioLoading = ref(false)
 const audioDuration = ref(0)
+const existingAudioName = ref('')
+const existingAudioFileSize = ref(0)
 
 // 播放相关
 const playDialogVisible = ref(false)
@@ -354,14 +370,44 @@ function getAudioDuration(file) {
   })
 }
 
-// 清除音频
+// 清除音频（取消新选择的文件）
 function clearAudio() {
   form.audioFile = null
-  form.audioFileSize = 0
-  form.audioUrl = ''
   audioDuration.value = 0
+  // 恢复原有音频的文件大小
+  if (form.audioUrl && existingAudioFileSize.value) {
+    form.audioFileSize = existingAudioFileSize.value
+  } else {
+    form.audioFileSize = 0
+  }
   if (uploadRef.value) {
     uploadRef.value.clearFiles()
+  }
+}
+
+// 删除已有音频（删除云存储文件）
+async function deleteExistingAudio() {
+  try {
+    await ElMessageBox.confirm('确定要删除该音频文件吗？删除后无法恢复。', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    // 调用删除API
+    const res = await deleteAudioFile(currentId.value)
+    if (res.success) {
+      ElMessage.success('音频已删除')
+      form.audioUrl = ''
+      form.audioFileSize = 0
+      existingAudioName.value = ''
+      existingAudioFileSize.value = 0
+      audioDuration.value = 0
+    } else {
+      ElMessage.error('删除失败: ' + res.error)
+    }
+  } catch {
+    // 用户取消
   }
 }
 
@@ -482,7 +528,34 @@ function showEditDialog(row) {
     favorite: row.favorite || false
   })
   audioDuration.value = row.duration || 0
+  // 从 audioUrl 提取文件名
+  if (row.audioUrl) {
+    existingAudioName.value = extractFileNameFromUrl(row.audioUrl)
+    existingAudioFileSize.value = row.audioFileSize || 0
+  } else {
+    existingAudioName.value = ''
+    existingAudioFileSize.value = 0
+  }
   dialogVisible.value = true
+}
+
+// 从 URL 提取文件名
+function extractFileNameFromUrl(url) {
+  if (!url) return ''
+  // cloud:// 格式
+  if (url.startsWith('cloud://')) {
+    const parts = url.split('/')
+    const fileName = parts[parts.length - 1]
+    // 去掉时间戳前缀
+    const match = fileName.match(/^\d+_(.+)$/)
+    return match ? match[1] : fileName
+  }
+  // http 格式
+  if (url.startsWith('http')) {
+    const parts = url.split('/')
+    return parts[parts.length - 1]
+  }
+  return url
 }
 
 // 重置表单
@@ -500,6 +573,8 @@ function resetForm() {
     favorite: false
   })
   audioDuration.value = 0
+  existingAudioName.value = ''
+  existingAudioFileSize.value = 0
 }
 
 // 提交表单
@@ -531,6 +606,20 @@ async function handleSubmit() {
 
     // 如果有新上传的音频文件，先上传到云端
     if (form.audioFile) {
+      // 如果已有音频，先删除原有音频
+      if (form.audioUrl && isEdit.value) {
+        ElMessage.info('正在删除原有音频...')
+        try {
+          await deleteAudioFile(currentId.value)
+          form.audioUrl = ''
+          existingAudioName.value = ''
+          existingAudioFileSize.value = 0
+        } catch (err) {
+          console.error('删除原有音频失败:', err)
+          // 继续上传新音频，不中断流程
+        }
+      }
+
       ElMessage.info('正在上传音频...')
       try {
         const uploadRes = await uploadAudio(form.audioFile, form.course, form.seq, form.title)

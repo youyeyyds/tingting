@@ -64,15 +64,15 @@
           </el-button>
         </el-col>
         <el-col :span="6">
-          <el-button type="success" @click="$router.push('/audios')">
-            <el-icon><Upload /></el-icon>
-            上传音频
+          <el-button type="success" @click="goToRecentChapter">
+            <el-icon><Plus /></el-icon>
+            新增章节
           </el-button>
         </el-col>
         <el-col :span="6">
-          <el-button type="warning" @click="$router.push('/categories')">
-            <el-icon><FolderAdd /></el-icon>
-            管理分类
+          <el-button type="warning" @click="$router.push('/audios')">
+            <el-icon><Plus /></el-icon>
+            上传音频
           </el-button>
         </el-col>
       </el-row>
@@ -121,8 +121,10 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getCourses, getChapters, getAudios, getUsers, testConnection } from '@/api/cloud'
 
+const router = useRouter()
 const loading = ref(false)
 const connected = ref(false)
 const currentTime = ref('')
@@ -135,6 +137,7 @@ const stats = reactive({
 })
 
 const recentCourses = ref([])
+const recentChapter = ref(null)
 
 // 检查连接状态
 async function checkConnection() {
@@ -156,7 +159,16 @@ async function loadStats() {
       stats.courses = coursesRes.data.length
       recentCourses.value = coursesRes.data.slice(0, 5)
     }
-    if (chaptersRes.success) stats.chapters = chaptersRes.data.length
+    if (chaptersRes.success) {
+      stats.chapters = chaptersRes.data.length
+      // 获取最近编辑的章节（按更新时间排序）
+      const sortedChapters = chaptersRes.data.sort((a, b) => {
+        const timeA = a._createTime ? new Date(a._createTime) : new Date(0)
+        const timeB = b._createTime ? new Date(b._createTime) : new Date(0)
+        return timeB - timeA
+      })
+      recentChapter.value = sortedChapters[0]
+    }
     if (audiosRes.success) stats.audios = audiosRes.data.length
     if (usersRes.success) stats.users = usersRes.data.length
 
@@ -164,6 +176,18 @@ async function loadStats() {
     console.error('加载统计数据失败:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// 进入最近编辑章节的课程页面
+function goToRecentChapter() {
+  if (recentChapter.value && recentChapter.value.course) {
+    router.push(`/courses/${recentChapter.value.course}/chapters`)
+  } else if (recentCourses.value.length > 0) {
+    // 如果没有章节，进入第一个课程
+    router.push(`/courses/${recentCourses.value[0]._id}/chapters`)
+  } else {
+    router.push('/courses')
   }
 }
 

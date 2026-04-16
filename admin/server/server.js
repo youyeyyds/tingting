@@ -728,6 +728,48 @@ app.delete('/api/chapters/:id', async (req, res) => {
   }
 });
 
+// 删除章节的音频文件
+app.delete('/api/chapters/:id/audio', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+
+    // 获取章节信息
+    const chapter = await db.collection('chapters').doc(id).get();
+    const chapterData = chapter.data[0];
+
+    if (chapterData && chapterData.audioUrl) {
+      // 删除云存储文件
+      try {
+        await tcb.deleteFile({ fileList: [chapterData.audioUrl] });
+      } catch (e) {
+        console.error('删除云存储文件失败:', e);
+      }
+
+      // 更新章节，清除音频信息
+      await db.collection('chapters').doc(id).update({
+        audioUrl: '',
+        audioFileSize: 0
+      });
+
+      // 同时删除 audios 集合中的关联记录（如果有）
+      const audios = await db.collection('audios').where({ audioFile: chapterData.audioUrl }).get();
+      if (audios.data.length > 0) {
+        for (const audio of audios.data) {
+          await db.collection('audios').doc(audio._id).remove();
+        }
+      }
+    }
+
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 音频 API ==========
 
 // 获取音频列表
