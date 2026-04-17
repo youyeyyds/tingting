@@ -219,17 +219,17 @@ async function loadChapters() {
 
 // 计算章节学习进度
 function calcChapterProgress(chapter) {
+  const finished = chapter.finished === true
   const lastPlayTime = Number(chapter.lastPlayTime) || 0
-  const playCount = Number(chapter.playCount) || 0
   const duration = Number(chapter.duration) || 0
 
-  // 播放量>=1，进度为100%
-  if (playCount >= 1) return 100
+  // 完播=true，进度为100%
+  if (finished) return 100
 
-  // 上次播放为0且播放量为0，进度为0%
-  if (lastPlayTime === 0 && playCount === 0) return 0
+  // 上次播放为0，进度为0%
+  if (lastPlayTime === 0) return 0
 
-  // 上次播放>0且播放量为0，进度=上次播放/时长
+  // 上次播放>0且时长>0，进度=上次播放/时长
   if (lastPlayTime > 0 && duration > 0) {
     const percent = Math.round((lastPlayTime / duration) * 100)
     return Math.min(percent, 100)

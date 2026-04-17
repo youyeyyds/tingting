@@ -6,19 +6,29 @@
   right: 30rpx;
   background: #fff;
   border-radius: 60rpx;
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: center;
   padding: 20rpx 30rpx 28rpx;
-  transform: translateY(100%);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease, bottom 0.3s ease;
   box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.12);
 }
 
-.mini-player.show {
-  transform: translateY(0);
-  opacity: 1;
+.mini-player.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.mini-player.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .chapter-cover {
@@ -59,10 +69,15 @@
   color: #FF6B00;
 }
 
-/* 播放列表按钮 */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
 .playlist-btn {
-  width: 72rpx;
-  height: 72rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,56 +88,52 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3rpx;
+  gap: 4rpx;
 }
 
 .playlist-line {
-  width: 22rpx;
-  height: 3rpx;
+  width: 18rpx;
+  height: 4rpx;
   background: #999;
   border-radius: 1rpx;
 }
 
-/* 倍速按钮 */
 .speed-btn {
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-left: 8rpx;
 }
 
 .speed-text {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: #FF6B00;
   font-weight: 500;
 }
 
-/* 播放按钮 */
 .play-btn {
-  width: 72rpx;
-  height: 72rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-left: 8rpx;
 }
 
-/* 播放图标 */
 .play-icon {
   width: 0;
   height: 0;
-  border-top: 12rpx solid transparent;
-  border-bottom: 12rpx solid transparent;
-  border-left: 18rpx solid #999;
-  margin-left: 6rpx;
+  border-top: 10rpx solid transparent;
+  border-bottom: 10rpx solid transparent;
+  border-left: 14rpx solid #999;
+  margin-left: 4rpx;
 }
 
-/* 暂停图标容器 */
 .play-icon.pause {
-  width: 20rpx;
-  height: 22rpx;
+  width: 16rpx;
+  height: 18rpx;
   border: none;
   background: transparent;
   margin-left: 0;
@@ -131,32 +142,28 @@
   align-items: center;
 }
 
-/* 暂停竖条 */
 .pause-bar {
-  width: 6rpx;
-  height: 22rpx;
+  width: 5rpx;
+  height: 18rpx;
   background: #999;
   border-radius: 2rpx;
 }
 
-/* 关闭按钮 */
 .close-btn {
-  width: 44rpx;
-  height: 44rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-left: 8rpx;
 }
 
 .close-text {
-  font-size: 36rpx;
+  font-size: 32rpx;
   color: #999;
   line-height: 1;
 }
 
-/* 进度条 */
 .progress-bar {
   position: absolute;
   bottom: 12rpx;

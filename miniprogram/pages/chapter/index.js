@@ -16,13 +16,13 @@ Page({
   },
 
   onLoad(options) {
-    const systemInfo = wx.getSystemInfoSync();
+    const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height;
-    const headerHeight = systemInfo.statusBarHeight + navBarHeight;
+    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
 
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight,
+      statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
       courseId: options.id || ''
@@ -36,8 +36,7 @@ Page({
   },
 
   onShow() {
-    const app = getApp();
-    app.globalData.tabBarHeight = 0;
+    // mini-player 会自动处理位置
   },
 
   calculateListMinHeight() {
@@ -45,11 +44,11 @@ Page({
     query.select('.course-info-section').boundingClientRect();
     query.select('.filter-bar').boundingClientRect();
     query.exec((res) => {
-      const systemInfo = wx.getSystemInfoSync();
+      const windowInfo = wx.getWindowInfo();
       const headerHeight = this.data.headerHeight;
       const courseInfoHeight = res[0]?.height || 120;
       const filterBarHeight = res[1]?.height || 30;
-      const minHeight = systemInfo.windowHeight - headerHeight - courseInfoHeight - filterBarHeight;
+      const minHeight = windowInfo.windowHeight - headerHeight - courseInfoHeight - filterBarHeight;
       this.setData({ listMinHeight: minHeight });
     });
   },
@@ -84,12 +83,18 @@ Page({
 
   formatChapter(chapter) {
     const lastPlayTime = Number(chapter.lastPlayTime) || 0;
-    const playCount = Number(chapter.playCount) || 0;
     const duration = Number(chapter.duration) || 0;
+    const finished = chapter.finished === true;
 
+    // 完播=true，进度为100%
     let progress = 0;
-    if (playCount >= 1) progress = 100;
-    else if (lastPlayTime > 0 && duration > 0) progress = Math.min(Math.round((lastPlayTime / duration) * 100), 100);
+    if (finished) {
+      progress = 100;
+    } else if (lastPlayTime === 0) {
+      progress = 0;
+    } else if (lastPlayTime > 0 && duration > 0) {
+      progress = Math.min(Math.round((lastPlayTime / duration) * 100), 100);
+    }
 
     let progressText = '未学习';
     if (progress === 100) progressText = '已学完';
@@ -154,11 +159,17 @@ Page({
   },
 
   onChapterTap(e) {
-    this.playChapter(e.currentTarget.dataset.id);
+    const id = e.currentTarget.dataset.id;
+    const chapter = this.data.chapters.find(ch => ch._id === id);
+    if (chapter?.isPlaying) return; // 正在播放，不响应点击
+    this.playChapter(id);
   },
 
   onPlayTap(e) {
-    this.playChapter(e.currentTarget.dataset.id);
+    const id = e.currentTarget.dataset.id;
+    const chapter = this.data.chapters.find(ch => ch._id === id);
+    if (chapter?.isPlaying) return; // 正在播放，不响应点击
+    this.playChapter(id);
   },
 
   playChapter(chapterId) {

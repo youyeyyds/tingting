@@ -9,15 +9,20 @@ const db = cloud.database();
 
 // 计算章节学习进度
 const calcChapterProgress = (chapter) => {
+  // 确保 finished 字段存在（旧数据默认 false）
+  if (chapter.finished === undefined) {
+    chapter.finished = false;
+  }
+
   const lastPlayTime = Number(chapter.lastPlayTime) || 0;
-  const playCount = Number(chapter.playCount) || 0;
+  const finished = chapter.finished === true;
   const duration = Number(chapter.duration) || 0;
 
-  // 播放量>=1，进度为100%
-  if (playCount >= 1) return 100;
+  // 完播=true，进度为100%
+  if (finished) return 100;
 
-  // 上次播放为0且播放量为0，进度为0%
-  if (lastPlayTime === 0 && playCount === 0) return 0;
+  // 上次播放为0，进度为0%
+  if (lastPlayTime === 0) return 0;
 
   // 上次播放>0且时长>0，进度=上次播放/时长
   if (lastPlayTime > 0 && duration > 0) {
@@ -247,11 +252,26 @@ const updateChapterProgress = async (event) => {
   try {
     const { chapterId, lastPlayTime, playCount } = event;
 
+    // 先获取章节当前数据
+    const chapterRes = await db.collection("chapters").doc(chapterId).get();
+    const chapter = chapterRes.data;
+
+    const duration = Number(chapter.duration) || 0;
+    const currentFinished = chapter.finished === true;
+    const currentPlayCount = Number(chapter.playCount) || 0;
+
     const updateData = {
       lastPlayTime: lastPlayTime
     };
 
-    // 如果 playCount > 0，更新播放量
+    // 判断是否需要自动完播
+    // 上次播放 >= 时长 > 0，且完播=false，自动转为true，播放量+1
+    if (!currentFinished && duration > 0 && lastPlayTime >= duration) {
+      updateData.finished = true;
+      updateData.playCount = currentPlayCount + 1;
+    }
+
+    // 如果 playCount > 0（手动更新播放量），也更新
     if (playCount > 0) {
       updateData.playCount = playCount;
     }

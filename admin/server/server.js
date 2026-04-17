@@ -642,7 +642,13 @@ app.get('/api/chapters', async (req, res) => {
 
     const result = await query.orderBy('seq', 'asc').get();
 
-    res.json(success(result.data));
+    // 为旧数据添加 finished 字段（默认 false）
+    const chapters = result.data.map(ch => ({
+      ...ch,
+      finished: ch.finished !== undefined ? ch.finished : false
+    }));
+
+    res.json(success(chapters));
   } catch (err) {
     res.json(error(err.message));
   }
@@ -666,7 +672,8 @@ app.post('/api/chapters', async (req, res) => {
       duration: data.duration || 0,
       lastPlayTime: data.lastPlayTime || 0,
       playCount: data.playCount || 0,
-      favorite: data.favorite || false
+      favorite: data.favorite || false,
+      finished: data.finished || false
     });
 
     res.json(success({ id: result.id }));
@@ -688,20 +695,64 @@ app.put('/api/chapters/:id', async (req, res) => {
     console.log('更新章节 ID:', id);
     console.log('更新数据:', JSON.stringify(data));
 
-    const updateData = {
-      seq: data.seq,
-      title: data.title,
-      audioUrl: data.audioUrl || '',
-      audioFileSize: data.audioFileSize || 0,
-      duration: data.duration ?? 0,
-      lastPlayTime: data.lastPlayTime ?? 0,
-      playCount: data.playCount ?? 0,
-      favorite: data.favorite ?? false
-    };
+    // 判断是完整编辑还是只更新 finished（完播/重置按钮）
+    if (data.finished !== undefined && data.seq === undefined) {
+      // 先获取当前播放量和时长
+      const chapterRes = await db.collection('chapters').doc(id).get();
+      const chapterData = chapterRes.data[0];
+      const currentPlayCount = Number(chapterData.playCount) || 0;
+      const duration = Number(chapterData.duration) || 0;
 
-    console.log('实际更新字段:', JSON.stringify(updateData));
+      // 重置时（finished=false），清空上次播放时间
+      if (data.finished === false) {
+        await db.collection('chapters').doc(id).update({
+          finished: false,
+          lastPlayTime: 0
+        });
+      } else {
+        // 完播时，播放量+1，上次播放=时长
+        await db.collection('chapters').doc(id).update({
+          finished: true,
+          playCount: currentPlayCount + 1,
+          lastPlayTime: duration
+        });
+      }
+    } else {
+      // 完整编辑
+      // 先获取当前数据，判断是否需要自动完播
+      const chapterRes = await db.collection('chapters').doc(id).get();
+      const chapter = chapterRes.data;
+      const currentFinished = chapter.finished === true;
+      const currentPlayCount = Number(chapter.playCount) || 0;
 
-    await db.collection('chapters').doc(id).update(updateData);
+      const lastPlayTime = data.lastPlayTime ?? 0;
+      const duration = data.duration ?? 0;
+
+      const updateData = {
+        seq: data.seq,
+        title: data.title,
+        audioUrl: data.audioUrl || '',
+        audioFileSize: data.audioFileSize || 0,
+        duration: duration,
+        lastPlayTime: lastPlayTime,
+        playCount: data.playCount ?? 0,
+        favorite: data.favorite ?? false
+      };
+
+      // 自动完播规则：
+      // 上次播放 >= 时长 > 0 → 自动完播，播放量+1（基于用户输入的值）
+      console.log('自动完播检查:', { duration, lastPlayTime, currentFinished, inputPlayCount: data.playCount });
+      if (duration > 0 && lastPlayTime >= duration) {
+        const newPlayCount = Number(data.playCount) + 1;
+        console.log('触发完播逻辑, playCount:', data.playCount, '+1 =', newPlayCount);
+        updateData.finished = true;
+        updateData.playCount = newPlayCount;
+      }
+
+      console.log('实际更新字段:', JSON.stringify(updateData));
+      const updateResult = await db.collection('chapters').doc(id).update(updateData);
+      console.log('数据库更新结果:', JSON.stringify(updateResult));
+    }
 
     res.json(success({ updated: true }));
   } catch (err) {
@@ -719,7 +770,31 @@ app.delete('/api/chapters/:id', async (req, res) => {
     const db = tcb.database();
     const id = req.params.id;
 
-    // 删除章节
+    // 先获取章节信息，检查是否有音频
+    const chapter = await db.collection('chapters').doc(id).get();
+    const chapterData = chapter.data[0];
+
+    // 如果有音频，删除云存储文件和 audios 记录
+    if (chapterData && chapterData.audioUrl) {
+      try {
+        await tcb.deleteFile({ fileList: [chapterData.audioUrl] });
+        console.log('已删除音频文件:', chapterData.audioUrl);
+      } catch (e) {
+        console.error('删除云存储文件失败:', e);
+        // 继续删除章节，不中断流程
+      }
+
+      // 删除 audios 表中对应的记录
+      const audios = await db.collection('audios').where({ audioFile: chapterData.audioUrl }).get();
+      if (audios.data.length > 0) {
+        for (const audio of audios.data) {
+          await db.collection('audios').doc(audio._id).remove();
+          console.log('已删除 audios 记录:', audio._id);
+        }
+      }
+    }
+
+    // 删除章节记录
     await db.collection('chapters').doc(id).remove();
 
     res.json(success({ deleted: true }));

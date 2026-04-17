@@ -15,32 +15,25 @@ Page({
   },
 
   onLoad() {
-    const systemInfo = wx.getSystemInfoSync();
+    const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height;
+    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
 
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight,
+      statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
-      headerHeight: systemInfo.statusBarHeight + navBarHeight
+      headerHeight: windowInfo.statusBarHeight + navBarHeight
     });
+
     this.checkLoginStatus();
     this.loadHeadlines();
     this.loadCourses();
   },
 
   onShow() {
-    const app = getApp();
-    const systemInfo = wx.getSystemInfoSync();
-    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
     this.checkLoginStatus();
     this.loadHeadlines();
     this.loadCourses();
-  },
-
-  onHide() {
-    const app = getApp();
-    app.globalData.tabBarHeight = 0;
   },
 
   loadHeadlines() {
@@ -75,12 +68,10 @@ Page({
           loading: false
         });
       } else {
-        console.error('获取课程失败', res.result.errMsg);
         this.setData({ loading: false });
       }
     })
     .catch(err => {
-      console.error('调用云函数失败', err);
       this.setData({ loading: false });
     });
   },

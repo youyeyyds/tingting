@@ -9,30 +9,18 @@ Page({
   },
 
   onLoad() {
-    const systemInfo = wx.getSystemInfoSync();
+    const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height;
+    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight,
+      statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight
     });
-  },
-
-  onShow() {
-    const systemInfo = wx.getSystemInfoSync();
-    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
-  },
-
-  onHide() {
-    app.globalData.tabBarHeight = 0;
   },
 
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index === 1) return;
-    const pages = ['index', '', 'mine'];
-    wx.redirectTo({
-      url: `/pages/${pages[index]}/index`
-    });
+    wx.redirectTo({ url: `/pages/${['index', '', 'mine'][index]}/index` });
   }
 });

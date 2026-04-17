@@ -11,24 +11,18 @@ Page({
   },
 
   onLoad() {
-    const systemInfo = wx.getSystemInfoSync();
+    const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height;
+    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight,
+      statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight
     });
     this.checkLoginStatus();
   },
 
   onShow() {
-    const systemInfo = wx.getSystemInfoSync();
-    app.globalData.tabBarHeight = 80 + systemInfo.safeAreaInsetBottom;
     this.checkLoginStatus();
-  },
-
-  onHide() {
-    app.globalData.tabBarHeight = 0;
   },
 
   checkLoginStatus() {
@@ -42,9 +36,6 @@ Page({
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index === 2) return;
-    const pages = ['index', 'favorite', ''];
-    wx.redirectTo({
-      url: `/pages/${pages[index]}/index`
-    });
+    wx.redirectTo({ url: `/pages/${['index', 'favorite', ''][index]}/index` });
   }
 });

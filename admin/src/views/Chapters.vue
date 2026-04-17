@@ -74,19 +74,25 @@
         </el-table-column>
         <el-table-column prop="progress" label="学习进度" width="100">
           <template #default="{ row }">
-            <el-tag v-if="calcProgress(row) === 0" type="info">未学习</el-tag>
-            <el-tag v-else-if="isCompleted(row)" type="success">已学完</el-tag>
+            <el-tag v-if="row.finished" type="success">已学完</el-tag>
+            <el-tag v-else-if="calcProgress(row) === 0" type="info">未学习</el-tag>
             <el-tag v-else>已学{{ calcProgress(row) }}%</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="playCount" label="播放量" width="100">
+        <el-table-column prop="playCount" label="播放量" width="80">
           <template #default="{ row }">
             {{ row.playCount || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
+            <el-button size="small" class="finish-btn" @click="toggleFinished(row)" v-if="!row.finished">
+              完播
+            </el-button>
+            <el-button size="small" type="warning" @click="toggleFinished(row)" v-else>
+              重置
+            </el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -275,18 +281,18 @@ function formatDuration(seconds) {
 
 // 计算学习进度
 function calcProgress(row) {
+  const finished = row.finished === true
   const lastPlayTime = Number(row.lastPlayTime) || 0
-  const playCount = Number(row.playCount) || 0
   const duration = Number(row.duration) || 0
 
-  // 播放量>=1，进度为100%（已学完）
-  if (playCount >= 1) return 100
+  // 完播=true，进度为100%
+  if (finished) return 100
 
-  // 上次播放为0且播放量为0，进度为0%（未学习）
-  if (lastPlayTime === 0 && playCount === 0) return 0
+  // 上次播放为0，进度为0%
+  if (lastPlayTime === 0) return 0
 
-  // 上次播放>0且播放量为0，进度=上次播放/时长
-  if (lastPlayTime > 0 && playCount === 0 && duration > 0) {
+  // 上次播放>0且时长>0，进度=上次播放/时长
+  if (lastPlayTime > 0 && duration > 0) {
     const percent = Math.round((lastPlayTime / duration) * 100)
     return Math.min(percent, 100)
   }
@@ -294,19 +300,28 @@ function calcProgress(row) {
   return 0
 }
 
-// 检查是否已学完（用于显示）
-function isCompleted(row) {
-  const playCount = Number(row.playCount) || 0
-  const lastPlayTime = Number(row.lastPlayTime) || 0
-  const duration = Number(row.duration) || 0
+// 切换完播状态
+async function toggleFinished(row) {
+  const newFinished = !row.finished
+  const action = newFinished ? '标记为完播' : '重置为未完播'
 
-  // 播放量>=1，已学完
-  if (playCount >= 1) return true
+  try {
+    await ElMessageBox.confirm(`确定要${action}章节 "${row.title}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
 
-  // 上次播放达到时长，也算已学完
-  if (duration > 0 && lastPlayTime >= duration) return true
-
-  return false
+    const res = await updateChapter(row._id, { finished: newFinished })
+    if (res.success) {
+      ElMessage.success(`${action}成功`)
+      loadChapters()
+    } else {
+      ElMessage.error('操作失败: ' + res.error)
+    }
+  } catch {
+    // 用户取消
+  }
 }
 
 // 验证上次播放时间不超过时长
@@ -599,11 +614,6 @@ async function handleSubmit() {
       audioFileSize: form.audioFileSize
     }
 
-    // 如果上次播放>=时长且时长>0且播放量=0，自动设置播放量为1
-    if (submitData.lastPlayTime >= submitData.duration && submitData.duration > 0 && submitData.playCount === 0) {
-      submitData.playCount = 1
-    }
-
     // 如果有新上传的音频文件，先上传到云端
     if (form.audioFile) {
       // 如果已有音频，先删除原有音频
@@ -769,6 +779,19 @@ onMounted(async () => {
 
 .drag-handle:hover .drag-line {
   background: #FF6B00;
+}
+
+/* 完播按钮：朴素样式，悬停变绿色 */
+.finish-btn {
+  background: #fff;
+  border-color: #dcdfe6;
+  color: #606266;
+}
+
+.finish-btn:hover {
+  background: #f0f9eb;
+  border-color: #c2e7b0;
+  color: #67c23a;
 }
 
 .form-tip {
