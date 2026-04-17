@@ -1,4 +1,6 @@
 // chapter.js
+const app = getApp();
+
 Page({
   data: {
     statusBarHeight: 0,
@@ -28,6 +30,19 @@ Page({
       courseId: options.id || ''
     });
 
+    // 注册播放器回调
+    this.audioCallback = {
+      onClose: () => {
+        // 播放器关闭，重置所有章节的播放状态
+        this.setData({
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false })),
+          currentPlayingId: ''
+        });
+        this.applyFilterAndSort();
+      }
+    };
+    app.registerMiniPlayer(this.audioCallback);
+
     this.loadCourseData();
   },
 
@@ -37,6 +52,20 @@ Page({
 
   onShow() {
     // mini-player 会自动处理位置
+    // 从全局数据同步当前播放状态
+    const playingChapterId = app.globalData.playingChapter?._id || '';
+    if (playingChapterId && this.data.chapters.length > 0) {
+      this.setData({
+        chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === playingChapterId })),
+        currentPlayingId: playingChapterId
+      });
+      this.applyFilterAndSort();
+    }
+  },
+
+  onUnload() {
+    // 页面卸载时移除回调
+    app.unregisterMiniPlayer(this.audioCallback);
   },
 
   calculateListMinHeight() {
@@ -100,12 +129,15 @@ Page({
     if (progress === 100) progressText = '已学完';
     else if (progress > 0) progressText = '已学' + progress + '%';
 
+    // 从全局数据获取当前播放的章节ID
+    const playingChapterId = app.globalData.playingChapter?._id || '';
+
     return {
       ...chapter,
       progress,
       progressText,
       durationText: this.formatDuration(duration),
-      isPlaying: this.data.currentPlayingId === chapter._id,
+      isPlaying: playingChapterId === chapter._id,
       isFavorite: false
     };
   },
