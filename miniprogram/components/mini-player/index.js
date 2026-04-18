@@ -3,8 +3,8 @@ const app = getApp();
 
 Component({
   properties: {
-    chapters: { type: Array, value: [] },
-    course: { type: Object, value: {} }
+    initialChapters: { type: Array, value: [] },
+    initialCourse: { type: Object, value: {} }
   },
 
   data: {
@@ -20,7 +20,10 @@ Component({
     duration: 0,
     progressPercent: 0,
     playbackRate: 2,
-    speedOptions: [1, 2]
+    speedOptions: [1, 2],
+    chapters: [], // 播放列表
+    course: {}, // 当前播放的课程
+    playlistSortOrder: 'asc' // 播放列表排序
   },
 
   lifetimes: {
@@ -35,17 +38,22 @@ Component({
         onError: () => this.data.visible && this.setData({ isPlaying: false }),
         onStop: () => this.data.visible && this.setData({ isPlaying: false }),
         onClose: () => {
-          const pages = getCurrentPages();
-          const isForeground = this.currentPageRoute === pages[pages.length - 1]?.route;
-          if (isForeground) {
-            // 前台：淡出后销毁
-            this.setData({ fadeInClass: 'fade-out' });
-            setTimeout(() => this.setData({ visible: false }), 300);
-          } else {
-            // 后台：直接销毁
-            this.setData({ visible: false, fadeInClass: '' });
+            const pages = getCurrentPages();
+            const isForeground = this.currentPageRoute === pages[pages.length - 1]?.route;
+            // 清除内部数据
+            this.setData({
+              visible: false,
+              fadeInClass: '',
+              chapters: [],
+              currentChapter: {},
+              currentIndex: 0,
+              course: {},
+              isPlaying: false,
+              currentTime: 0,
+              duration: 0,
+              progressPercent: 0
+            });
           }
-        }
       };
     },
     attached() {
@@ -67,14 +75,17 @@ Component({
         return;
       }
 
-      const { playingCourse, playingChapter, playingIndex } = app.globalData;
+      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder } = app.globalData;
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
         currentChapter: playingChapter || {},
         currentIndex: playingIndex || 0,
         courseCover: playingCourse?.cover || '',
-        courseName: playingCourse?.title || ''
+        courseName: playingCourse?.title || '',
+        chapters: playlistChaptersData || [],
+        course: playingCourse || {},
+        playlistSortOrder: playlistSortOrder || 'asc'
       };
 
       // 首页/收藏页/我的页：如果还没淡入过，则淡入
@@ -106,8 +117,11 @@ Component({
       this.setData({ visible: true, fadeInClass: 'fade-in', ...data });
     },
 
-    async play(chapterId) {
-      const { chapters, course } = this.properties;
+    async play(chapterId, playlistChapters, courseData, sortOrder) {
+      // 使用传入的播放列表，如果没有传入则使用 properties 的初始数据
+      let chapters = playlistChapters || this.properties.initialChapters;
+      let course = courseData || this.properties.initialCourse;
+
       const index = chapters.findIndex(ch => ch._id === chapterId);
 
       if (index === -1 || !chapters[index]?.audioUrl) {
@@ -116,11 +130,27 @@ Component({
       }
 
       const chapter = chapters[index];
+
+      // 判断是否需要更新排序状态：第一次创建播放列表或切换了课程时使用传入的排序
+      const currentCourseId = app.globalData.playingCourse && app.globalData.playingCourse._id;
+      const isNewPlaylist = !app.globalData.miniPlayerActive || currentCourseId !== course._id;
+      const order = isNewPlaylist ? (sortOrder || 'asc') : (app.globalData.playlistSortOrder || sortOrder || 'asc');
+
+      // 更新播放列表数据
+      this.setData({ chapters: chapters, course: course, playlistSortOrder: order });
+
+      // 保存到全局数据，以便其他页面恢复
       app.globalData.playingCourse = course;
       app.globalData.playingChapter = chapter;
       app.globalData.playingIndex = index;
+      app.globalData.playlistChaptersData = chapters; // 保存完整的播放列表数据
+      if (isNewPlaylist) {
+        app.globalData.playlistSortOrder = order; // 只在创建新播放列表时保存排序状态
+      }
       app.globalData.miniPlayerActive = true;
       app.globalData.miniPlayerIndexFadedIn = false;
+      // 默认播放模式为顺序播放
+      app.globalData.playMode = 'sequence';
 
       this.fadeIn({
         playerBottom: this.calcPosition(),
@@ -154,8 +184,9 @@ Component({
 
       const [baseUrl, query] = src.split('?');
       bgAudio.title = chapter.title || '音频课程';
-      bgAudio.epname = this.properties.course.title || '';
-      bgAudio.coverImgUrl = this.properties.course.cover || '';
+      bgAudio.epname = this.data.course.title || '';
+      bgAudio.coverImgUrl = this.data.course.cover || '';
+      // 从上次播放位置继续播放
       bgAudio.startTime = Number(chapter.lastPlayTime) || 0;
       bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(baseUrl);
     },
@@ -169,6 +200,11 @@ Component({
       }
     },
 
+    // 公开方法：切换播放/暂停状态
+    togglePlayPause() {
+      this.onPlayPause();
+    },
+
     onSpeedChange() {
       const { speedOptions, playbackRate } = this.data;
       const nextRate = speedOptions[(speedOptions.indexOf(playbackRate) + 1) % speedOptions.length];
@@ -177,11 +213,40 @@ Component({
     },
 
     onAudioEnded() {
-      this.updateProgress(this.data.duration, 1);
+      // 自然播放结束，设为完播，lastPlayTime=0，下次从头开始
+      this.updateProgress(0, true);
       const { chapters, currentIndex } = this.data;
+      const playMode = app.globalData.playMode || 'sequence';
+
+      // 单章循环：重新播放当前章节
+      if (playMode === 'single') {
+        this.loadAudio(this.data.currentChapter);
+        return;
+      }
+
+      // 顺序播放或列表循环：播放下一章
       const nextIndex = currentIndex + 1;
 
-      if (chapters?.length > nextIndex && chapters[nextIndex]?.audioUrl) {
+      // 列表结束处理
+      if (nextIndex >= chapters.length) {
+        if (playMode === 'loop') {
+          // 列表循环：从头开始
+          const firstChapter = chapters[0];
+          if (firstChapter?.audioUrl) {
+            app.globalData.playingChapter = firstChapter;
+            app.globalData.playingIndex = 0;
+            this.setData({ currentChapter: firstChapter, currentIndex: 0 });
+            this.loadAudio(firstChapter);
+          }
+        } else {
+          // 顺序播放：停止
+          this.setData({ isPlaying: false });
+        }
+        return;
+      }
+
+      // 播放下一章
+      if (chapters[nextIndex]?.audioUrl) {
         const nextChapter = chapters[nextIndex];
         app.globalData.playingChapter = nextChapter;
         app.globalData.playingIndex = nextIndex;
@@ -193,31 +258,171 @@ Component({
     },
 
     onClose() {
+      this.saveProgress(); // 关闭前保存进度
       this.bgAudioManager.stop();
       app.globalData.miniPlayerActive = false;
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.playingCourse = null;
       app.globalData.playingChapter = null;
       app.globalData.playingIndex = 0;
+      app.globalData.playlistChaptersData = []; // 清空播放列表数据
       app.notifyCallbacks('onClose', {});
     },
 
     saveProgress() {
-      this.updateProgress(Math.floor(this.data.currentTime), 0);
+      // 直接从 bgAudioManager 获取当前播放时间，确保是最新的
+      const currentTime = this.bgAudioManager.currentTime || this.data.currentTime;
+      this.updateProgress(Math.floor(currentTime));
     },
 
-    updateProgress(time, count) {
+    updateProgress(time, finished) {
+      const chapterId = this.data.currentChapter._id;
+      const courseId = this.data.course._id;
+      const userId = app.globalData.userId;
+
+      // 确保 userId 存在才调用云函数
+      if (!userId) {
+        console.log('updateProgress: userId 不存在，跳过更新');
+        return;
+      }
+
       wx.cloud.callFunction({
         name: 'courseFunctions',
         data: {
           type: 'updateChapterProgress',
-          chapterId: this.data.currentChapter._id,
+          chapterId: chapterId,
+          courseId: courseId,
           lastPlayTime: time,
-          playCount: count
+          finished: finished,
+          userId: userId
         }
-      }).catch(err => console.error('更新进度失败:', err));
+      }).then(res => {
+        if (res.result.success) {
+          // 更新 chapters 数组中对应章节的进度
+          const chapters = this.data.chapters.map(ch => {
+            if (ch._id === chapterId) {
+              // 如果本次设置为完播，更新为"已学完"并设置 lastPlayTime
+              if (finished === true) {
+                return { ...ch, lastPlayTime: time, finished: true, progress: 100, progressText: '已学完' };
+              }
+              // 如果之前已完播，保持"已学完"状态，只更新 lastPlayTime
+              if (ch.finished) {
+                return { ...ch, lastPlayTime: time };
+              }
+              // 未完播时，根据播放位置计算进度
+              const chDuration = Number(ch.duration) || 0;
+              const progress = chDuration > 0 ? Math.min(Math.round((time / chDuration) * 100), 100) : 0;
+              let progressText = '未学习';
+              if (progress === 100) progressText = '已学完';
+              else if (progress > 0) progressText = '已学' + progress + '%';
+              return { ...ch, lastPlayTime: time, progress, progressText };
+            }
+            return ch;
+          });
+          this.setData({ chapters });
+          // 同步到全局数据
+          app.globalData.playlistChaptersData = chapters;
+
+          // 通知页面更新进度显示
+          app.notifyCallbacks('onProgressUpdate', {
+            chapterId: chapterId,
+            lastPlayTime: time,
+            duration: this.data.duration,
+            finished: finished
+          });
+        }
+      }).catch(err => {
+        console.error('更新进度失败:', err);
+      });
     },
 
-    preventMove() {}
+    preventMove() {},
+
+    // 播放列表相关方法
+    onPlaylistTap() {
+      const playlistPanel = this.selectComponent('#playlistPanel');
+      if (playlistPanel) playlistPanel.show();
+    },
+
+    onPlaylistCollapse() {
+      // 播放列表收起
+    },
+
+    onPlaylistClear() {
+      // 清空播放列表：停止播放，清空数据
+      this.bgAudioManager.stop();
+      app.globalData.miniPlayerActive = false;
+      app.globalData.miniPlayerIndexFadedIn = false;
+      app.globalData.playingCourse = null;
+      app.globalData.playingChapter = null;
+      app.globalData.playingIndex = 0;
+      app.globalData.playlistChaptersData = [];
+      this.setData({ visible: false, isPlaying: false, chapters: [] });
+    },
+
+    onPlaylistSyncSort(e) {
+      // 播放列表排序变化，同步更新 chapters，并重新计算当前播放索引
+      const sortedChapters = e.detail.chapters;
+      const currentId = this.data.currentChapter._id;
+      const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
+      this.setData({ chapters: sortedChapters, currentIndex: newIndex });
+      app.globalData.playingIndex = newIndex;
+    },
+
+    onPlaylistPlay(e) {
+      const { chapterId, index } = e.detail;
+      const chapter = this.data.chapters.find(ch => ch._id === chapterId);
+
+      // 如果点击的是当前正在播放的章节，切换播放/暂停状态
+      if (chapterId === this.data.currentChapter._id) {
+        if (this.data.isPlaying) {
+          this.bgAudioManager.pause();
+          this.saveProgress();
+        } else {
+          this.bgAudioManager.play();
+        }
+        return;
+      }
+
+      // 否则播放新章节
+      if (chapter?.audioUrl) {
+        app.globalData.playingChapter = chapter;
+        app.globalData.playingIndex = index;
+        this.setData({
+          currentChapter: chapter,
+          currentIndex: index,
+          isPlaying: false
+        });
+        this.loadAudio(chapter);
+      }
+    },
+
+    onPlaylistDelete(e) {
+      const { chapterId } = e.detail;
+      const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
+      this.setData({ chapters });
+      // 更新全局播放列表数据
+      app.globalData.playlistChaptersData = chapters;
+
+      // 如果删除的是当前播放的章节，自动播放下一条
+      if (chapterId === this.data.currentChapter._id) {
+        const nextIndex = this.data.currentIndex;
+        if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
+          const nextChapter = chapters[nextIndex];
+          app.globalData.playingChapter = nextChapter;
+          app.globalData.playingIndex = nextIndex;
+          this.setData({
+            currentChapter: nextChapter,
+            currentIndex: nextIndex
+          });
+          this.loadAudio(nextChapter);
+        } else {
+          this.bgAudioManager.stop();
+          app.globalData.miniPlayerActive = false;
+          app.globalData.playlistChaptersData = [];
+          this.setData({ visible: false, isPlaying: false });
+        }
+      }
+    }
   }
 });

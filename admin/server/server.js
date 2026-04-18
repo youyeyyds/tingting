@@ -1335,6 +1335,170 @@ app.post('/api/file/temp-url', async (req, res) => {
   }
 });
 
+// ========== 用户进度 API ==========
+
+// 获取用户进度
+app.get('/api/user-progress', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const { userId, courseId } = req.query;
+    console.log('获取用户进度请求:', { userId, courseId });
+    if (!userId) return res.json(error('缺少用户ID'));
+
+    const db = tcb.database();
+
+    // 只按 userId 查询，不做 courseId 筛选
+    const result = await db.collection('userProgress').where({ userId }).get();
+    console.log('查询进度结果条数:', result.data?.length);
+    console.log('查询进度结果详情:', JSON.stringify(result.data, null, 2));
+    res.json(success(result.data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 更新用户进度
+app.put('/api/user-progress', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const { userId, chapterId, lastPlayTime, finished, isFavorite, playCount } = req.body;
+    console.log('更新用户进度请求:', { userId, chapterId, lastPlayTime, finished, playCount });
+    if (!userId || !chapterId) return res.json(error('缺少参数'));
+
+    const db = tcb.database();
+
+    // 获取章节信息（用于判断完播）
+    const chapterRes = await db.collection('chapters').doc(chapterId).get();
+    // doc查询可能返回数组或对象，统一处理
+    const chapter = Array.isArray(chapterRes.data) ? chapterRes.data[0] : chapterRes.data;
+    console.log('完整章节信息:', chapter);
+    const duration = Number(chapter?.duration) || 0;
+    const chapterTotalPlayCount = Number(chapter?.playCount) || 0;
+    console.log('章节信息:', { duration, chapterTotalPlayCount });
+
+    // 查询现有记录 - 尝试多种查询方式确保能找到记录
+    let existing = null;
+
+    // 方式1: 直接按 userId + chapterId 查询
+    const query1 = await db.collection('userProgress')
+      .where({ userId, chapterId })
+      .limit(1)
+      .get();
+    console.log('查询方式1 (userId+chapterId):', query1.data?.length);
+
+    if (query1.data?.length > 0) {
+      existing = query1.data[0];
+    } else {
+      // 方式2: 只按 userId 查询，再过滤 chapterId
+      const query2 = await db.collection('userProgress').where({ userId }).get();
+      console.log('查询方式2 (只userId):', query2.data?.length);
+      console.log('查询方式2详情:', JSON.stringify(query2.data, null, 2));
+
+      // 手动过滤
+      const matched = query2.data?.find(r =>
+        r.chapterId === chapterId ||
+        r.chapter_id === chapterId ||
+        r._id === chapterId
+      );
+      if (matched) {
+        existing = matched;
+        console.log('方式2找到匹配记录:', matched);
+      }
+    }
+
+    console.log('最终找到的现有记录:', existing);
+    const currentFinished = existing?.finished || false;
+    const currentPlayCount = existing?.playCount || 0;
+    console.log('现有进度:', { currentFinished, currentPlayCount });
+
+    const updateData = {};
+
+    // 自动完播判断：播放时长 > 时长 - 10秒，且未完播，自动设置 finished=true，playCount+1
+    let shouldAutoFinish = false;
+    if (lastPlayTime !== undefined && finished !== true) {
+      shouldAutoFinish = !currentFinished && duration > 0 && lastPlayTime > duration - 10;
+    }
+    console.log('自动完播判断:', {
+      lastPlayTime,
+      duration,
+      threshold: duration - 10,
+      currentFinished,
+      shouldAutoFinish
+    });
+
+    if (lastPlayTime !== undefined) updateData.lastPlayTime = lastPlayTime;
+
+    // 处理完播状态
+    if (finished === true) {
+      // 手动设置为完播
+      updateData.finished = true;
+    } else if (shouldAutoFinish) {
+      // 自动完播
+      updateData.finished = true;
+      updateData.playCount = currentPlayCount + 1;
+    } else if (finished === false) {
+      updateData.finished = false;
+    }
+
+    if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
+    if (playCount !== undefined && !shouldAutoFinish) updateData.playCount = playCount;
+
+    // 更新或创建用户进度记录
+    console.log('准备更新的数据:', updateData);
+    if (existing) {
+      // 如果旧记录没有 courseId 或 duration，补充上
+      if (!existing.courseId && chapter?.course) {
+        updateData.courseId = chapter.course;
+      }
+      if (!existing.duration && duration > 0) {
+        updateData.duration = duration;
+      }
+      // TCB update 需要使用 { data: ... } 格式
+      const updateResult = await db.collection('userProgress').doc(existing._id).update(updateData);
+      console.log('用户进度更新结果:', updateResult);
+    } else {
+      console.log('准备新增用户进度记录, courseId:', chapter?.course);
+      const addResult = await db.collection('userProgress').add({
+        userId,
+        chapterId,
+        courseId: chapter?.course,
+        duration,  // 添加时长字段
+        lastPlayTime: lastPlayTime || 0,
+        finished: finished || shouldAutoFinish,
+        isFavorite: isFavorite || false,
+        playCount: (finished || shouldAutoFinish) ? 1 : (playCount || 0)
+      });
+      console.log('用户进度添加结果:', addResult);
+    }
+
+    // 如果触发自动完播，更新章节总播放量
+    if (shouldAutoFinish) {
+      const chapterUpdateResult = await db.collection('chapters').doc(chapterId).update({
+        data: { playCount: chapterTotalPlayCount + 1 }
+      });
+      console.log('章节播放量更新结果:', chapterUpdateResult);
+    }
+
+    // 如果是收藏操作，更新章节的 favoriteCount
+    if (isFavorite !== undefined && existing) {
+      const oldIsFavorite = existing.isFavorite || false;
+      if (oldIsFavorite !== isFavorite) {
+        const oldCount = chapter?.favoriteCount || 0;
+        const newCount = isFavorite ? oldCount + 1 : Math.max(0, oldCount - 1);
+        await db.collection('chapters').doc(chapterId).update({ data: { favoriteCount: newCount } });
+      }
+    }
+
+    res.json(success());
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // 创建用户
 app.post('/api/users', async (req, res) => {
   try {

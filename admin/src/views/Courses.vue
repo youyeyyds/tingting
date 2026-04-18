@@ -157,7 +157,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getCourses, createCourse, updateCourse, deleteCourse, getCategories, batchUpdateSeq, getChapters } from '@/api/cloud'
+import { getCourses, createCourse, updateCourse, deleteCourse, getCategories, batchUpdateSeq, getChapters, getUserProgress } from '@/api/cloud'
 
 const router = useRouter()
 const loading = ref(false)
@@ -171,6 +171,23 @@ const tableRef = ref(null)
 const courses = ref([])
 const categories = ref([])
 const chapters = ref([])
+
+// 获取当前登录用户
+function getCurrentUser() {
+  const stored = localStorage.getItem('tingting_admin_user')
+  if (stored) {
+    try {
+      const data = JSON.parse(stored)
+      // 检查是否过期（2小时）
+      if (data.loginTime && Date.now() - data.loginTime < 2 * 60 * 60 * 1000) {
+        return data
+      }
+    } catch (e) {
+      console.error('解析用户信息失败:', e)
+    }
+  }
+  return null
+}
 
 const form = reactive({
   seq: 1,
@@ -210,17 +227,40 @@ async function loadChapters() {
   try {
     const res = await getChapters()
     if (res.success) {
-      chapters.value = res.data
+      let chaptersData = res.data
+
+      // 加载当前用户进度
+      const currentUser = getCurrentUser()
+      if (currentUser && currentUser.userId) {
+        const progressRes = await getUserProgress(currentUser.userId)
+        if (progressRes.success) {
+          // 构建进度映射
+          const progressMap = {}
+          progressRes.data.forEach(p => {
+            progressMap[p.chapterId] = p
+          })
+          // 合并用户进度到章节
+          chaptersData = chaptersData.map(chapter => ({
+            ...chapter,
+            userProgress: progressMap[chapter._id] || null
+          }))
+        }
+      }
+
+      chapters.value = chaptersData
     }
   } catch (err) {
     console.error('加载章节失败:', err)
   }
 }
 
-// 计算章节学习进度
+// 计算章节学习进度（基于用户进度）
 function calcChapterProgress(chapter) {
-  const finished = chapter.finished === true
-  const lastPlayTime = Number(chapter.lastPlayTime) || 0
+  const userProgress = chapter.userProgress
+  if (!userProgress) return 0
+
+  const finished = userProgress.finished === true
+  const lastPlayTime = Number(userProgress.lastPlayTime) || 0
   const duration = Number(chapter.duration) || 0
 
   // 完播=true，进度为100%

@@ -7,7 +7,14 @@ Page({
     navBarHeight: 0,
     activeTab: 2,
     isLoggedIn: false,
-    userInfo: null
+    userInfo: null,
+    stats: {
+      finishedCount: 0,
+      favoriteCount: 0,
+      totalPlayCount: 0,
+      totalDuration: 0
+    },
+    loading: false
   },
 
   onLoad() {
@@ -23,14 +30,110 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    if (this.data.isLoggedIn && app.globalData.userId) {
+      this.loadUserStats();
+    }
   },
 
   checkLoginStatus() {
-    const { isLoggedIn, userInfo } = app.globalData;
+    const { isLoggedIn, userInfo, userId } = app.globalData;
     this.setData({
       isLoggedIn: isLoggedIn || false,
       userInfo: userInfo || null
     });
+    if (!isLoggedIn && userId) {
+      // 尝试从本地存储恢复登录状态
+      const storedUserId = wx.getStorageSync('userId');
+      const storedUserInfo = wx.getStorageSync('userInfo');
+      if (storedUserId && storedUserInfo) {
+        app.globalData.isLoggedIn = true;
+        app.globalData.userId = storedUserId;
+        app.globalData.userInfo = JSON.parse(storedUserInfo);
+        this.setData({
+          isLoggedIn: true,
+          userInfo: app.globalData.userInfo
+        });
+      }
+    }
+  },
+
+  async loadUserStats() {
+    if (this.data.loading) return;
+    this.setData({ loading: true });
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'userFunctions',
+        data: {
+          type: 'getUserStats',
+          userId: app.globalData.userId
+        }
+      });
+
+      if (res.result.success) {
+        this.setData({
+          stats: res.result.data
+        });
+      }
+    } catch (err) {
+      console.error('获取用户统计失败:', err);
+    } finally {
+      this.setData({ loading: false });
+    }
+  },
+
+  handleLogin() {
+    wx.navigateTo({ url: '/pages/login/index' });
+  },
+
+  handleLogout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          // 停止播放器并清空播放状态
+          app.bgAudioManager.stop();
+          app.globalData.miniPlayerActive = false;
+          app.globalData.miniPlayerIndexFadedIn = false;
+          app.globalData.playingCourse = null;
+          app.globalData.playingChapter = null;
+          app.globalData.playingIndex = 0;
+          app.globalData.playlistChaptersData = [];
+          app.globalData.playMode = 'sequence';
+          app.globalData.playlistSortOrder = 'asc';
+          // 通知 mini-player 关闭
+          app.notifyCallbacks('onClose', {});
+
+          app.globalData.isLoggedIn = false;
+          app.globalData.userInfo = null;
+          app.globalData.userId = null;
+          wx.removeStorageSync('userId');
+          wx.removeStorageSync('userInfo');
+          this.setData({
+            isLoggedIn: false,
+            userInfo: null,
+            stats: {
+              finishedCount: 0,
+              favoriteCount: 0,
+              totalPlayCount: 0,
+              totalDuration: 0
+            }
+          });
+          wx.showToast({ title: '已退出', icon: 'success' });
+        }
+      }
+    });
+  },
+
+  formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return '0分钟';
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}小时${mins > 0 ? mins + '分钟' : ''}`;
+    }
+    return `${mins}分钟`;
   },
 
   onTabChange(e) {

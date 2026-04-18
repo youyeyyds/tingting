@@ -1,0 +1,395 @@
+/* playlist-panel/index.wxss */
+
+/* 遮罩层 - 覆盖下层页面 */
+.page-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.page-mask.slide-up {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.page-mask.slide-down {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.playlist-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  overflow: hidden;
+}
+
+.playlist-panel.slide-up {
+  animation: slideUp 0.3s ease forwards;
+}
+
+.playlist-panel.slide-down {
+  animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 顶部栏 */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+/* 收起按钮 - 样式与关闭图标一致 */
+.collapse-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-icon {
+  font-size: 48rpx;
+  color: #999;
+  line-height: 1;
+  transform: rotate(90deg);
+}
+
+/* 播放模式图标 - 文字，无框，灰色 */
+.mode-btn {
+  display: flex;
+  align-items: center;
+}
+
+.mode-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* 排序按钮 - 与章节页一致 */
+.sort-arrow {
+  font-size: 26rpx;
+  color: #FF6B00;
+  margin-right: 4rpx;
+}
+
+.sort-btn {
+  font-size: 26rpx;
+  color: #FF6B00;
+}
+
+/* 清空按钮 - 橙色 */
+.clear-btn {
+  font-size: 26rpx;
+  color: #FF6B00;
+  margin-left: 48rpx;
+}
+
+/* 清空确认弹窗 */
+.confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-content {
+  position: relative;
+  width: 480rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 56rpx 32rpx 48rpx;
+  text-align: center;
+}
+
+.confirm-text {
+  font-size: 32rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 56rpx;
+}
+
+.confirm-btn {
+  padding: 20rpx 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+.confirm-btn.cancel {
+  background: #f5f5f5;
+  color: #FF6B00;
+}
+
+.confirm-btn.confirm {
+  background: #FF6B00;
+  color: #fff;
+}
+
+/* 列表区域 */
+.chapter-scroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+.chapter-list {
+  padding: 0 30rpx;
+}
+
+/* 章节卡片 */
+.chapter-card {
+  display: flex;
+  flex-direction: column;
+  padding: 32rpx 24rpx;
+  background: #fff;
+  position: relative;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chapter-card.dragging {
+  opacity: 0.8;
+  transform: scale(1.02);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* 分隔线 */
+.chapter-divider {
+  position: absolute;
+  bottom: 0;
+  left: 24rpx;
+  right: 24rpx;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 第一行：序号|章节名称 */
+.chapter-title-line {
+  display: flex;
+  align-items: center;
+}
+
+.chapter-seq {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.chapter-sep {
+  font-size: 28rpx;
+  color: #333;
+  margin: 0 8rpx;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.chapter-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  word-break: break-all;
+  flex: 1;
+  line-height: 1.2;
+}
+
+/* 已学完：颜色变浅 */
+.chapter-title-line.completed .chapter-seq,
+.chapter-title-line.completed .chapter-sep,
+.chapter-title-line.completed .chapter-name {
+  color: #999;
+}
+
+/* 正播放：颜色为橙色 */
+.chapter-title-line.playing .audio-icon,
+.chapter-title-line.playing .chapter-seq,
+.chapter-title-line.playing .chapter-sep,
+.chapter-title-line.playing .chapter-name {
+  color: #FF6B00;
+}
+
+/* 音频跳动动画图标 */
+.audio-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rpx;
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-right: 4rpx;
+}
+
+.audio-bar {
+  width: 4rpx;
+  height: 16rpx;
+  background: #FF6B00;
+  border-radius: 2rpx;
+}
+
+.audio-bar-1 {
+  height: 12rpx;
+}
+
+.audio-bar-2 {
+  height: 20rpx;
+}
+
+.audio-bar-3 {
+  height: 16rpx;
+}
+
+.audio-icon.playing .audio-bar {
+  animation: audioWave 0.5s ease-in-out infinite alternate;
+}
+
+.audio-icon.playing .audio-bar-1 {
+  animation-delay: 0s;
+}
+
+.audio-icon.playing .audio-bar-2 {
+  animation-delay: 0.2s;
+}
+
+.audio-icon.playing .audio-bar-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes audioWave {
+  from {
+    height: 8rpx;
+  }
+  to {
+    height: 24rpx;
+  }
+}
+
+/* 第二行：课程名称|音频时长|学习进度 */
+.chapter-meta-line {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+}
+
+.meta-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.meta-sep {
+  font-size: 24rpx;
+  color: #ccc;
+  margin: 0 8rpx;
+}
+
+/* 右侧操作区：删除和拖拽图标 */
+.card-actions {
+  position: absolute;
+  right: 8rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.delete-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-icon {
+  font-size: 40rpx;
+  color: #999;
+  line-height: 1;
+}
+
+.drag-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5rpx;
+}
+
+.drag-line {
+  width: 22rpx;
+  height: 5rpx;
+  background: #999;
+  border-radius: 1rpx;
+}

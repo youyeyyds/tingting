@@ -58,7 +58,8 @@ Page({
       data: {
         type: 'getCourses',
         limit: 20,
-        filterDraft: true
+        filterDraft: true,
+        userId: app.globalData.userId
       }
     })
     .then(res => {
@@ -82,25 +83,42 @@ Page({
 
   handleLogin() {
     if (this.data.isLoggedIn) {
+      // 退出登录
+      // 停止播放器并清空播放状态
+      app.bgAudioManager.stop();
+      app.globalData.miniPlayerActive = false;
+      app.globalData.miniPlayerIndexFadedIn = false;
+      app.globalData.playingCourse = null;
+      app.globalData.playingChapter = null;
+      app.globalData.playingIndex = 0;
+      app.globalData.playlistChaptersData = [];
+      app.globalData.playMode = 'sequence';
+      app.globalData.playlistSortOrder = 'asc';
+      // 通知 mini-player 关闭
+      app.notifyCallbacks('onClose', {});
+
       app.globalData.isLoggedIn = false;
       app.globalData.userInfo = null;
+      app.globalData.userId = null;
+      wx.removeStorageSync('userId');
+      wx.removeStorageSync('userInfo');
       this.setData({ isLoggedIn: false });
       wx.showToast({ title: '已退出', icon: 'success' });
     } else {
-      wx.getUserProfile({
-        desc: '用于完善用户资料',
-        success: (res) => {
-          app.globalData.isLoggedIn = true;
-          app.globalData.userInfo = res.userInfo;
-          this.setData({ isLoggedIn: true });
-          wx.showToast({ title: '登录成功', icon: 'success' });
-        },
-        fail: () => wx.showToast({ title: '登录取消', icon: 'none' })
-      });
+      // 跳转到登录页
+      wx.navigateTo({ url: '/pages/login/index' });
     }
   },
 
   onCourseTap(e) {
+    // 检查登录状态，未登录则跳转到登录页
+    if (!app.globalData.isLoggedIn || !app.globalData.userId) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      setTimeout(() => {
+        wx.navigateTo({ url: '/pages/login/index' });
+      }, 500);
+      return;
+    }
     wx.navigateTo({ url: `/pages/chapter/index?id=${e.currentTarget.dataset.id}` });
   },
 

@@ -1,0 +1,92 @@
+<!--playlist-panel/index.wxml-->
+<!-- 遮罩层 - 覆盖下层页面（章节列表） -->
+<view wx:if="{{visible}}" class="page-mask {{slideClass}}" catchtap="hide"></view>
+
+<!-- 播放列表面板 -->
+<view wx:if="{{visible}}" class="playlist-panel {{slideClass}}" style="height: 74vh;" catchtouchmove="preventMove">
+  <!-- 内容区域 -->
+  <view class="panel-content">
+    <!-- 顶部操作栏 -->
+    <view class="panel-header">
+      <view class="header-left">
+        <view class="collapse-btn" catchtap="hide">
+          <text class="collapse-icon">›</text>
+        </view>
+        <!-- 播放模式图标 -->
+        <view class="mode-btn" catchtap="onTogglePlayMode">
+          <text class="mode-text">{{playMode === 'sequence' ? '顺序播放' : playMode === 'loop' ? '列表循环' : '单曲循环'}}</text>
+        </view>
+      </view>
+      <view class="header-right">
+        <!-- 排序按钮 -->
+        <text class="sort-arrow">{{sortOrder === 'asc' ? '↑' : '↓'}}</text>
+        <text class="sort-btn" catchtap="onToggleSort">{{sortOrder === 'asc' ? '正序' : '倒序'}}</text>
+        <!-- 清空按钮 -->
+        <text class="clear-btn" catchtap="onClear">清空</text>
+      </view>
+    </view>
+
+    <!-- 列表区域 -->
+    <scroll-view class="chapter-scroll" scroll-y="true" scroll-into-view="{{scrollIntoView}}" scroll-with-animation="true">
+      <view class="chapter-list">
+        <view id="card-{{index}}"
+              class="chapter-card {{dragIndex === index ? 'dragging' : ''}} {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 ? 'completed' : ''}}"
+              wx:for="{{sortedChapters}}" wx:key="_id"
+              data-id="{{item._id}}" data-index="{{index}}"
+              bindtap="onCardTap">
+          <!-- 第一行：序号|章节名称 -->
+          <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 && !item.isPlaying ? 'completed' : ''}}">
+            <!-- 音频跳动图标（正在播放时显示） -->
+            <view class="audio-icon playing" wx:if="{{item.isPlaying}}">
+              <view class="audio-bar audio-bar-1"></view>
+              <view class="audio-bar audio-bar-2"></view>
+              <view class="audio-bar audio-bar-3"></view>
+            </view>
+            <text class="chapter-seq">{{item.seq}}</text>
+            <text class="chapter-sep">|</text>
+            <text class="chapter-name">{{item.title}}</text>
+          </view>
+          <!-- 第二行：课程名称|音频时长|学习进度 -->
+          <view class="chapter-meta-line">
+            <text class="meta-text">{{course.title}}</text>
+            <text class="meta-sep">|</text>
+            <text class="meta-text">{{item.durationText || '--'}}</text>
+            <block wx:if="{{item.progress > 0}}">
+              <text class="meta-sep">|</text>
+              <text class="meta-text">{{item.progressText}}</text>
+            </block>
+          </view>
+          <!-- 右侧操作区 -->
+          <view class="card-actions">
+            <!-- 拖拽排序图标 -->
+            <view class="drag-btn" data-index="{{index}}" catchtouchstart="onDragStart" catchtouchmove="onDragMove" catchtouchend="onDragEnd">
+              <view class="drag-lines">
+                <view class="drag-line"></view>
+                <view class="drag-line"></view>
+                <view class="drag-line"></view>
+              </view>
+            </view>
+            <!-- 删除图标 -->
+            <view class="delete-btn" data-id="{{item._id}}" catchtap="onDeleteTap">
+              <text class="delete-icon">×</text>
+            </view>
+          </view>
+          <!-- 分隔线 -->
+          <view class="chapter-divider" wx:if="{{index < sortedChapters.length - 1}}"></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 清空确认弹窗 -->
+<view wx:if="{{confirmVisible}}" class="confirm-modal">
+  <view class="confirm-mask" catchtap="onConfirmCancel"></view>
+  <view class="confirm-content">
+    <text class="confirm-text">确定要清空播放列表吗？</text>
+    <view class="confirm-buttons">
+      <view class="confirm-btn cancel" catchtap="onConfirmCancel">取消</view>
+      <view class="confirm-btn confirm" catchtap="onConfirmOk">确定</view>
+    </view>
+  </view>
+</view>

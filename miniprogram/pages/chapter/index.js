@@ -14,7 +14,13 @@ Page({
     showUnfinishedOnly: false,
     sortOrder: 'asc',
     loading: true,
-    currentPlayingId: ''
+    currentPlayingId: '',
+    // 用于追踪播放列表状态
+    playlistState: {
+      courseId: '',
+      showUnfinishedOnly: false,
+      sortOrder: 'asc'
+    }
   },
 
   onLoad(options) {
@@ -39,6 +45,40 @@ Page({
           currentPlayingId: ''
         });
         this.applyFilterAndSort();
+      },
+      onStop: () => {
+        // 播放停止（包括清空播放列表），重置所有章节的播放状态
+        this.setData({
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false })),
+          currentPlayingId: ''
+        });
+        this.applyFilterAndSort();
+      },
+      onProgressUpdate: (data) => {
+        // 进度更新，实时显示
+        const { chapterId, lastPlayTime, finished } = data;
+        const chapters = this.data.chapters.map(ch => {
+          if (ch._id === chapterId) {
+            // 如果本次设置为完播，更新为"已学完"
+            if (finished === true) {
+              return { ...ch, lastPlayTime, finished: true, progress: 100, progressText: '已学完' };
+            }
+            // 如果之前已完播，保持"已学完"状态，只更新 lastPlayTime
+            if (ch.finished) {
+              return { ...ch, lastPlayTime };
+            }
+            // 未完播时，根据播放位置计算进度
+            const chDuration = Number(ch.duration) || 0;
+            const progress = chDuration > 0 ? Math.min(Math.round((lastPlayTime / chDuration) * 100), 100) : 0;
+            let progressText = '未学习';
+            if (progress === 100) progressText = '已学完';
+            else if (progress > 0) progressText = '已学' + progress + '%';
+            return { ...ch, lastPlayTime, progress, progressText };
+          }
+          return ch;
+        });
+        this.setData({ chapters });
+        this.applyFilterAndSort();
       }
     };
     app.registerMiniPlayer(this.audioCallback);
@@ -52,14 +92,9 @@ Page({
 
   onShow() {
     // mini-player 会自动处理位置
-    // 从全局数据同步当前播放状态
-    const playingChapterId = app.globalData.playingChapter?._id || '';
-    if (playingChapterId && this.data.chapters.length > 0) {
-      this.setData({
-        chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === playingChapterId })),
-        currentPlayingId: playingChapterId
-      });
-      this.applyFilterAndSort();
+    // 重新加载课程数据以同步收藏状态
+    if (this.data.courseId) {
+      this.loadCourseData();
     }
   },
 
@@ -87,7 +122,8 @@ Page({
       name: 'courseFunctions',
       data: {
         type: 'getCourseDetail',
-        courseId: this.data.courseId
+        courseId: this.data.courseId,
+        userId: app.globalData.userId
       }
     })
     .then(res => {
@@ -138,7 +174,7 @@ Page({
       progressText,
       durationText: this.formatDuration(duration),
       isPlaying: playingChapterId === chapter._id,
-      isFavorite: false
+      isFavorite: chapter.isFavorite || false  // 保留云函数返回的收藏状态
     };
   },
 
@@ -154,14 +190,21 @@ Page({
   },
 
   handleContinuePlay() {
-    const unfinished = this.data.chapters.filter(ch => ch.progress < 100);
+    // 从当前筛选后的章节列表中选择播放
+    const filteredChapters = this.data.filteredChapters;
+    if (filteredChapters.length === 0) {
+      wx.showToast({ title: '暂无章节', icon: 'none' });
+      return;
+    }
+
+    // 找到进度最高的未学完章节
+    const unfinished = filteredChapters.filter(ch => ch.progress < 100);
     if (unfinished.length > 0) {
       const target = unfinished.reduce((max, ch) => ch.progress > max.progress ? ch : max, unfinished[0]);
       this.playChapter(target._id);
-    } else if (this.data.chapters.length > 0) {
-      this.playChapter(this.data.chapters[0]._id);
     } else {
-      wx.showToast({ title: '暂无章节', icon: 'none' });
+      // 如果全部学完，播放第一章
+      this.playChapter(filteredChapters[0]._id);
     }
   },
 
@@ -193,20 +236,50 @@ Page({
   onChapterTap(e) {
     const id = e.currentTarget.dataset.id;
     const chapter = this.data.chapters.find(ch => ch._id === id);
-    if (chapter?.isPlaying) return; // 正在播放，不响应点击
-    this.playChapter(id);
+    if (chapter?.isPlaying) {
+      // 正在播放的章节，切换暂停/播放状态
+      const miniPlayer = this.selectComponent('#miniPlayer');
+      if (miniPlayer) miniPlayer.togglePlayPause();
+    } else {
+      this.playChapter(id);
+    }
   },
 
   onPlayTap(e) {
     const id = e.currentTarget.dataset.id;
     const chapter = this.data.chapters.find(ch => ch._id === id);
-    if (chapter?.isPlaying) return; // 正在播放，不响应点击
-    this.playChapter(id);
+    if (chapter?.isPlaying) {
+      // 正在播放的章节，切换暂停/播放状态
+      const miniPlayer = this.selectComponent('#miniPlayer');
+      if (miniPlayer) miniPlayer.togglePlayPause();
+    } else {
+      this.playChapter(id);
+    }
   },
 
   playChapter(chapterId) {
     const miniPlayer = this.selectComponent('#miniPlayer');
-    if (miniPlayer) miniPlayer.play(chapterId);
+    if (miniPlayer) {
+      // 检查播放列表状态是否变化，变化则重新生成播放列表
+      const currentPlaylistState = {
+        courseId: this.data.courseId,
+        showUnfinishedOnly: this.data.showUnfinishedOnly,
+        sortOrder: this.data.sortOrder
+      };
+
+      const stateChanged =
+        currentPlaylistState.courseId !== this.data.playlistState.courseId ||
+        currentPlaylistState.showUnfinishedOnly !== this.data.playlistState.showUnfinishedOnly ||
+        currentPlaylistState.sortOrder !== this.data.playlistState.sortOrder;
+
+      if (stateChanged) {
+        // 状态变化，更新播放列表状态并传递新的播放列表
+        this.setData({ playlistState: currentPlaylistState });
+      }
+
+      // 传递当前筛选后的章节列表作为播放列表
+      miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
+    }
 
     this.setData({
       chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
@@ -216,6 +289,38 @@ Page({
   },
 
   onFavoriteTap(e) {
-    wx.showToast({ title: '收藏功能开发中', icon: 'none' });
+    const chapterId = e.currentTarget.dataset.id;
+    const chapter = this.data.chapters.find(ch => ch._id === chapterId);
+    const currentIsFavorite = chapter?.isFavorite || false;
+
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: {
+        type: 'toggleFavorite',
+        chapterId: chapterId,
+        courseId: this.data.courseId,
+        userId: app.globalData.userId
+      }
+    }).then(res => {
+      if (res.result.success) {
+        const newIsFavorite = res.result.isFavorite;
+        // 更新章节列表中的收藏状态
+        this.setData({
+          chapters: this.data.chapters.map(ch =>
+            ch._id === chapterId ? { ...ch, isFavorite: newIsFavorite } : ch
+          )
+        });
+        this.applyFilterAndSort();
+        wx.showToast({
+          title: newIsFavorite ? '已收藏' : '已取消收藏',
+          icon: 'none'
+        });
+      } else {
+        wx.showToast({ title: '操作失败', icon: 'none' });
+      }
+    }).catch(err => {
+      console.error('收藏操作失败:', err);
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    });
   }
 });

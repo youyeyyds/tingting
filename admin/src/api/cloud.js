@@ -390,6 +390,33 @@ export async function getFileTempUrl(fileID) {
   return response.data
 }
 
+// ========== 用户进度 API ==========
+
+/**
+ * 获取用户进度
+ * @param {string} userId 用户ID
+ * @param {string} courseId 课程ID（可选）
+ * @returns {Promise<object>}
+ */
+export async function getUserProgress(userId, courseId = null) {
+  const params = { userId }
+  if (courseId) params.courseId = courseId
+  const response = await api.get('/user-progress', { params })
+  return response.data
+}
+
+/**
+ * 更新用户进度
+ * @param {string} userId 用户ID
+ * @param {string} chapterId 章节ID
+ * @param {object} data 进度数据
+ * @returns {Promise<object>}
+ */
+export async function updateUserProgress(userId, chapterId, data) {
+  const response = await api.put('/user-progress', { userId, chapterId, ...data })
+  return response.data
+}
+
 /**
  * 获取菜单配置
  * @returns {Promise<object>}

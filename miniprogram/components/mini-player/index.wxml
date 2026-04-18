@@ -16,7 +16,7 @@
   <!-- 操作按钮 -->
   <view class="action-buttons">
     <!-- 播放列表 -->
-    <view class="playlist-btn">
+    <view class="playlist-btn" catchtap="onPlaylistTap">
       <view class="playlist-icon">
         <view class="playlist-line"></view>
         <view class="playlist-line"></view>
@@ -48,3 +48,7 @@
     <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
   </view>
 </view>
+
+<!-- 播放列表面板 -->
+<playlist-panel id="playlistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}"
+                bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" />

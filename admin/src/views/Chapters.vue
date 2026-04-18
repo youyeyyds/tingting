@@ -52,7 +52,7 @@
         <el-table-column prop="title" label="章节名称" min-width="200">
           <template #default="{ row }">
             {{ row.title }}
-            <el-tag v-if="row.favorite" type="warning" size="small" style="margin-left: 8px">已收藏</el-tag>
+            <el-tag v-if="row.userProgress?.isFavorite" type="warning" size="small" style="margin-left: 8px">已收藏</el-tag>
           </template>
         </el-table-column>
         <el-table-column v-if="!courseId" prop="courseName" label="课程名称" width="150" />
@@ -69,25 +69,25 @@
         </el-table-column>
         <el-table-column prop="lastPlayTime" label="上次播放" width="100">
           <template #default="{ row }">
-            {{ formatDuration(row.lastPlayTime) }}
+            {{ formatDuration(row.userProgress?.lastPlayTime || 0) }}
           </template>
         </el-table-column>
         <el-table-column prop="progress" label="学习进度" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.finished" type="success">已学完</el-tag>
+            <el-tag v-if="row.userProgress?.finished" type="success">已学完</el-tag>
             <el-tag v-else-if="calcProgress(row) === 0" type="info">未学习</el-tag>
             <el-tag v-else>已学{{ calcProgress(row) }}%</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="playCount" label="播放量" width="80">
           <template #default="{ row }">
-            {{ row.playCount || 0 }}
+            {{ row.userProgress?.playCount || 0 }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
-            <el-button size="small" class="finish-btn" @click="toggleFinished(row)" v-if="!row.finished">
+            <el-button size="small" class="finish-btn" @click="toggleFinished(row)" v-if="!row.userProgress?.finished">
               完播
             </el-button>
             <el-button size="small" type="warning" @click="toggleFinished(row)" v-else>
@@ -103,12 +103,12 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑章节' : '新增章节'"
-      width="500px"
+      width="460px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="所属课程" prop="course">
-          <el-input v-if="courseId" :value="courseTitle" disabled />
-          <el-select v-else v-model="form.course" placeholder="请选择课程" style="width: 100%">
+          <el-input v-if="courseId" :value="courseTitle" disabled style="width: 280px" />
+          <el-select v-else v-model="form.course" placeholder="请选择课程" style="width: 280px">
             <el-option
               v-for="course in courses"
               :key="course._id"
@@ -118,10 +118,10 @@
           </el-select>
         </el-form-item>
         <el-form-item label="序号" prop="seq">
-          <el-input-number v-model="form.seq" :min="1" />
+          <el-input-number v-model="form.seq" :min="1" style="width: 120px" />
         </el-form-item>
         <el-form-item label="章节名称" prop="title">
-          <el-input v-model="form.title" placeholder="请输入章节名称" />
+          <el-input v-model="form.title" placeholder="请输入章节名称" style="width: 280px" />
         </el-form-item>
         <el-form-item label="音频文件" prop="audioFile">
           <div class="audio-upload-wrapper">
@@ -153,34 +153,32 @@
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="时长(秒)" prop="duration">
-          <div @dblclick.stop>
-            <el-input-number v-model="form.duration" :min="0" @change="validateLastPlayTime" />
-          </div>
-          <div v-if="audioDuration > 0" class="form-tip">
-            音频时长: {{ formatDuration(audioDuration) }} ({{ audioDuration }}秒)
-          </div>
+        <el-form-item label="时长" prop="duration">
+          <el-input-number v-model="form.duration" :min="0" disabled style="width: 150px" />
+          <span style="margin-left: 10px; color: #999; font-size: 13px">
+            {{ form.duration ? `${Math.floor(form.duration / 60)}:${String(Math.floor(form.duration % 60)).padStart(2, '0')}` : '未设置' }}
+          </span>
         </el-form-item>
-        <el-form-item label="上次播放(秒)" prop="lastPlayTime">
-          <div @dblclick.stop>
-            <el-input-number v-model="form.lastPlayTime" :min="0" :max="form.duration || 0" />
+        <el-form-item label="上次播放" prop="lastPlayTime">
+          <div @dblclick.stop style="display: flex; align-items: center;">
+            <el-input-number v-model="form.lastPlayTime" :min="0" :max="form.duration || 0" style="width: 150px" />
+            <span style="margin-left: 10px; color: #999; font-size: 13px">
+              -{{ Math.floor(((form.duration || 0) - form.lastPlayTime) / 60) }}:{{ String(Math.floor(((form.duration || 0) - form.lastPlayTime) % 60)).padStart(2, '0') }}
+            </span>
           </div>
-          <div class="form-tip">取值范围：0 ~ 时长（{{ form.duration || 0 }}秒）</div>
           <el-slider
             v-model="form.lastPlayTime"
             :min="0"
             :max="form.duration || 0"
             :disabled="!form.duration"
-            style="margin-top: 10px; max-width: 300px"
+            style="margin-top: 10px; max-width: 280px"
           />
         </el-form-item>
         <el-form-item label="播放量" prop="playCount">
-          <div @dblclick.stop>
-            <el-input-number v-model="form.playCount" :min="0" />
-          </div>
+          <el-input-number v-model="form.playCount" :min="0" style="width: 150px" />
         </el-form-item>
-        <el-form-item label="收藏" prop="favorite">
-          <el-switch v-model="form.favorite" />
+        <el-form-item label="收藏" prop="isFavorite">
+          <el-switch v-model="form.isFavorite" />
         </el-form-item>
       </el-form>
 
@@ -216,7 +214,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Plus, Upload, Loading, VideoPlay } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getChapters, createChapter, updateChapter, deleteChapter, getCourses, batchUpdateSeq, uploadAudio, getFileTempUrl, deleteAudioFile } from '@/api/cloud'
+import { getChapters, createChapter, updateChapter, deleteChapter, getCourses, batchUpdateSeq, uploadAudio, getFileTempUrl, deleteAudioFile, getUserProgress, updateUserProgress } from '@/api/cloud'
 
 const router = useRouter()
 const route = useRoute()
@@ -230,6 +228,24 @@ const tableRef = ref(null)
 const uploadRef = ref(null)
 const audioRef = ref(null)
 const selectedCourse = ref('')
+
+// 获取当前登录用户（动态获取，确保登录后也能正确获取）
+function getCurrentUser() {
+  const stored = localStorage.getItem('tingting_admin_user')
+  if (stored) {
+    try {
+      const data = JSON.parse(stored)
+      // 检查是否过期（2小时）
+      if (data.loginTime && Date.now() - data.loginTime > 2 * 60 * 60 * 1000) {
+        return null
+      }
+      return data
+    } catch {
+      return null
+    }
+  }
+  return null
+}
 
 // 音频相关
 const audioAccept = '.mp3,.m4a,.wav,.ogg,.flac,.aac'
@@ -263,7 +279,7 @@ const form = reactive({
   duration: 0,
   lastPlayTime: 0,
   playCount: 0,
-  favorite: false
+  isFavorite: false
 })
 
 const rules = {
@@ -279,10 +295,13 @@ function formatDuration(seconds) {
   return `${min}:${sec.toString().padStart(2, '0')}`
 }
 
-// 计算学习进度
+// 计算学习进度（基于用户进度）
 function calcProgress(row) {
-  const finished = row.finished === true
-  const lastPlayTime = Number(row.lastPlayTime) || 0
+  const userProgress = row.userProgress
+  if (!userProgress) return 0
+
+  const finished = userProgress.finished === true
+  const lastPlayTime = Number(userProgress.lastPlayTime) || 0
   const duration = Number(row.duration) || 0
 
   // 完播=true，进度为100%
@@ -302,7 +321,14 @@ function calcProgress(row) {
 
 // 切换完播状态
 async function toggleFinished(row) {
-  const newFinished = !row.finished
+  const currentUser = getCurrentUser()
+  if (!currentUser || !currentUser.userId) {
+    ElMessage.warning('请先登录')
+    return
+  }
+
+  const userProgress = row.userProgress || {}
+  const newFinished = !userProgress.finished
   const action = newFinished ? '标记为完播' : '重置为未完播'
 
   try {
@@ -312,7 +338,11 @@ async function toggleFinished(row) {
       type: 'warning'
     })
 
-    const res = await updateChapter(row._id, { finished: newFinished })
+    const res = await updateUserProgress(currentUser.userId, row._id, {
+      finished: newFinished,
+      lastPlayTime: newFinished ? row.duration : 0,  // 完播时设为时长，重置时设为0
+      playCount: newFinished ? (userProgress.playCount || 0) + 1 : userProgress.playCount  // 完播时播放量+1
+    })
     if (res.success) {
       ElMessage.success(`${action}成功`)
       loadChapters()
@@ -435,13 +465,39 @@ async function loadChapters() {
     const res = await getChapters(filterCourseId)
     if (res.success) {
       // 关联课程名称
-      chapters.value = res.data.map(chapter => {
+      let chaptersData = res.data.map(chapter => {
         const course = courses.value.find(c => c._id === chapter.course)
         return {
           ...chapter,
           courseName: course ? course.title : '-'
         }
       })
+
+      // 加载当前用户进度
+      const currentUser = getCurrentUser()
+      if (currentUser && currentUser.userId) {
+        const progressRes = await getUserProgress(currentUser.userId, filterCourseId)
+        if (progressRes.success) {
+          // 构建进度映射
+          const progressMap = {}
+          progressRes.data.forEach(p => {
+            progressMap[p.chapterId] = p
+          })
+          // 合并用户进度到章节
+          chaptersData = chaptersData.map(chapter => ({
+            ...chapter,
+            userProgress: progressMap[chapter._id] || null
+          }))
+        }
+      } else {
+        // 未登录时，userProgress 为空
+        chaptersData = chaptersData.map(chapter => ({
+          ...chapter,
+          userProgress: null
+        }))
+      }
+
+      chapters.value = chaptersData
       initSortable()
     } else {
       ElMessage.error('加载章节失败: ' + res.error)
@@ -530,6 +586,7 @@ function stopAudio() {
 function showEditDialog(row) {
   isEdit.value = true
   currentId.value = row._id
+  const userProgress = row.userProgress || {}
   Object.assign(form, {
     course: row.course,
     seq: row.seq || 1,
@@ -538,9 +595,9 @@ function showEditDialog(row) {
     audioFileSize: row.audioFileSize || 0,
     audioUrl: row.audioUrl || '',
     duration: row.duration || 0,
-    lastPlayTime: row.lastPlayTime || 0,
-    playCount: row.playCount || 0,
-    favorite: row.favorite || false
+    lastPlayTime: userProgress.lastPlayTime || 0,
+    playCount: userProgress.playCount || 0,
+    isFavorite: userProgress.isFavorite || false
   })
   audioDuration.value = row.duration || 0
   // 从 audioUrl 提取文件名
@@ -585,7 +642,7 @@ function resetForm() {
     duration: 0,
     lastPlayTime: 0,
     playCount: 0,
-    favorite: false
+    isFavorite: false
   })
   audioDuration.value = 0
   existingAudioName.value = ''
@@ -607,9 +664,6 @@ async function handleSubmit() {
       seq: form.seq,
       title: form.title,
       duration: form.duration,
-      lastPlayTime: form.lastPlayTime,
-      playCount: form.playCount,
-      favorite: form.favorite,
       audioUrl: form.audioUrl,
       audioFileSize: form.audioFileSize
     }
@@ -653,6 +707,7 @@ async function handleSubmit() {
       }
     }
 
+    // 更新章节基本信息
     let res
     if (isEdit.value) {
       res = await updateChapter(currentId.value, submitData)
@@ -661,6 +716,16 @@ async function handleSubmit() {
     }
 
     if (res.success) {
+      // 如果已登录，同时更新当前用户的进度
+      const currentUser = getCurrentUser()
+      if (currentUser && currentUser.userId && isEdit.value) {
+        await updateUserProgress(currentUser.userId, currentId.value, {
+          lastPlayTime: form.lastPlayTime,
+          playCount: form.playCount,
+          isFavorite: form.isFavorite
+        })
+      }
+
       ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
       dialogVisible.value = false
       await loadChapters()

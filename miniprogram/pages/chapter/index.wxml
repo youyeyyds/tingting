@@ -84,5 +84,5 @@
   </scroll-view>
 
   <!-- 迷你播放器 -->
-  <mini-player id="miniPlayer" chapters="{{chapters}}" course="{{course}}" />
+  <mini-player id="miniPlayer" initialChapters="{{chapters}}" initialCourse="{{course}}" />
 </view>

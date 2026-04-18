@@ -91,3 +91,82 @@
 .tab-item.active .tab-text {
   color: #FF6B00;
 }
+
+/* 登录按钮 */
+.login-btn {
+  margin-top: 20rpx;
+  padding: 16rpx 60rpx;
+  background: #FF6B00;
+  color: #fff;
+  font-size: 28rpx;
+  border-radius: 8rpx;
+  border: none;
+}
+
+.login-btn::after {
+  border: none;
+}
+
+/* 手机号 */
+.phone {
+  font-size: 26rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+/* 学习统计卡片 */
+.stats-card {
+  margin-top: 30rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-radius: 16rpx;
+}
+
+.stats-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 20rpx;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  color: #FF6B00;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+/* 退出登录 */
+.logout-section {
+  margin-top: 30rpx;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 24rpx 0;
+  background: #fff;
+  color: #999;
+  font-size: 28rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #eee;
+}
+
+.logout-btn::after {
+  border: none;
+}

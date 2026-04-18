@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/chapter/index",
     "pages/favorite/index",
-    "pages/mine/index"
+    "pages/mine/index",
+    "pages/login/index"
   ],
   "window": {
     "backgroundColor": "#F6F6F6",
@@ -15,5 +16,8 @@
   "requiredBackgroundModes": ["audio"],
   "sitemapLocation": "sitemap.json",
   "style": "v2",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "mini-player": "/components/mini-player/index"
+  }
 }

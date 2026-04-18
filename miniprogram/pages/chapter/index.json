@@ -1,7 +1,5 @@
 {
-  "usingComponents": {
-    "mini-player": "/components/mini-player/index"
-  },
+  "usingComponents": {},
   "navigationStyle": "custom",
   "disableScroll": false
 }

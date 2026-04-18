@@ -14,16 +14,38 @@ App({
     this.bgAudioManager = wx.getBackgroundAudioManager();
     this.miniPlayerCallbacks = [];
     this.setupAudioEvents();
+
+    // 尝试恢复登录状态
+    this.restoreLoginState();
   },
 
   globalData: {
     userInfo: null,
     isLoggedIn: false,
+    userId: null,
     playingCourse: null,
     playingChapter: null,
     playingIndex: 0,
     miniPlayerActive: false,
-    miniPlayerIndexFadedIn: false
+    miniPlayerIndexFadedIn: false,
+    playMode: 'sequence', // 'sequence' | 'loop' | 'single'
+    playlistChaptersData: [], // 完整的播放列表数据
+    playlistSortOrder: 'asc' // 'asc' | 'desc'
+  },
+
+  restoreLoginState() {
+    const userId = wx.getStorageSync('userId');
+    const userInfoStr = wx.getStorageSync('userInfo');
+    if (userId && userInfoStr) {
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        this.globalData.isLoggedIn = true;
+        this.globalData.userId = userId;
+        this.globalData.userInfo = userInfo;
+      } catch (e) {
+        console.error('恢复登录状态失败:', e);
+      }
+    }
   },
 
   // 设置背景音频事件
@@ -32,9 +54,12 @@ App({
 
     bgAudio.onCanplay(() => {
       bgAudio.playbackRate = 2;
-      this.notifyCallbacks('onCanplay', {
-        duration: bgAudio.duration
-      });
+      const duration = bgAudio.duration;
+      if (duration && duration > 0) {
+        this.notifyCallbacks('onCanplay', {
+          duration: duration
+        });
+      }
     });
 
     bgAudio.onPlay(() => {
