@@ -76,8 +76,8 @@
 }
 
 .playlist-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,19 +88,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4rpx;
+  gap: 5rpx;
 }
 
 .playlist-line {
-  width: 18rpx;
-  height: 4rpx;
+  width: 22rpx;
+  height: 5rpx;
   background: #999;
   border-radius: 1rpx;
 }
 
 .speed-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,14 +108,14 @@
 }
 
 .speed-text {
-  font-size: 22rpx;
+  font-size: 26rpx;
   color: #FF6B00;
   font-weight: 500;
 }
 
 .play-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,15 +125,15 @@
 .play-icon {
   width: 0;
   height: 0;
-  border-top: 10rpx solid transparent;
-  border-bottom: 10rpx solid transparent;
-  border-left: 14rpx solid #999;
-  margin-left: 4rpx;
+  border-top: 12rpx solid transparent;
+  border-bottom: 12rpx solid transparent;
+  border-left: 18rpx solid #999;
+  margin-left: 5rpx;
 }
 
 .play-icon.pause {
-  width: 16rpx;
-  height: 18rpx;
+  width: 20rpx;
+  height: 22rpx;
   border: none;
   background: transparent;
   margin-left: 0;
@@ -143,15 +143,15 @@
 }
 
 .pause-bar {
-  width: 5rpx;
-  height: 18rpx;
+  width: 6rpx;
+  height: 22rpx;
   background: #999;
   border-radius: 2rpx;
 }
 
 .close-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +159,7 @@
 }
 
 .close-text {
-  font-size: 32rpx;
+  font-size: 40rpx;
   color: #999;
   line-height: 1;
 }
