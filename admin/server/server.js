@@ -540,6 +540,7 @@ app.get('/api/courses', async (req, res) => {
     // 关联分类名称和章节数
     const courses = coursesRes.data.map(course => ({
       ...course,
+      coverRandom: course.coverRandom !== false,
       categoryName: categoryMap[course.category] || '-',
       chapters: chaptersCountMap[course._id] || 0
     }));
@@ -565,6 +566,7 @@ app.post('/api/courses', async (req, res) => {
       author: data.author,
       category: data.category,
       cover: data.cover,
+      coverRandom: data.coverRandom !== false,
       description: data.description,
       onlineTime: data.onlineTime || '',
       status: data.status || 'published'
@@ -592,6 +594,7 @@ app.put('/api/courses/:id', async (req, res) => {
       author: data.author,
       category: data.category,
       cover: data.cover,
+      coverRandom: data.coverRandom !== false,
       description: data.description,
       onlineTime: data.onlineTime || '',
       status: data.status

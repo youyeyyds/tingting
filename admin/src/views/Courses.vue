@@ -113,8 +113,11 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="封面URL" prop="cover">
-          <el-input v-model="form.cover" placeholder="请输入封面图片URL" />
+        <el-form-item label="随机" prop="coverRandom">
+          <el-switch v-model="form.coverRandom" @change="updateCoverUrl" />
+        </el-form-item>
+        <el-form-item label="链接" prop="cover">
+          <el-input v-model="form.cover" readonly placeholder="自动生成" />
         </el-form-item>
         <el-form-item label="简介" prop="description">
           <el-input
@@ -153,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
@@ -195,6 +198,7 @@ const form = reactive({
   author: '',
   category: '',
   cover: '',
+  coverRandom: true,
   description: '',
   onlineTime: '',
   status: 'published'
@@ -203,6 +207,20 @@ const form = reactive({
 const rules = {
   title: [{ required: true, message: '请输入课程名称', trigger: 'blur' }],
   author: [{ required: true, message: '请输入作者', trigger: 'blur' }]
+}
+
+// 监听序号变化，更新封面URL
+watch(() => form.seq, () => {
+  if (dialogVisible.value) {
+    updateCoverUrl()
+  }
+})
+
+// 更新封面 URL
+function updateCoverUrl() {
+  form.cover = form.coverRandom
+    ? `https://picsum.photos/400?random=${form.seq}`
+    : `https://picsum.photos/seed/course${form.seq}/400/400`
 }
 
 // 加载课程列表
@@ -341,11 +359,10 @@ async function loadCategories() {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
-  // 计算下一个序号并生成默认封面
+  // 计算下一个序号
   const maxSeq = courses.value.length > 0 ? Math.max(...courses.value.map(c => c.seq || 0)) : 0
-  const nextSeq = maxSeq + 1
-  form.seq = nextSeq
-  form.cover = `https://picsum.photos/seed/course${nextSeq}/400/400`
+  form.seq = maxSeq + 1
+  updateCoverUrl()
   dialogVisible.value = true
 }
 
@@ -358,7 +375,8 @@ function showEditDialog(row) {
     title: row.title,
     author: row.author,
     category: row.category,
-    cover: row.cover,
+    cover: row.cover || '',
+    coverRandom: row.coverRandom !== false,
     description: row.description,
     onlineTime: row.onlineTime || '',
     status: row.status || 'published'
@@ -374,6 +392,7 @@ function resetForm() {
     author: '',
     category: '',
     cover: '',
+    coverRandom: true,
     description: '',
     onlineTime: '',
     status: 'published'
