@@ -210,8 +210,6 @@ Page({
     // 直接跳转到登录页
     wx.redirectTo({ url: '/pages/login/index' });
   },
-    });
-  },
 
   formatDuration(seconds) {
     if (!seconds || seconds <= 0) return '0分钟';
