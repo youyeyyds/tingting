@@ -144,16 +144,18 @@ Page({
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
 
-        // 直接跳转到个人页面
+        // 保持登录中状态，直接跳转到个人页面
         wx.redirectTo({ url: '/pages/mine/index' });
+        return; // 成功时不执行 finally 中的 loading: false
       } else {
         wx.showToast({ title: res.result.error || '登录失败', icon: 'none' });
       }
     } catch (err) {
       console.error('登录失败:', err);
       wx.showToast({ title: '登录失败', icon: 'none' });
-    } finally {
-      this.setData({ loading: false });
     }
+
+    // 只有失败时才恢复按钮状态
+    this.setData({ loading: false });
   }
 });
