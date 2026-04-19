@@ -165,7 +165,7 @@ const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
 const homeProtect = ref(true) // 首页保护，默认开启
 const copyrightText = ref('youyeyyds') // 版权文字
-const icpNumber = ref('粤ICP备2026041617号-1') // 备案号
+const icpNumber = ref('粤ICP备2026041617号-1X') // 备案号
 
 const form = reactive({
   seq: 1,

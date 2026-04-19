@@ -10,7 +10,7 @@ Page({
     headlines: [],
     refresherTriggered: false,
     copyrightText: 'youyeyyds',
-    icpNumber: '粤ICP备2026041617号-1',
+    icpNumber: '粤ICP备2026041617号-1X',
     loadTime: '' // 加载时间戳，用于图片URL
   },
 
@@ -71,7 +71,7 @@ Page({
       if (res.result.success && res.result.data) {
         this.setData({
           copyrightText: res.result.data.copyrightText || 'youyeyyds',
-          icpNumber: res.result.data.icpNumber || '粤ICP备2026041617号-1'
+          icpNumber: res.result.data.icpNumber || '粤ICP备2026041617号-1X'
         });
       }
     })
