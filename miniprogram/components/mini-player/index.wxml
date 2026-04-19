@@ -53,5 +53,5 @@
 </view>
 
 <!-- 播放列表面板 -->
-<playlist-panel id="playlistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}"
+<playlist-panel id="playlistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
                 bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" />

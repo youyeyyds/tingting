@@ -23,7 +23,8 @@ Component({
     speedOptions: [1, 2],
     chapters: [], // 播放列表
     course: {}, // 当前播放的课程
-    playlistSortOrder: 'asc' // 播放列表排序
+    playlistSortOrder: 'asc', // 播放列表排序
+    isFavoriteList: false // 是否是收藏列表
   },
 
   lifetimes: {
@@ -79,7 +80,7 @@ Component({
         return;
       }
 
-      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder } = app.globalData;
+      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, isFavoriteList } = app.globalData;
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
@@ -89,7 +90,8 @@ Component({
         courseName: playingCourse?.title || '',
         chapters: playlistChaptersData || [],
         course: playingCourse || {},
-        playlistSortOrder: playlistSortOrder || 'asc'
+        playlistSortOrder: playlistSortOrder || 'asc',
+        isFavoriteList: isFavoriteList || false
       };
 
       // 首页/收藏页/我的页：如果还没淡入过，则淡入
@@ -149,7 +151,8 @@ Component({
         currentIndex: index,
         courseCover: chapter.courseCover || '',
         courseName: chapter.courseTitle || '收藏列表',
-        playlistSortOrder: 'asc'
+        playlistSortOrder: 'asc',
+        isFavoriteList: true // 标识这是收藏列表
       });
 
       // 更新全局数据
@@ -161,6 +164,7 @@ Component({
       app.globalData.playMode = 'sequence';
       app.globalData.miniPlayerActive = true;
       app.globalData.miniPlayerIndexFadedIn = false;
+      app.globalData.isFavoriteList = true; // 标识这是收藏列表
 
       // 淡入显示
       this.fadeIn({
@@ -171,7 +175,8 @@ Component({
         courseName: chapter.courseTitle || '收藏列表',
         chapters: chapters,
         course: course,
-        playlistSortOrder: 'asc'
+        playlistSortOrder: 'asc',
+        isFavoriteList: true
       });
 
       // 播放音频（使用 loadAudio 处理云存储链接）
@@ -203,7 +208,7 @@ Component({
       const order = isNewPlaylist ? (sortOrder || 'asc') : (app.globalData.playlistSortOrder || sortOrder || 'asc');
 
       // 更新播放列表数据
-      this.setData({ chapters: chapters, course: course, playlistSortOrder: order });
+      this.setData({ chapters: chapters, course: course, playlistSortOrder: order, isFavoriteList: false });
 
       // 保存到全局数据，以便其他页面恢复
       app.globalData.playingCourse = course;
@@ -216,6 +221,7 @@ Component({
       }
       app.globalData.miniPlayerActive = true;
       app.globalData.miniPlayerIndexFadedIn = false;
+      app.globalData.isFavoriteList = false; // 课程播放列表
 
       this.fadeIn({
         playerBottom: this.calcPosition(),
@@ -223,7 +229,8 @@ Component({
         currentChapter: chapter,
         currentIndex: index,
         courseCover: course.cover || '',
-        courseName: course.title || ''
+        courseName: course.title || '',
+        isFavoriteList: false
       });
 
       this.loadAudio(chapter);
@@ -372,6 +379,7 @@ Component({
       app.globalData.playingChapter = null;
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = []; // 清空播放列表数据
+      app.globalData.isFavoriteList = false; // 清除收藏列表标识
       app.notifyCallbacks('onClose', {});
     },
 
@@ -472,7 +480,8 @@ Component({
       app.globalData.playingChapter = null;
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
-      this.setData({ visible: false, isPlaying: false, chapters: [] });
+      app.globalData.isFavoriteList = false;
+      this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false });
     },
 
     onPlaylistSyncSort(e) {

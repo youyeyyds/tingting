@@ -36,7 +36,8 @@ Component({
         }
       }
     },
-    initialSortOrder: { type: String, value: 'asc' }
+    initialSortOrder: { type: String, value: 'asc' },
+    isFavoriteList: { type: Boolean, value: false } // 是否是收藏列表
   },
 
   data: {
@@ -91,10 +92,15 @@ Component({
     applySort() {
       let chapters = [...this.properties.chapters];
       const currentId = this.properties.currentChapterId;
-      chapters.sort((a, b) => {
-        const diff = (a.seq || 0) - (b.seq || 0);
-        return this.data.sortOrder === 'asc' ? diff : -diff;
-      });
+
+      // 如果是收藏列表，保持原始顺序，不按 seq 排序
+      if (!this.properties.isFavoriteList) {
+        chapters.sort((a, b) => {
+          const diff = (a.seq || 0) - (b.seq || 0);
+          return this.data.sortOrder === 'asc' ? diff : -diff;
+        });
+      }
+
       chapters = chapters.map(ch => ({
         ...ch,
         isPlaying: ch._id === currentId
