@@ -48,8 +48,8 @@
           <!-- 分隔线 -->
           <view class="info-divider"></view>
           <!-- 第二行：序号 | 章节名称 -->
-          <view class="chapter-title-line">
-            <text class="chapter-seq {{item.isPlaying ? 'playing' : ''}}">{{item.seq}}</text>
+          <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}}">
+            <text class="chapter-seq">{{item.seq}}</text>
             <text class="chapter-sep">|</text>
             <text class="chapter-name">{{item.title}}</text>
           </view>

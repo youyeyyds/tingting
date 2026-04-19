@@ -216,7 +216,9 @@
   flex-shrink: 0;
 }
 
-.chapter-seq.playing {
+.chapter-title-line.playing .chapter-seq,
+.chapter-title-line.playing .chapter-sep,
+.chapter-title-line.playing .chapter-name {
   color: #FF6B00;
 }
 

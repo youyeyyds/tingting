@@ -42,6 +42,26 @@ Page({
           }))
         });
       },
+      onProgressUpdate: (data) => {
+        const { chapterId, lastPlayTime, finished } = data;
+        const favoriteChapters = this.data.favoriteChapters.map(ch => {
+          if (ch._id === chapterId) {
+            const duration = Number(ch.duration) || 0;
+            let progress = 0;
+            if (finished) {
+              progress = 100;
+            } else if (lastPlayTime > 0 && duration > 0) {
+              progress = Math.min(Math.round((lastPlayTime / duration) * 100), 100);
+            }
+            let progressText = '未学习';
+            if (progress === 100) progressText = '已学完';
+            else if (progress > 0) progressText = `已学${progress}%`;
+            return { ...ch, lastPlayTime, finished, progress, progressText };
+          }
+          return ch;
+        });
+        this.setData({ favoriteChapters });
+      },
       onClose: () => {
         this.setData({
           favoriteChapters: this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }))
