@@ -15,7 +15,7 @@ async function createHeadlinesTable() {
     const result = await db.collection('headlines').add({
       seq: 1,
       title: '欢迎使用听听',
-      image: 'https://picsum.photos/seed/headline1/400/200',
+      image: 'https://picsum.photos/seed/headline1/800/300',
       link: '',
       _createTime: new Date()
     });

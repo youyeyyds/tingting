@@ -189,8 +189,8 @@ watch(() => form.seq, () => {
 // 更新图片 URL
 function updateImageUrl() {
   form.image = form.imageRandom
-    ? `https://picsum.photos/400/200?random=${form.seq}`
-    : `https://picsum.photos/seed/index${form.seq}/400/200`
+    ? `https://picsum.photos/800/300?random=${form.seq}`
+    : `https://picsum.photos/seed/index${form.seq}/800/300`
 }
 
 // 加载横幅列表
@@ -391,8 +391,8 @@ async function handleDelete(row) {
 async function toggleRowImageRandom(row) {
   // 生成新的图片 URL
   const imageUrl = row.imageRandom
-    ? `https://picsum.photos/400/200?random=${row.seq}`
-    : `https://picsum.photos/seed/index${row.seq}/400/200`
+    ? `https://picsum.photos/800/300?random=${row.seq}`
+    : `https://picsum.photos/seed/index${row.seq}/800/300`
 
   // 更新本地数据
   row.image = imageUrl
@@ -413,15 +413,15 @@ async function toggleRowImageRandom(row) {
       // 恢复原状态
       row.imageRandom = !row.imageRandom
       row.image = row.imageRandom
-        ? `https://picsum.photos/400/200?random=${row.seq}`
-        : `https://picsum.photos/seed/index${row.seq}/400/200`
+        ? `https://picsum.photos/800/300?random=${row.seq}`
+        : `https://picsum.photos/seed/index${row.seq}/800/300`
     }
   } catch (err) {
     ElMessage.error('保存失败')
     row.imageRandom = !row.imageRandom
     row.image = row.imageRandom
-      ? `https://picsum.photos/400/200?random=${row.seq}`
-      : `https://picsum.photos/seed/index${row.seq}/400/200`
+      ? `https://picsum.photos/800/300?random=${row.seq}`
+      : `https://picsum.photos/seed/index${row.seq}/800/300`
   }
 }
 
