@@ -127,7 +127,7 @@
 .clear-btn {
   font-size: 26rpx;
   color: #FF6B00;
-  margin-left: 48rpx;
+  margin-left: 32rpx;
 }
 
 /* 清空确认弹窗 */
