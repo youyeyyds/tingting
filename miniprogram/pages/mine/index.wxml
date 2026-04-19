@@ -29,9 +29,9 @@
       <text class="phone">{{userInfo.phone || ''}}</text>
     </view>
 
-    <!-- 学习统计（已登录时显示） -->
+    <!-- 学习报告（已登录时显示） -->
     <view class="stats-card" wx:if="{{isLoggedIn}}">
-      <view class="stats-title">学习统计</view>
+      <view class="stats-title">学习报告</view>
       <view class="stats-grid">
         <view class="stat-item">
           <text class="stat-value">{{stats.finishedCount}}</text>

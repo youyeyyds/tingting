@@ -144,12 +144,8 @@ Page({
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
 
-        wx.showToast({ title: '登录成功', icon: 'success' });
-
-        // 跳转到首页
-        setTimeout(() => {
-          wx.redirectTo({ url: '/pages/index/index' });
-        }, 500);
+        // 直接跳转到个人页面
+        wx.switchTab({ url: '/pages/mine/index' });
       } else {
         wx.showToast({ title: res.result.error || '登录失败', icon: 'none' });
       }
