@@ -245,7 +245,7 @@ async function saveCopyright() {
       icpNumber: icpNumber.value
     })
     if (res.success) {
-      ElMessage.success('版权信息已保存')
+      ElMessage.success('底部信息已保存')
     } else {
       ElMessage.error('保存失败: ' + res.error)
     }
