@@ -197,31 +197,10 @@ Page({
 
   handleLogin() {
     if (this.data.isLoggedIn) {
-      // 退出登录
-      // 停止播放器并清空播放状态
-      app.bgAudioManager.stop();
-      app.globalData.miniPlayerActive = false;
-      app.globalData.miniPlayerIndexFadedIn = false;
-      app.globalData.playingCourse = null;
-      app.globalData.playingChapter = null;
-      app.globalData.playingIndex = 0;
-      app.globalData.playlistChaptersData = [];
-      app.globalData.playMode = 'sequence';
-      app.globalData.playlistSortOrder = 'asc';
-      // 通知 mini-player 关闭
-      app.notifyCallbacks('onClose', {});
-
-      app.globalData.isLoggedIn = false;
-      app.globalData.userInfo = null;
-      app.globalData.userId = null;
-      wx.removeStorageSync('userId');
-      wx.removeStorageSync('userInfo');
-      this.setData({ isLoggedIn: false });
-      // 重新加载课程（应用首页保护）
-      this.loadCourses();
-      wx.showToast({ title: '已退出', icon: 'success' });
+      // 已登录时跳转到个人页面
+      wx.redirectTo({ url: '/pages/mine/index' });
     } else {
-      // 跳转到登录页
+      // 未登录时跳转到登录页
       wx.navigateTo({ url: '/pages/login/index' });
     }
   },
