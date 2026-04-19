@@ -249,6 +249,7 @@ const getUserStats = async (event) => {
           ...ch,
           courseTitle: course.title || '',
           courseCover: course.cover || '',
+          author: course.author || '',
           userProgress: progress
         };
       });

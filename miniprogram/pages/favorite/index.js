@@ -11,8 +11,8 @@ Page({
     headlines: [],
     refresherTriggered: false,
     loadTime: '',
-    loading: true,
-    bannerSpeed: 5000
+    bannerSpeed: 5000,
+    loading: true
   },
 
   onLoad() {
@@ -29,8 +29,6 @@ Page({
     this.loadHeadlines();
     if (this.data.isLoggedIn) {
       this.loadFavorites();
-    } else {
-      this.setData({ loading: false });
     }
   },
 
@@ -39,9 +37,8 @@ Page({
     // 切换页面时不重新加载，保持原有数据
     if (this.data.isLoggedIn && app.globalData.userId) {
       if (this.data.favoriteChapters.length === 0) {
-        this.setData({ loading: true });
+        this.loadFavorites();
       }
-      this.loadFavorites();
     }
   },
 
@@ -189,6 +186,14 @@ Page({
 
   handleLogin() {
     wx.navigateTo({ url: '/pages/login/index' });
+  },
+
+  // 点击课程跳转到课程详情页
+  onCourseTap(e) {
+    const courseId = e.currentTarget.dataset.id;
+    if (courseId) {
+      wx.navigateTo({ url: `/pages/chapter/index?id=${courseId}` });
+    }
   },
 
   // 点击卡片播放

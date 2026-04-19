@@ -18,61 +18,50 @@
     <view class="banner-placeholder" wx:else></view>
 
     <!-- 未登录状态 -->
-    <view class="empty-state" wx:if="{{!isLoggedIn}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
-      <image class="empty-icon" src="/icons/svg/favorite.svg" mode="aspectFit" />
+    <view class="empty-tip" wx:if="{{!isLoggedIn}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
       <text class="empty-text">请先登录查看收藏</text>
       <button class="login-btn" bindtap="handleLogin">登录</button>
     </view>
 
-    <!-- 加载状态 -->
-    <view class="favorite-list" wx:if="{{isLoggedIn && loading}}">
-      <view class="chapter-card skeleton" wx:for="{{3}}" wx:key="index">
-        <view class="chapter-cover skeleton-bg"></view>
-        <view class="chapter-info">
-          <view class="skeleton-row skeleton-bg"></view>
-          <view class="skeleton-row skeleton-bg" style="width: 60%;"></view>
-          <view class="skeleton-row skeleton-bg" style="width: 40%;"></view>
-        </view>
-      </view>
-    </view>
-
     <!-- 已登录但无收藏 -->
-    <view class="empty-state" wx:if="{{isLoggedIn && !loading && favoriteChapters.length === 0}}">
-      <image class="empty-icon" src="/icons/svg/favorite.svg" mode="aspectFit" />
+    <view class="empty-tip" wx:if="{{isLoggedIn && favoriteChapters.length === 0 && !loading}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
       <text class="empty-text">暂无收藏章节</text>
     </view>
 
     <!-- 收藏列表 -->
-    <view class="favorite-list" wx:if="{{isLoggedIn && !loading && favoriteChapters.length > 0}}">
+    <view class="favorite-list" wx:if="{{isLoggedIn && favoriteChapters.length > 0}}">
       <view class="chapter-card" wx:for="{{favoriteChapters}}" wx:key="_id"
         data-index="{{index}}" bindtap="onChapterTap">
         <!-- 左边封面 -->
-        <image class="chapter-cover" src="{{item.courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+        <view class="chapter-cover-wrapper">
+          <image class="chapter-cover" src="{{item.courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+        </view>
         <!-- 右边信息 -->
         <view class="chapter-info">
-          <!-- 第一行：作者 · 课程名称 -->
-          <view class="info-row">
+          <!-- 第一行：作者 · 课程名称 + 跳转按钮 -->
+          <view class="chapter-top-line" catchtap="onCourseTap" data-id="{{item.course}}">
             <text class="chapter-author">{{item.author || '未知作者'}}</text>
-            <text class="separator">·</text>
+            <text class="chapter-sep-top">·</text>
             <text class="chapter-course">{{item.courseTitle || '未知课程'}}</text>
+            <view class="course-arrow"></view>
           </view>
           <!-- 分隔线 -->
           <view class="info-divider"></view>
           <!-- 第二行：序号 | 章节名称 -->
-          <view class="info-row">
+          <view class="chapter-title-line">
             <text class="chapter-seq">{{item.seq}}</text>
-            <text class="separator">|</text>
-            <text class="chapter-title">{{item.title}}</text>
+            <text class="chapter-sep">|</text>
+            <text class="chapter-name">{{item.title}}</text>
           </view>
           <!-- 第三行：时长 | 学习进度 -->
-          <view class="info-row">
+          <view class="chapter-meta-line">
             <text class="chapter-duration">{{item.durationText}}</text>
-            <text class="separator">|</text>
-            <text class="chapter-progress {{item.progress === 100 ? 'finished' : ''}}">{{item.progressText}}</text>
+            <text class="chapter-sep-meta">|</text>
+            <text class="chapter-progress">{{item.progressText}}</text>
           </view>
         </view>
-        <!-- 右下角按钮 -->
-        <view class="card-actions">
+        <!-- 右下角操作按钮 -->
+        <view class="chapter-actions">
           <view class="play-btn" catchtap="onPlayTap" data-index="{{index}}">
             <view class="play-triangle"></view>
           </view>

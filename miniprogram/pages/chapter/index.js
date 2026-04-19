@@ -337,7 +337,7 @@ Page({
       }
     }).then(res => {
       if (res.result.success) {
-        const newIsFavorite = res.result.isFavorite;
+        const newIsFavorite = res.result.data.isFavorite;
         // 更新章节列表中的收藏状态
         this.setData({
           chapters: this.data.chapters.map(ch =>

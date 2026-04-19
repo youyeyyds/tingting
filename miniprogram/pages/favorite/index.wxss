@@ -50,23 +50,16 @@
   height: 100%;
 }
 
-.empty-state {
+.empty-tip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 0;
-}
-
-.empty-icon {
-  width: 120rpx;
-  height: 120rpx;
-  opacity: 0.5;
+  padding: 60rpx 30rpx;
 }
 
 .empty-text {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #999;
-  margin-top: 20rpx;
 }
 
 /* 底部导航栏 */
@@ -124,129 +117,157 @@
 
 /* 收藏列表 */
 .favorite-list {
-  width: 100%;
-  padding: 20rpx 30rpx;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx 30rpx 0;
 }
 
 .chapter-card {
   display: flex;
-  padding: 24rpx;
+  align-items: center;
   background: #fff;
   border-radius: 16rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
+  padding: 28rpx;
   position: relative;
-  box-sizing: border-box;
-}
-
-/* 骨架占位 */
-.chapter-card.skeleton {
-  pointer-events: none;
-}
-
-.skeleton-bg {
-  background: #f0f0f0;
-}
-
-.skeleton-row {
-  height: 24rpx;
-  border-radius: 4rpx;
-  margin: 8rpx 0;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
 /* 左边封面 */
-.chapter-cover {
+.chapter-cover-wrapper {
   width: 140rpx;
   height: 140rpx;
   border-radius: 12rpx;
   background: #eee;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chapter-cover {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
 }
 
 /* 右边信息 */
 .chapter-info {
   flex: 1;
-  margin-left: 20rpx;
-  display: flex;
-  flex-direction: column;
+  margin-left: 24rpx;
   min-width: 0;
 }
 
-.info-row {
+/* 第一行：作者 · 课程名称 */
+.chapter-top-line {
   display: flex;
   align-items: center;
+  padding: 4rpx 0;
 }
 
-.separator {
-  color: #999;
-  margin: 0 8rpx;
-  font-size: 24rpx;
-}
-
-.info-divider {
-  height: 1rpx;
-  background: #eee;
-  margin: 14rpx 0;
-}
-
-/* 第一行 */
 .chapter-author {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #666;
+  flex-shrink: 0;
+}
+
+.chapter-sep-top {
+  font-size: 26rpx;
+  color: #ccc;
+  margin: 0 6rpx;
 }
 
 .chapter-course {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #666;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
-/* 第二行 */
+.course-arrow {
+  width: 12rpx;
+  height: 12rpx;
+  border-left: 2rpx solid #999;
+  border-bottom: 2rpx solid #999;
+  transform: rotate(-135deg);
+  margin-left: 8rpx;
+  flex-shrink: 0;
+}
+
+/* 分隔线 */
+.info-divider {
+  height: 1rpx;
+  background: #eee;
+  margin: 16rpx 0;
+}
+
+/* 第二行：序号 | 章节名称 */
+.chapter-title-line {
+  display: flex;
+  align-items: flex-start;
+}
+
 .chapter-seq {
-  font-size: 28rpx;
-  color: #FF6B00;
-  font-weight: 600;
-}
-
-.chapter-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #333;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-/* 第三行 */
+.chapter-sep {
+  font-size: 30rpx;
+  color: #333;
+  margin: 0 8rpx;
+  flex-shrink: 0;
+}
+
+.chapter-name {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  word-break: break-all;
+  flex: 1;
+}
+
+/* 第三行：时长 | 进度 */
+.chapter-meta-line {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+}
+
 .chapter-duration {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #999;
 }
 
+.chapter-sep-meta {
+  font-size: 26rpx;
+  color: #ccc;
+  margin: 0 8rpx;
+}
+
 .chapter-progress {
-  font-size: 24rpx;
-  color: #FF6B00;
+  font-size: 26rpx;
+  color: #999;
 }
 
-.chapter-progress.finished {
-  color: #52c41a;
-}
-
-/* 右下角按钮 */
-.card-actions {
+/* 右下角操作按钮 */
+.chapter-actions {
   position: absolute;
-  right: 20rpx;
-  bottom: 20rpx;
+  right: 24rpx;
+  bottom: 24rpx;
   display: flex;
+  align-items: center;
   gap: 16rpx;
 }
 
 .play-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 12rpx 24rpx;
   background: #FF6B00;
   border-radius: 12rpx;
@@ -263,15 +284,15 @@
 .close-btn {
   width: 52rpx;
   height: 52rpx;
-  background: #f5f5f5;
-  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f5f5f5;
+  border-radius: 12rpx;
 }
 
 .close-text {
-  font-size: 36rpx;
+  font-size: 40rpx;
   color: #999;
   line-height: 1;
 }
