@@ -1,5 +1,5 @@
 <!--index.wxml-->
-<view class="page-container">
+<view class="page-container {{pageAnimating ? 'page-exit' : ''}}">
   <!-- 固定顶部区域 -->
   <view class="header-fixed">
     <!-- 状态栏占位 -->

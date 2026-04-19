@@ -51,7 +51,8 @@ Page({
     activeTab: 0,
     refresherTriggered: false,
     maskedAuthors: {}, // 存储课程ID对应的随机作者
-    loadTime: '' // 加载时间戳
+    loadTime: '', // 加载时间戳
+    pageAnimating: false // 页面退出动画
   },
 
   onLoad() {
@@ -197,8 +198,11 @@ Page({
 
   handleLogin() {
     if (this.data.isLoggedIn) {
-      // 已登录时跳转到个人页面
-      wx.redirectTo({ url: '/pages/mine/index' });
+      // 已登录时，触发动画后跳转到个人页面
+      this.setData({ pageAnimating: true });
+      setTimeout(() => {
+        wx.redirectTo({ url: '/pages/mine/index' });
+      }, 200);
     } else {
       // 未登录时跳转到登录页
       wx.navigateTo({ url: '/pages/login/index' });

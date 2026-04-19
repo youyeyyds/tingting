@@ -7,6 +7,22 @@
   background: #f5f5f5;
 }
 
+/* 页面退出动画 */
+.page-exit {
+  animation: pageExit 0.2s ease forwards;
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30rpx);
+  }
+}
+
 /* 固定顶部 */
 .header-fixed {
   position: fixed;
