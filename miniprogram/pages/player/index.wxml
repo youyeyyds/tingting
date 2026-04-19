@@ -1,0 +1,97 @@
+<!--player/index.wxml-->
+<view class="player-container {{showAnimation}}">
+  <!-- 收起按钮 -->
+  <view class="header-area" bindtap="handleClose">
+    <view class="collapse-icon"></view>
+  </view>
+
+  <!-- 课程信息 -->
+  <view class="course-info">
+    <image class="course-cover {{isPlaying ? 'rotating' : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+    <view class="course-details">
+      <text class="course-title">{{courseTitle || '未知课程'}}</text>
+      <text class="course-author">{{courseAuthor || '未知作者'}}</text>
+      <text class="course-meta">{{chapterCount}}章</text>
+    </view>
+  </view>
+
+  <!-- 播放控制面板 -->
+  <view class="control-panel">
+    <!-- 第一行：进度条 -->
+    <view class="progress-row">
+      <slider class="progress-slider" min="0" max="100" value="{{progressPercent}}"
+        block-size="12" activeColor="#FF6B00" backgroundColor="#eee"
+        bindchange="onSliderChange" bindchanging="onSliderChanging" />
+    </view>
+    <view class="time-row">
+      <text class="current-time">{{currentTimeText}}</text>
+      <text class="remaining-time" bindtap="toggleTimeDisplay">{{remainingTimeText}}</text>
+    </view>
+
+    <!-- 第二行：播放控制按钮 -->
+    <view class="play-controls">
+      <view class="control-btn prev-btn" bindtap="playPrev">
+        <view class="prev-icon"></view>
+      </view>
+      <view class="control-btn rewind-btn" bindtap="rewind15">
+        <text class="rewind-text">-15</text>
+      </view>
+      <view class="control-btn play-pause-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlayPause">
+        <view class="play-icon" wx:if="{{!isPlaying}}"></view>
+        <view class="pause-icon" wx:else>
+          <view class="pause-bar"></view>
+          <view class="pause-bar"></view>
+        </view>
+      </view>
+      <view class="control-btn forward-btn" bindtap="forward30">
+        <text class="forward-text">+30</text>
+      </view>
+      <view class="control-btn next-btn" bindtap="playNext">
+        <view class="next-icon"></view>
+      </view>
+    </view>
+
+    <!-- 第三行：功能按钮 -->
+    <view class="func-row">
+      <view class="func-btn mode-btn" bindtap="togglePlayMode">
+        <view class="mode-icon {{playMode}}">
+          <text class="mode-text" wx:if="{{playMode === 'sequence'}}">→</text>
+          <text class="mode-text" wx:elif="{{playMode === 'loop'}}">↻</text>
+          <text class="mode-text" wx:else>1</text>
+        </view>
+      </view>
+      <view class="func-btn playlist-btn" bindtap="showPlaylist">
+        <view class="playlist-icon">
+          <view class="list-bar"></view>
+          <view class="list-bar"></view>
+          <view class="list-bar"></view>
+        </view>
+      </view>
+      <view class="func-btn speed-btn">
+        <text class="speed-text">{{playbackRate}}x</text>
+      </view>
+      <view class="func-btn sort-btn" bindtap="toggleSort">
+        <text class="sort-text">{{sortOrder === 'asc' ? '↑' : '↓'}}</text>
+      </view>
+      <view class="func-btn favorite-btn {{isFavorite ? 'favorited' : ''}}" bindtap="toggleFavorite">
+        <text class="favorite-icon">♡</text>
+      </view>
+    </view>
+
+    <!-- 第四行：倍速调整 -->
+    <view class="speed-control">
+      <view class="speed-slider-container">
+        <view class="speed-marks">
+          <view class="speed-mark {{playbackRate === 1 ? 'active' : ''}}" data-rate="1" bindtap="setSpeed">1x</view>
+          <view class="speed-mark {{playbackRate === 1.5 ? 'active' : ''}}" data-rate="1.5" bindtap="setSpeed">1.5x</view>
+          <view class="speed-mark {{playbackRate === 2 ? 'active' : ''}}" data-rate="2" bindtap="setSpeed">2x</view>
+          <view class="speed-mark {{playbackRate === 2.5 ? 'active' : ''}}" data-rate="2.5" bindtap="setSpeed">2.5x</view>
+          <view class="speed-mark {{playbackRate === 3 ? 'active' : ''}}" data-rate="3" bindtap="setSpeed">3x</view>
+        </view>
+        <view class="speed-track">
+          <view class="speed-indicator" style="left: {{speedIndicatorPos}}%;"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

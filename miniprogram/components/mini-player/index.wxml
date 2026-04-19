@@ -1,15 +1,18 @@
 <!--mini-player/index.wxml-->
 <view wx:if="{{visible}}" class="mini-player {{fadeInClass}}" style="bottom: {{playerBottom}}px;" catchtouchmove="preventMove">
-  <!-- 封面 -->
-  <image class="chapter-cover" src="{{courseCover}}" mode="aspectFill" />
+  <!-- 左边可点击区域：封面和信息 -->
+  <view class="left-area" bindtap="openPlayerPage">
+    <!-- 封面 -->
+    <image class="chapter-cover" src="{{courseCover}}" mode="aspectFill" />
 
-  <!-- 信息 -->
-  <view class="chapter-info">
-    <view class="chapter-title">{{currentChapter.title}}</view>
-    <view class="chapter-meta">
-      <text class="course-name">{{courseName}}</text>
-      <text class="dot">·</text>
-      <text class="chapter-seq">第{{currentChapter.seq}}章</text>
+    <!-- 信息 -->
+    <view class="chapter-info">
+      <view class="chapter-title">{{currentChapter.title}}</view>
+      <view class="chapter-meta">
+        <text class="course-name">{{courseName}}</text>
+        <text class="dot">·</text>
+        <text class="chapter-seq">第{{currentChapter.seq}}章</text>
+      </view>
     </view>
   </view>
 

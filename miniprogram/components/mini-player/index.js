@@ -450,6 +450,11 @@ Component({
 
     preventMove() {},
 
+    // 打开播放控制页面
+    openPlayerPage() {
+      wx.navigateTo({ url: '/pages/player/index' });
+    },
+
     // 播放列表相关方法
     onPlaylistTap() {
       const playlistPanel = this.selectComponent('#playlistPanel');

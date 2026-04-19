@@ -31,6 +31,13 @@
   to { opacity: 0; }
 }
 
+/* 左边可点击区域 */
+.left-area {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
 .chapter-cover {
   width: 70rpx;
   height: 70rpx;

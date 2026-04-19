@@ -460,7 +460,35 @@ const toggleFavorite = async (event) => {
 
     return {
       success: true,
-      isFavorite: newIsFavorite
+      data: { isFavorite: newIsFavorite }
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
+// 检查收藏状态
+const checkFavorite = async (event) => {
+  try {
+    const { chapterId, userId } = event;
+    const currentUserId = getUserId(event);
+
+    const progressRes = await db.collection("userProgress")
+      .where({
+        userId: currentUserId,
+        chapterId: chapterId
+      })
+      .limit(1)
+      .get();
+
+    const isFavorite = progressRes.data[0]?.isFavorite || false;
+
+    return {
+      success: true,
+      data: { isFavorite }
     };
   } catch (e) {
     return {
@@ -520,6 +548,8 @@ exports.main = async (event, context) => {
       return await updateChapterProgress(event);
     case "toggleFavorite":
       return await toggleFavorite(event);
+    case "checkFavorite":
+      return await checkFavorite(event);
     case "getCopyright":
       return await getCopyright();
     default:
