@@ -10,16 +10,19 @@ Page({
     favoriteChapters: [],
     headlines: [],
     loading: true,
-    refresherTriggered: false
+    refresherTriggered: false,
+    loadTime: ''
   },
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const loadTime = Date.now();
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
-      navBarHeight: navBarHeight
+      navBarHeight: navBarHeight,
+      loadTime: loadTime
     });
     this.checkLoginStatus();
     this.loadHeadlines();
@@ -27,16 +30,17 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
-    this.loadHeadlines();
+    // 切换页面时不重新加载，保持原有数据
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavorites();
     }
   },
 
   onRefresh() {
-    this.setData({ refresherTriggered: true });
+    const newLoadTime = Date.now();
+    this.setData({ refresherTriggered: true, loadTime: newLoadTime });
     this.checkLoginStatus();
-    this.loadHeadlines(true);
+    this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavoritesAsync().then(() => {
         this.setData({ refresherTriggered: false });
@@ -78,20 +82,17 @@ Page({
     });
   },
 
-  loadHeadlines(refresh = false) {
+  loadHeadlines() {
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'favorite' }
     })
     .then(res => {
       if (res.result.success) {
-        let headlines = res.result.data;
-        if (refresh) {
-          headlines = headlines.map(h => ({
-            ...h,
-            image: this.addTimestamp(h.image)
-          }));
-        }
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
         this.setData({ headlines: headlines });
       }
     })
@@ -100,7 +101,7 @@ Page({
 
   addTimestamp(url) {
     if (!url) return url;
-    const t = Date.now();
+    const t = this.data.loadTime;
     return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 

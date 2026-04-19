@@ -1,7 +1,7 @@
 // index.js
 const app = getApp();
 
-// 随机作者名称列表（金庸小说人物，共100个）
+// 随机作者名称列表（金庸小说人物，共200个）
 const randomAuthors = [
   // 射雕英雄传
   '郭靖', '黄蓉', '黄药师', '欧阳锋', '洪七公', '周伯通', '一灯大师', '梅超风', '杨康', '穆念慈',
@@ -18,9 +18,23 @@ const randomAuthors = [
   // 笑傲江湖
   '令狐冲', '任盈盈', '岳不群', '宁中则', '林平之', '岳灵珊', '左冷禅', '向问天', '任我行', '东方不败',
   '童柏熊', '黄钟公', '黑白子', '秃笔翁', '丹青生', '莫大先生', '刘正风', '曲洋', '定闲师太', '余沧海',
-  // 鹿鼎记及其他
+  // 鹿鼎记
   '韦小宝', '陈近南', '康熙', '双儿', '阿珂', '苏荃', '方怡', '沐剑屏', '曾柔', '建宁公主',
-  '袁承志', '温青青', '金蛇郎君', '胡斐', '苗若兰', '苗人凤', '狄云', '戚芳', '石破天', '叮叮当当'
+  '鳌拜', '索额图', '明珠', '施琅', '风际中', '徐天川', '澄观', '澄光', '白寒松', '白寒松',
+  // 书剑恩仇录
+  '陈家洛', '霍青桐', '香香公主', '文泰来', '骆冰', '余万亭', '无尘道长', '赵半山', '徐天川', '心砚',
+  '周绮', '孟健雄', '章进', '卫春华', '石双英', '蒋四根', '杨成协', '常赫志', '常伯志', '哈合台',
+  // 碧血剑
+  '袁承志', '温青青', '金蛇郎君', '何红药', '温仪', '温方山', '温方施', '温方悟', '温方禄', '穆人清',
+  '黄真', '归辛树', '归二娘', '何铁手', '五毒教主', '李自成', '刘宗敏', '宋献策', '田见秀', '袁崇焕',
+  // 雪山飞狐
+  '胡斐', '苗若兰', '苗人凤', '胡一刀', '南兰', '田归农', '商宝震', '阎基', '杜希孟', '平阿四',
+  '宝树和尚', '陶百岁', '殷吉', '刘元鹤', '曹云奇', '周云阳', '阮士中', '姬晓峰', '欧阳公政', '上官铁生',
+  // 连城诀
+  '狄云', '戚芳', '水笙', '丁典', '凌霜华', '万震山', '万圭', '言达平', '戚长发', '花铁干',
+  // 侠客行
+  '石破天', '叮叮当当', '石中玉', '白自在', '史小翠', '谢烟客', '贝海石', '白万剑', '花万紫', '侍剑',
+  '阿绣', '丁不三', '丁不四', '梅文馨', '欢喜老祖', '上清观主', '愚茶道长', '桂香婆婆', '冲虚道长', '清虚道长'
 ];
 
 Page({
@@ -35,18 +49,26 @@ Page({
     homeProtect: true, // 默认开启首页保护
     loading: true,
     activeTab: 0,
-    refresherTriggered: false
+    refresherTriggered: false,
+    maskedAuthors: {}, // 存储课程ID对应的随机作者
+    loadTime: '' // 加载时间戳
   },
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const loadTime = Date.now();
+
+    // 初始化随机作者映射
+    const maskedAuthors = {};
 
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
-      headerHeight: windowInfo.statusBarHeight + navBarHeight
+      headerHeight: windowInfo.statusBarHeight + navBarHeight,
+      loadTime: loadTime,
+      maskedAuthors: maskedAuthors
     });
 
     this.checkLoginStatus();
@@ -56,34 +78,36 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
-    this.loadHeadlinesAsync();
-    this.loadCoursesAsync();
+    // 切换页面时不重新加载，保持原有数据
   },
 
   onRefresh() {
-    this.setData({ refresherTriggered: true });
+    const newLoadTime = Date.now();
+    // 重新生成随机作者
+    const newMaskedAuthors = {};
+    this.data.courses.forEach(course => {
+      newMaskedAuthors[course._id] = randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
+    });
+    this.setData({ refresherTriggered: true, loadTime: newLoadTime, maskedAuthors: newMaskedAuthors });
     Promise.all([
-      this.loadHeadlinesAsync(true),
-      this.loadCoursesAsync(true)
+      this.loadHeadlinesAsync(),
+      this.loadCoursesAsync()
     ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
   },
 
-  loadHeadlinesAsync(refresh = false) {
+  loadHeadlinesAsync() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'index' }
     })
     .then(res => {
       if (res.result.success) {
-        let headlines = res.result.data;
-        if (refresh) {
-          headlines = headlines.map(h => ({
-            ...h,
-            image: this.addTimestamp(h.image)
-          }));
-        }
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
         this.setData({
           headlines: headlines,
           bannerSpeed: (res.result.speed || 3) * 1000,
@@ -95,7 +119,7 @@ Page({
     .catch(err => console.error('获取头条失败', err));
   },
 
-  loadCoursesAsync(refresh = false) {
+  loadCoursesAsync() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
@@ -107,13 +131,10 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
-        let courses = res.result.data;
-        if (refresh) {
-          courses = courses.map(c => ({
-            ...c,
-            cover: this.addTimestamp(c.cover)
-          }));
-        }
+        const courses = res.result.data.map(c => ({
+          ...c,
+          cover: this.addTimestamp(c.cover)
+        }));
         this.setData({
           courses: courses,
           loading: false
@@ -130,23 +151,26 @@ Page({
 
   addTimestamp(url) {
     if (!url) return url;
-    const t = Date.now();
+    const t = this.data.loadTime;
     return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   // 处理课程显示（根据首页保护和登录状态）
   processCourses() {
-    const { homeProtect, isLoggedIn, courses } = this.data;
+    const { homeProtect, isLoggedIn, courses, maskedAuthors } = this.data;
     if (!homeProtect || isLoggedIn) {
       // 首页保护关闭或已登录，显示真实数据
       return;
     }
     // 首页保护开启且未登录，隐藏课程信息
-    const maskedCourses = courses.map(course => ({
-      ...course,
-      title: '登录后可见',
-      author: randomAuthors[Math.floor(Math.random() * randomAuthors.length)]
-    }));
+    const maskedCourses = courses.map(course => {
+      const randomAuthor = maskedAuthors[course._id] || randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
+      return {
+        ...course,
+        title: '登录后可见',
+        author: randomAuthor
+      };
+    });
     this.setData({ courses: maskedCourses });
   },
 

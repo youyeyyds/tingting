@@ -10,49 +10,50 @@ Page({
     headlines: [],
     refresherTriggered: false,
     showPassword: false,
-    copyrightText: 'youyeyyds'
+    copyrightText: 'youyeyyds',
+    loadTime: '' // 加载时间戳，用于图片URL
   },
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
+    const loadTime = Date.now();
     this.setData({
-      statusBarHeight: windowInfo.statusBarHeight
+      statusBarHeight: windowInfo.statusBarHeight,
+      loadTime: loadTime
     });
     this.loadHeadlines();
     this.loadCopyright();
   },
 
   onRefresh() {
-    this.setData({ refresherTriggered: true });
+    const newLoadTime = Date.now();
+    this.setData({ refresherTriggered: true, loadTime: newLoadTime });
     Promise.all([
-      this.loadHeadlinesAsync(true),
-      this.loadCopyrightAsync(true)
+      this.loadHeadlinesAsync(),
+      this.loadCopyrightAsync()
     ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
   },
 
-  loadHeadlinesAsync(refresh = false) {
+  loadHeadlinesAsync() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'login' }
     })
     .then(res => {
       if (res.result.success) {
-        let headlines = res.result.data;
-        if (refresh) {
-          headlines = headlines.map(h => ({
-            ...h,
-            image: this.addTimestamp(h.image)
-          }));
-        }
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
         this.setData({ headlines: headlines });
       }
     })
     .catch(err => console.error('获取头条失败', err));
   },
 
-  loadCopyrightAsync(refresh = false) {
+  loadCopyrightAsync() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCopyright' }
@@ -69,7 +70,7 @@ Page({
 
   addTimestamp(url) {
     if (!url) return url;
-    const t = Date.now();
+    const t = this.data.loadTime;
     return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
