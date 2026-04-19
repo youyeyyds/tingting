@@ -22,7 +22,8 @@ Page({
     joinedTime: { days: 0, hours: 0, mins: 0 }, // 加入听听拆分
     loading: false,
     refresherTriggered: false,
-    loadTime: ''
+    loadTime: '',
+    pageAnimating: false // 页面退出动画
   },
 
   // 格式化分钟数，返回拆分后的对象
@@ -73,6 +74,15 @@ Page({
     } else {
       this.setData({ refresherTriggered: false });
     }
+  },
+
+  handleBack() {
+    // 触发退出动画
+    this.setData({ pageAnimating: true });
+    // 动画完成后跳转首页
+    setTimeout(() => {
+      wx.redirectTo({ url: '/pages/index/index' });
+    }, 200);
   },
 
   loadUserStatsAsync() {

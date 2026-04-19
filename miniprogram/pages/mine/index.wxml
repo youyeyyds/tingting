@@ -1,8 +1,12 @@
 <!--mine/index.wxml-->
-<view class="page-container">
+<view class="page-container {{pageAnimating ? 'page-exit' : ''}}">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
   <view class="header" style="height: {{navBarHeight}}px;">
+    <view class="back-btn" bindtap="handleBack">
+      <view class="back-arrow"></view>
+      <text class="back-text">返回</text>
+    </view>
     <text class="header-title">我的</text>
   </view>
 

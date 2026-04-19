@@ -7,6 +7,22 @@
   flex-direction: column;
 }
 
+/* 页面退出动画 */
+.page-exit {
+  animation: pageExit 0.2s ease forwards;
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30rpx);
+  }
+}
+
 /* 状态栏占位 */
 .status-bar {
   background: #fff;
@@ -18,6 +34,28 @@
   align-items: center;
   justify-content: center;
   background: #fff;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  left: 30rpx;
+  display: flex;
+  align-items: center;
+}
+
+.back-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-left: 3rpx solid #333;
+  border-bottom: 3rpx solid #333;
+  transform: rotate(45deg);
+  margin-right: 8rpx;
+}
+
+.back-text {
+  font-size: 30rpx;
+  color: #333;
 }
 
 .header-title {
