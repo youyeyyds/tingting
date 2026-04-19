@@ -93,8 +93,14 @@ Component({
       let chapters = [...this.properties.chapters];
       const currentId = this.properties.currentChapterId;
 
-      // 如果是收藏列表，保持原始顺序，不按 seq 排序
-      if (!this.properties.isFavoriteList) {
+      // 收藏列表按原始顺序排列（不按 seq 排序）
+      // 排序按钮只是切换显示顺序（正序/倒序），不改变播放顺序
+      if (this.properties.isFavoriteList) {
+        if (this.data.sortOrder === 'desc') {
+          chapters.reverse();
+        }
+      } else {
+        // 课程列表按 seq 排序
         chapters.sort((a, b) => {
           const diff = (a.seq || 0) - (b.seq || 0);
           return this.data.sortOrder === 'asc' ? diff : -diff;

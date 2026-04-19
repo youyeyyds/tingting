@@ -18,11 +18,9 @@
         </view>
       </view>
       <view class="header-right">
-        <!-- 排序按钮（收藏列表不显示） -->
-        <block wx:if="{{!isFavoriteList}}">
-          <text class="sort-arrow">{{sortOrder === 'asc' ? '↑' : '↓'}}</text>
-          <text class="sort-btn" catchtap="onToggleSort">{{sortOrder === 'asc' ? '正序' : '倒序'}}</text>
-        </block>
+        <!-- 排序按钮 -->
+        <text class="sort-arrow">{{sortOrder === 'asc' ? '↑' : '↓'}}</text>
+        <text class="sort-btn" catchtap="onToggleSort">{{sortOrder === 'asc' ? '正序' : '倒序'}}</text>
         <!-- 清空按钮 -->
         <text class="clear-btn" catchtap="onClear">清空</text>
       </view>
