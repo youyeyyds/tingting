@@ -18,9 +18,24 @@ Page({
       totalStudyMinutes: 0,
       joinedMinutes: 0
     },
+    studyTimeText: '', // 学习时长格式化文本
+    joinedTimeText: '', // 加入听听格式化文本
     loading: false,
     refresherTriggered: false,
     loadTime: ''
+  },
+
+  // 格式化分钟数为 X天X时X分
+  formatMinutes(minutes) {
+    if (!minutes || minutes <= 0) return '0分';
+    const days = Math.floor(minutes / (24 * 60));
+    const hours = Math.floor((minutes % (24 * 60)) / 60);
+    const mins = minutes % 60;
+    let result = '';
+    if (days > 0) result += `${days}天`;
+    if (hours > 0) result += `${hours}时`;
+    if (mins > 0 || result === '') result += `${mins}分`;
+    return result;
   },
 
   onLoad() {
@@ -39,8 +54,13 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    // 未登录时跳转到登录页
+    if (!this.data.isLoggedIn) {
+      wx.redirectTo({ url: '/pages/login/index' });
+      return;
+    }
     // 切换页面时不重新加载，保持原有数据
-    if (this.data.isLoggedIn && app.globalData.userId) {
+    if (app.globalData.userId) {
       this.loadUserStats();
     }
   },
@@ -73,8 +93,13 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
+        const stats = res.result.data;
+        const studyTimeText = this.formatMinutes(stats.totalStudyMinutes || 0);
+        const joinedTimeText = this.formatMinutes(stats.joinedMinutes || 0);
         this.setData({
-          stats: res.result.data
+          stats: stats,
+          studyTimeText: studyTimeText,
+          joinedTimeText: joinedTimeText
         });
       }
     })
@@ -142,8 +167,13 @@ Page({
       });
 
       if (res.result.success) {
+        const stats = res.result.data;
+        const studyTimeText = this.formatMinutes(stats.totalStudyMinutes || 0);
+        const joinedTimeText = this.formatMinutes(stats.joinedMinutes || 0);
         this.setData({
-          stats: res.result.data
+          stats: stats,
+          studyTimeText: studyTimeText,
+          joinedTimeText: joinedTimeText
         });
       }
     } catch (err) {
@@ -158,45 +188,28 @@ Page({
   },
 
   handleLogout() {
-    wx.showModal({
-      title: '退出登录',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // 停止播放器并清空播放状态
-          app.bgAudioManager.stop();
-          app.globalData.miniPlayerActive = false;
-          app.globalData.miniPlayerIndexFadedIn = false;
-          app.globalData.playingCourse = null;
-          app.globalData.playingChapter = null;
-          app.globalData.playingIndex = 0;
-          app.globalData.playlistChaptersData = [];
-          app.globalData.playMode = 'sequence';
-          app.globalData.playlistSortOrder = 'asc';
-          // 通知 mini-player 关闭
-          app.notifyCallbacks('onClose', {});
+    // 停止播放器并清空播放状态
+    app.bgAudioManager.stop();
+    app.globalData.miniPlayerActive = false;
+    app.globalData.miniPlayerIndexFadedIn = false;
+    app.globalData.playingCourse = null;
+    app.globalData.playingChapter = null;
+    app.globalData.playingIndex = 0;
+    app.globalData.playlistChaptersData = [];
+    app.globalData.playMode = 'sequence';
+    app.globalData.playlistSortOrder = 'asc';
+    // 通知 mini-player 关闭
+    app.notifyCallbacks('onClose', {});
 
-          app.globalData.isLoggedIn = false;
-          app.globalData.userInfo = null;
-          app.globalData.userId = null;
-          wx.removeStorageSync('userId');
-          wx.removeStorageSync('userInfo');
-          this.setData({
-            isLoggedIn: false,
-            userInfo: null,
-            stats: {
-            learnedCourses: 0,
-            graduatedCourses: 0,
-            finishedCount: 0,
-            favoriteCount: 0,
-            totalPlayCount: 0,
-            totalStudyMinutes: 0,
-            joinedMinutes: 0
-          }
-          });
-          wx.showToast({ title: '已退出', icon: 'success' });
-        }
-      }
+    app.globalData.isLoggedIn = false;
+    app.globalData.userInfo = null;
+    app.globalData.userId = null;
+    wx.removeStorageSync('userId');
+    wx.removeStorageSync('userInfo');
+
+    // 直接跳转到登录页
+    wx.redirectTo({ url: '/pages/login/index' });
+  },
     });
   },
 

@@ -17,22 +17,15 @@
     <!-- 横幅占位 -->
     <view class="banner-placeholder" wx:else></view>
 
-    <!-- 未登录状态 -->
-    <view class="user-card" wx:if="{{!isLoggedIn}}">
-      <image class="avatar" src="https://picsum.photos/seed/avatar/200/200" mode="aspectFill" />
-      <text class="nickname">未登录</text>
-      <button class="login-btn" bindtap="handleLogin">登录</button>
-    </view>
-
-    <!-- 已登录状态 -->
-    <view class="user-card" wx:if="{{isLoggedIn}}">
+    <!-- 用户信息 -->
+    <view class="user-card">
       <image class="avatar" src="{{userInfo.avatarUrl || 'https://picsum.photos/seed/avatar/200/200'}}" mode="aspectFill" />
       <text class="nickname">{{userInfo.nickName || '用户'}}</text>
       <text class="phone">{{userInfo.phone || ''}}</text>
     </view>
 
-    <!-- 学习报告（已登录时显示） -->
-    <view class="stats-card" wx:if="{{isLoggedIn}}">
+    <!-- 学习报告 -->
+    <view class="stats-card">
       <view class="stats-row stats-header">
         <text class="stats-title">学习报告</text>
       </view>
@@ -68,23 +61,17 @@
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">学习时长</text>
-        <view class="stats-value">
-          <text class="stats-number">{{stats.totalStudyMinutes || 0}}</text>
-          <text> 分</text>
-        </view>
+        <text class="stats-number">{{studyTimeText}}</text>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">加入听听</text>
-        <view class="stats-value">
-          <text class="stats-number">{{stats.joinedMinutes || 0}}</text>
-          <text> 分</text>
-        </view>
+        <text class="stats-number">{{joinedTimeText}}</text>
       </view>
     </view>
 
     <!-- 退出登录按钮 -->
-    <view class="logout-section" wx:if="{{isLoggedIn}}">
+    <view class="logout-section">
       <button class="logout-btn" bindtap="handleLogout">退出登录</button>
     </view>
   </scroll-view>
