@@ -169,7 +169,7 @@ const getHeadlines = async () => {
       const configRes = await db.collection("config").where({ key: 'banner' }).limit(1).get();
       if (configRes.data.length > 0 && configRes.data[0].value) {
         speed = configRes.data[0].value.speed || 3;
-        homeProtect = configRes.data[0].value.homeProtect !== false; // 默认开启，只有明确设为 false 才关闭
+        homeProtect = configRes.data[0].value.homeProtect !== false;
       }
     } catch (e) {
       console.error('获取轮播配置失败:', e);

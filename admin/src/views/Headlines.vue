@@ -53,6 +53,13 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
+        <el-table-column prop="imageRandom" label="图片随机" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.imageRandom ? 'success' : 'info'" size="small">
+              {{ row.imageRandom ? '随机' : '固定' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="link" label="链接" min-width="200">
           <template #default="{ row }">
             <el-link v-if="row.link" :href="row.link" target="_blank" type="primary">
@@ -90,8 +97,11 @@
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
-        <el-form-item label="图片URL" prop="image">
-          <el-input v-model="form.image" placeholder="请输入图片URL" />
+        <el-form-item label="图片随机" prop="imageRandom">
+          <el-switch v-model="form.imageRandom" />
+          <span class="form-tip" style="margin-left: 10px; color: #999;">
+            {{ form.imageRandom ? '每次刷新图片变化' : '图片固定不变' }}
+          </span>
         </el-form-item>
         <el-form-item label="链接" prop="link">
           <el-input v-model="form.link" placeholder="请输入链接地址" />
@@ -130,7 +140,7 @@ const homeProtect = ref(true) // 首页保护，默认开启
 const form = reactive({
   seq: 1,
   title: '',
-  image: '',
+  imageRandom: true,
   link: ''
 })
 
@@ -162,7 +172,7 @@ async function loadBannerSpeed() {
     const res = await getBannerConfig()
     if (res.success && res.data) {
       bannerSpeed.value = res.data.speed || 3
-      homeProtect.value = res.data.homeProtect || false
+      homeProtect.value = res.data.homeProtect !== false
     }
   } catch (err) {
     console.error('加载配置失败:', err)
@@ -172,7 +182,10 @@ async function loadBannerSpeed() {
 // 保存轮播速度
 async function saveBannerSpeed() {
   try {
-    const res = await saveBannerConfig({ speed: bannerSpeed.value, homeProtect: homeProtect.value })
+    const res = await saveBannerConfig({
+      speed: bannerSpeed.value,
+      homeProtect: homeProtect.value
+    })
     if (res.success) {
       ElMessage.success('轮播速度已保存')
     } else {
@@ -186,12 +199,14 @@ async function saveBannerSpeed() {
 // 保存首页保护状态
 async function saveHomeProtect() {
   try {
-    const res = await saveBannerConfig({ speed: bannerSpeed.value, homeProtect: homeProtect.value })
+    const res = await saveBannerConfig({
+      speed: bannerSpeed.value,
+      homeProtect: homeProtect.value
+    })
     if (res.success) {
       ElMessage.success(homeProtect.value ? '首页保护已开启' : '首页保护已关闭')
     } else {
       ElMessage.error('保存失败: ' + res.error)
-      // 恢复原状态
       homeProtect.value = !homeProtect.value
     }
   } catch (err) {
@@ -217,7 +232,7 @@ function showEditDialog(row) {
   Object.assign(form, {
     seq: row.seq || 1,
     title: row.title,
-    image: row.image || '',
+    imageRandom: row.imageRandom !== false,
     link: row.link || ''
   })
   dialogVisible.value = true
@@ -228,7 +243,7 @@ function resetForm() {
   Object.assign(form, {
     seq: 1,
     title: '',
-    image: '',
+    imageRandom: true,
     link: ''
   })
 }
@@ -243,11 +258,24 @@ async function handleSubmit() {
 
   submitLoading.value = true
   try {
+    // 根据序号和随机设置生成图片 URL
+    const imageUrl = form.imageRandom
+      ? `https://picsum.photos/400/200?random=${form.seq}`
+      : `https://picsum.photos/seed/index${form.seq}/400/200`
+
+    const submitData = {
+      seq: form.seq,
+      title: form.title,
+      image: imageUrl,
+      imageRandom: form.imageRandom,
+      link: form.link
+    }
+
     let res
     if (isEdit.value) {
-      res = await updateHeadline(currentId.value, form)
+      res = await updateHeadline(currentId.value, submitData)
     } else {
-      res = await createHeadline(form)
+      res = await createHeadline(submitData)
     }
 
     if (res.success) {

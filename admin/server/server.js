@@ -1060,7 +1060,7 @@ app.get('/api/banner-config', async (req, res) => {
       const value = result.data[0].value || {};
       res.json(success({
         speed: value.speed || 3,
-        homeProtect: value.homeProtect !== false // 默认开启
+        homeProtect: value.homeProtect !== false
       }));
     } else {
       res.json(success({ speed: 3, homeProtect: true }));
@@ -1084,7 +1084,7 @@ app.post('/api/banner-config', async (req, res) => {
 
     const configValue = {
       speed: speed || 3,
-      homeProtect: homeProtect !== false // 默认开启
+      homeProtect: homeProtect !== false
     };
 
     if (existing.data.length > 0) {
