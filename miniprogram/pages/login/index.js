@@ -9,7 +9,6 @@ Page({
     loading: false,
     headlines: [],
     refresherTriggered: false,
-    showPassword: false,
     copyrightText: 'youyeyyds',
     loadTime: '' // 加载时间戳，用于图片URL
   },
@@ -27,6 +26,10 @@ Page({
     });
     this.loadHeadlines();
     this.loadCopyright();
+  },
+
+  handleBack() {
+    wx.navigateTo({ url: '/pages/index/index' });
   },
 
   onRefresh() {
@@ -85,10 +88,6 @@ Page({
 
   loadCopyright() {
     this.loadCopyrightAsync();
-  },
-
-  togglePassword() {
-    this.setData({ showPassword: !this.data.showPassword });
   },
 
   onPhoneInput(e) {

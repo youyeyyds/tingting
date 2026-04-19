@@ -1,54 +1,51 @@
 <!--login/index.wxml-->
 <view class="page-container">
-  <!-- 顶部空白区域 -->
-  <view class="top-space" style="height: {{statusBarHeight + 20}}px;"></view>
-
-  <!-- 横幅轮播 -->
-  <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
-    <swiper-item wx:for="{{headlines}}" wx:key="_id">
-      <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
-    </swiper-item>
-  </swiper>
-  <!-- 横幅占位 -->
-  <view class="banner-placeholder" wx:else></view>
-
-  <!-- 品牌区域 -->
-  <view class="brand-section">
-    <text class="app-name">听听</text>
-    <text class="app-slogan">随时随地，学习成长</text>
+  <!-- 顶部导航栏 -->
+  <view class="header-fixed">
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: 44px;">
+      <view class="back-btn" bindtap="handleBack">
+        <view class="back-arrow"></view>
+        <text class="back-text">返回</text>
+      </view>
+    </view>
   </view>
 
-  <!-- 登录表单 -->
-  <view class="login-form">
-    <view class="form-item">
-      <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
+  <!-- 内容区域 -->
+  <view class="content-area" style="padding-top: {{statusBarHeight + 44}}px;">
+    <!-- 横幅轮播 -->
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+      <swiper-item wx:for="{{headlines}}" wx:key="_id">
+        <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+    <!-- 横幅占位 -->
+    <view class="banner-placeholder" wx:else></view>
+
+    <!-- 品牌区域 -->
+    <view class="brand-section">
+      <text class="app-name">听听</text>
+      <text class="app-slogan">随时随地，学习成长</text>
     </view>
 
-    <view class="form-item password-item">
-      <input class="form-input password-input" type="{{showPassword ? 'text' : 'password'}}" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
-      <view class="password-toggle" bindtap="togglePassword">
-        <image class="eye-icon" src="{{showPassword ? '/icons/svg/eye-open.svg' : '/icons/svg/eye-close.svg'}}" mode="aspectFit" />
+    <!-- 登录表单 -->
+    <view class="login-form">
+      <view class="form-item">
+        <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
+      </view>
+
+      <view class="form-item">
+        <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+      </view>
+
+      <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
+        <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
       </view>
     </view>
 
-    <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
-      <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
-    </view>
-  </view>
-
-  <!-- 底部版权信息 -->
-  <view class="footer-section">
-    <view class="copyright-row">
-      <image class="copyright-icon" src="/icons/svg/copyright.svg" mode="aspectFit" />
+    <!-- 底部版权信息 -->
+    <view class="footer-section">
       <text class="copyright-text">{{copyrightText}}</text>
     </view>
-    <view class="powered-row">
-      <text class="powered-text">Powered by</text>
-      <image class="terminal-icon" src="/icons/svg/terminal.svg" mode="aspectFit" />
-      <text class="powered-text">Claude Code</text>
-    </view>
   </view>
-
-  <!-- 下拉刷新（用于刷新横幅和版权信息） -->
-  <view class="refresh-trigger" catchtouchstart="onTouchStart" catchtouchend="onTouchEnd" wx:if="{{!headlines.length}}"></view>
 </view>

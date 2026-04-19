@@ -8,9 +8,50 @@
   box-sizing: border-box;
 }
 
-/* 顶部空白 */
-.top-space {
-  width: 100%;
+/* 固定顶部导航 */
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+}
+
+.status-bar {
+  background: #fff;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding-left: 30rpx;
+  background: #fff;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+}
+
+.back-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-left: 3rpx solid #333;
+  border-bottom: 3rpx solid #333;
+  transform: rotate(45deg);
+  margin-right: 8rpx;
+}
+
+.back-text {
+  font-size: 30rpx;
+  color: #333;
+}
+
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  padding: 0 40rpx;
 }
 
 /* 横幅 */
@@ -59,7 +100,7 @@
 /* 登录表单 */
 .login-form {
   width: 100%;
-  padding: 0 40rpx;
+  padding: 0;
 }
 
 .form-item {
@@ -80,32 +121,6 @@
 
 .form-input:focus {
   border-color: #FF6B00;
-}
-
-/* 密码输入框 */
-.password-item {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.password-input {
-  flex: 1;
-  padding-right: 80rpx;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 30rpx;
-  height: 100rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.eye-icon {
-  width: 40rpx;
-  height: 40rpx;
 }
 
 /* 登录按钮 */
@@ -141,35 +156,7 @@
   padding-bottom: 40rpx;
 }
 
-.copyright-row {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.copyright-icon {
-  width: 28rpx;
-  height: 28rpx;
-}
-
 .copyright-text {
   font-size: 24rpx;
   color: #999;
-}
-
-.powered-row {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  margin-top: 12rpx;
-}
-
-.terminal-icon {
-  width: 28rpx;
-  height: 28rpx;
-}
-
-.powered-text {
-  font-size: 22rpx;
-  color: #bbb;
 }
