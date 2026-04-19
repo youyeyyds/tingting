@@ -61,9 +61,10 @@ Component({
 
   methods: {
     show() {
-      // 使用播放列表保存的排序状态，如果没有则使用章节页传入的排序
+      // 从全局数据同步播放模式和排序状态
+      const playMode = app.globalData.playMode || 'sequence';
       const sortOrder = app.globalData.playlistSortOrder || this.properties.initialSortOrder || 'asc';
-      this.setData({ sortOrder });
+      this.setData({ playMode, sortOrder });
       this.applySort();
       this.setData({ visible: true, slideClass: 'slide-up' });
       setTimeout(() => this.scrollToCurrent(), 350);
@@ -107,6 +108,7 @@ Component({
       const nextMode = modes[(currentIdx + 1) % modes.length];
       this.setData({ playMode: nextMode });
       app.globalData.playMode = nextMode;
+      console.log('切换播放模式:', nextMode, 'app.globalData.playMode:', app.globalData.playMode);
     },
 
     onToggleSort() {

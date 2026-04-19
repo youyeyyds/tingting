@@ -340,7 +340,7 @@ async function toggleFinished(row) {
 
     const res = await updateUserProgress(currentUser.userId, row._id, {
       finished: newFinished,
-      lastPlayTime: newFinished ? row.duration : 0,  // 完播时设为时长，重置时设为0
+      lastPlayTime: 0,  // 完播或重置时都设为0，下次从头开始
       playCount: newFinished ? (userProgress.playCount || 0) + 1 : userProgress.playCount  // 完播时播放量+1
     })
     if (res.success) {

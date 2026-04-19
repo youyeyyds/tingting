@@ -54,6 +54,21 @@ Page({
         });
         this.applyFilterAndSort();
       },
+      onChapterChange: (data) => {
+        // 播放章节切换，更新播放状态
+        const { chapterId } = data;
+        this.setData({
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
+          currentPlayingId: chapterId
+        });
+        this.applyFilterAndSort();
+      },
+      onPlayPause: (data) => {
+        // 播放/暂停状态变化（仅影响当前播放章节的显示状态）
+        const { chapterId, isPlaying } = data;
+        // 暂时不处理，章节页的 isPlaying 用于标识当前播放章节
+        // 如果需要显示暂停状态，可以添加 isPaused 字段
+      },
       onProgressUpdate: (data) => {
         // 进度更新，实时显示
         const { chapterId, lastPlayTime, finished } = data;
@@ -77,8 +92,20 @@ Page({
           }
           return ch;
         });
-        this.setData({ chapters });
-        this.applyFilterAndSort();
+
+        // 计算课程总进度（章节平均进度）
+        const courseProgress = chapters.length > 0
+          ? Math.round(chapters.reduce((sum, ch) => sum + (ch.progress || 0), 0) / chapters.length)
+          : 0;
+        const courseProgressText = courseProgress === 100 ? '已学完'
+          : courseProgress === 0 ? '未学习'
+          : '已学' + courseProgress + '%';
+
+        this.setData({
+          chapters,
+          filteredChapters: chapters,
+          course: { ...this.data.course, progress: courseProgress, progressText: courseProgressText }
+        });
       }
     };
     app.registerMiniPlayer(this.audioCallback);

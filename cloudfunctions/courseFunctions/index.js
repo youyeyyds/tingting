@@ -284,6 +284,8 @@ const updateChapterProgress = async (event) => {
     const { chapterId, courseId, lastPlayTime, finished, userId } = event;
     const currentUserId = getUserId(event);
 
+    console.log('updateChapterProgress 收到参数:', { chapterId, courseId, lastPlayTime, finished, userId, currentUserId });
+
     // 获取章节信息
     const chapterRes = await db.collection("chapters").doc(chapterId).get();
     const chapter = chapterRes.data;
@@ -298,6 +300,8 @@ const updateChapterProgress = async (event) => {
       .limit(1)
       .get();
 
+    console.log('查询 userProgress:', currentUserId, chapterId, '找到', progressRes.data?.length, '条');
+
     const existingProgress = progressRes.data[0];
     const currentFinished = existingProgress?.finished || false;
     const currentPlayCount = existingProgress?.playCount || 0;
@@ -309,6 +313,7 @@ const updateChapterProgress = async (event) => {
 
     // 播放完成时的处理
     let userPlayCountIncrease = 0;
+    let shouldMarkFinished = false;
 
     // 手动设置完播（finished=true）
     if (finished === true) {
@@ -317,7 +322,12 @@ const updateChapterProgress = async (event) => {
       if (!currentFinished) {
         userUpdateData.finished = true;
       }
-    } else if (finished !== false) {
+      shouldMarkFinished = true;
+    } else if (finished === false) {
+      // 手动设置为未完播
+      userUpdateData.finished = false;
+      shouldMarkFinished = false;
+    } else {
       // finished 未传入时，自动完播判断（到达后10秒内）
       const isCompleted = duration > 0 && lastPlayTime > duration - 10;
       if (isCompleted) {
@@ -327,6 +337,7 @@ const updateChapterProgress = async (event) => {
           userUpdateData.finished = true;
         }
       }
+      shouldMarkFinished = isCompleted;
     }
 
     // 更新或创建用户进度记录
@@ -347,8 +358,8 @@ const updateChapterProgress = async (event) => {
           courseId: courseId || chapter.course,
           duration,
           lastPlayTime: lastPlayTime,
-          finished: isCompleted,
-          playCount: isCompleted ? 1 : 0,
+          finished: shouldMarkFinished,
+          playCount: shouldMarkFinished ? 1 : 0,
           isFavorite: false
         }
       });
