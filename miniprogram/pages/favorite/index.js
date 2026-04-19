@@ -223,7 +223,10 @@ Page({
       course: ch.course,
       courseTitle: ch.courseTitle,
       courseCover: ch.courseCover,
-      author: ch.author
+      author: ch.author,
+      // 用户进度信息
+      lastPlayTime: ch.lastPlayTime || (ch.userProgress && ch.userProgress.lastPlayTime) || 0,
+      finished: ch.finished || (ch.userProgress && ch.userProgress.finished) || false
     }));
 
     // 保存到全局

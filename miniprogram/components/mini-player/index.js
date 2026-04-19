@@ -383,7 +383,8 @@ Component({
 
     updateProgress(time, finished) {
       const chapterId = this.data.currentChapter._id;
-      const courseId = this.data.course._id;
+      // 使用当前章节的 course 字段作为 courseId（支持跨课程播放列表）
+      const courseId = this.data.currentChapter.course || this.data.course._id;
       const userId = app.globalData.userId;
 
       console.log('updateProgress 调用:', { chapterId, courseId, userId, time, finished });
