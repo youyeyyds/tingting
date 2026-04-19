@@ -251,13 +251,29 @@ Page({
   // 点击卡片播放
   onChapterTap(e) {
     const index = e.currentTarget.dataset.index;
-    this.playFavoriteList(index);
+    const chapter = this.data.favoriteChapters[index];
+
+    // 如果点击的是正在播放的章节，切换播放/暂停
+    if (chapter.isPlaying) {
+      const miniPlayer = this.selectComponent('#miniPlayer');
+      if (miniPlayer) miniPlayer.togglePlayPause();
+    } else {
+      this.playFavoriteList(index);
+    }
   },
 
   // 点击播放按钮
   onPlayTap(e) {
     const index = e.currentTarget.dataset.index;
-    this.playFavoriteList(index);
+    const chapter = this.data.favoriteChapters[index];
+
+    // 如果点击的是正在播放的章节，切换播放/暂停
+    if (chapter.isPlaying) {
+      const miniPlayer = this.selectComponent('#miniPlayer');
+      if (miniPlayer) miniPlayer.togglePlayPause();
+    } else {
+      this.playFavoriteList(index);
+    }
   },
 
   // 播放收藏列表
