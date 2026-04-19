@@ -978,7 +978,13 @@ app.get('/api/headlines', async (req, res) => {
     const db = tcb.database();
     const result = await db.collection('headlines').orderBy('seq', 'asc').get();
 
-    res.json(success(result.data));
+    // 默认 imageRandom 为 true
+    const headlines = result.data.map(h => ({
+      ...h,
+      imageRandom: h.imageRandom !== false
+    }));
+
+    res.json(success(headlines));
   } catch (err) {
     res.json(error(err.message));
   }
@@ -997,6 +1003,7 @@ app.post('/api/headlines', async (req, res) => {
       seq: data.seq || 1,
       title: data.title,
       image: data.image || '',
+      imageRandom: data.imageRandom !== false,
       link: data.link || '',
       _createTime: new Date()
     });
@@ -1021,6 +1028,7 @@ app.put('/api/headlines/:id', async (req, res) => {
       seq: data.seq,
       title: data.title,
       image: data.image || '',
+      imageRandom: data.imageRandom !== false,
       link: data.link || ''
     });
 
