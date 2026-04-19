@@ -171,6 +171,9 @@ Page({
 
     return {
       ...chapter,
+      // 用户进度信息（放到顶层，便于播放器使用）
+      lastPlayTime,
+      finished,
       progress,
       progressText,
       durationText: this.formatDuration(duration)
@@ -224,9 +227,9 @@ Page({
       courseTitle: ch.courseTitle,
       courseCover: ch.courseCover,
       author: ch.author,
-      // 用户进度信息
-      lastPlayTime: ch.lastPlayTime || (ch.userProgress && ch.userProgress.lastPlayTime) || 0,
-      finished: ch.finished || (ch.userProgress && ch.userProgress.finished) || false
+      // 用户进度信息（formatChapter 已放到顶层）
+      lastPlayTime: ch.lastPlayTime || 0,
+      finished: ch.finished || false
     }));
 
     // 保存到全局
