@@ -14,6 +14,8 @@
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
     </swiper>
+    <!-- 横幅占位 -->
+    <view class="banner-placeholder" wx:else></view>
 
     <!-- 未登录状态 -->
     <view class="user-card" wx:if="{{!isLoggedIn}}">
