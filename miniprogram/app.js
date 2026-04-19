@@ -31,7 +31,9 @@ App({
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
     playlistSortOrder: 'asc', // 'asc' | 'desc'
-    loginPageLoadTime: null // 登录页图片加载时间戳，保持稳定
+    loginPageLoadTime: null, // 登录页图片加载时间戳，保持稳定
+    homePageLoadTime: null, // 首页图片加载时间戳，保持稳定
+    homePageMaskedAuthors: null // 首页随机作者映射，保持稳定
   },
 
   restoreLoginState() {

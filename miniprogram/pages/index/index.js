@@ -58,10 +58,16 @@ Page({
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
-    const loadTime = Date.now();
 
-    // 初始化随机作者映射
-    const maskedAuthors = {};
+    // 使用全局 loadTime 和 maskedAuthors，保持图片稳定
+    if (!app.globalData.homePageLoadTime) {
+      app.globalData.homePageLoadTime = Date.now();
+    }
+    if (!app.globalData.homePageMaskedAuthors) {
+      app.globalData.homePageMaskedAuthors = {};
+    }
+    const loadTime = app.globalData.homePageLoadTime;
+    const maskedAuthors = app.globalData.homePageMaskedAuthors;
 
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
@@ -88,6 +94,9 @@ Page({
     this.data.courses.forEach(course => {
       newMaskedAuthors[course._id] = randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
     });
+    // 更新全局变量
+    app.globalData.homePageLoadTime = newLoadTime;
+    app.globalData.homePageMaskedAuthors = newMaskedAuthors;
     this.setData({ refresherTriggered: true, loadTime: newLoadTime, maskedAuthors: newMaskedAuthors });
     Promise.all([
       this.loadHeadlinesAsync(),
@@ -163,15 +172,22 @@ Page({
       return;
     }
     // 首页保护开启且未登录，隐藏课程信息
+    const newMaskedAuthors = { ...maskedAuthors };
     const maskedCourses = courses.map(course => {
-      const randomAuthor = maskedAuthors[course._id] || randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
+      let randomAuthor = maskedAuthors[course._id];
+      if (!randomAuthor) {
+        randomAuthor = randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
+        newMaskedAuthors[course._id] = randomAuthor;
+      }
       return {
         ...course,
         title: '登录后可见',
         author: randomAuthor
       };
     });
-    this.setData({ courses: maskedCourses });
+    // 更新全局和本地状态
+    app.globalData.homePageMaskedAuthors = newMaskedAuthors;
+    this.setData({ courses: maskedCourses, maskedAuthors: newMaskedAuthors });
   },
 
   checkLoginStatus() {

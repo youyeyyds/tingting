@@ -30,7 +30,7 @@ Page({
   },
 
   handleBack() {
-    wx.navigateTo({ url: '/pages/index/index' });
+    wx.redirectTo({ url: '/pages/index/index' });
   },
 
   onRefresh() {
