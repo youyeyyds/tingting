@@ -87,19 +87,19 @@
       </el-table>
     </el-card>
 
-    <!-- 版权信息卡片 -->
+    <!-- 底部信息卡片 -->
     <el-card class="copyright-card">
       <template #header>
         <div class="card-header">
-          <span>版权信息</span>
+          <span>底部信息</span>
         </div>
       </template>
       <el-form label-width="100px">
-        <el-form-item label="版权内容">
+        <el-form-item label="版权信息">
           <el-input v-model="copyrightText" placeholder="如：youyeyyds" />
         </el-form-item>
         <el-form-item label="备案号">
-          <el-input v-model="icpNumber" placeholder="如：粤ICP备2026041617号-1" />
+          <el-input v-model="icpNumber" placeholder="如：粤ICP备2026041617号-1X" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="saveCopyright">保存</el-button>
