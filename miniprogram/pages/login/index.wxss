@@ -83,7 +83,8 @@
   flex-direction: column;
   align-items: center;
   padding: 0 40rpx;
-  margin-bottom: 40rpx;
+  margin-top: 40rpx;
+  margin-bottom: 60rpx;
 }
 
 .app-name {
@@ -149,23 +150,24 @@
   letter-spacing: 8rpx;
 }
 
-/* 底部版权 */
-.footer-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: auto;
-  padding: 0 40rpx;
-  padding-bottom: 40rpx;
-}
-
+/* 版权内容 */
 .copyright-text {
   font-size: 24rpx;
   color: #999;
+  text-align: center;
+  margin-top: 30rpx;
+}
+
+/* 备案号在底部 */
+.icp-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding-bottom: 40rpx;
 }
 
 .icp-text {
   font-size: 22rpx;
   color: #bbb;
-  margin-top: 8rpx;
 }

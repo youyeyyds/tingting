@@ -41,11 +41,13 @@
       <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
         <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
       </view>
+
+      <!-- 版权内容 -->
+      <text class="copyright-text">{{copyrightText}}</text>
     </view>
 
-    <!-- 底部版权信息 -->
-    <view class="footer-section">
-      <text class="copyright-text">{{copyrightText}}</text>
+    <!-- 备案号在底部 -->
+    <view class="icp-section">
       <text class="icp-text">{{icpNumber}}</text>
     </view>
   </view>
