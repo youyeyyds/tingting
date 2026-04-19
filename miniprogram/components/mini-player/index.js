@@ -37,6 +37,7 @@ Component({
         onEnded: () => this.onAudioEnded(),
         onError: () => this.data.visible && this.setData({ isPlaying: false }),
         onStop: () => this.data.visible && this.setData({ isPlaying: false }),
+        onPlayFromList: (data) => this.playFromList(data),
         onClose: () => {
             const pages = getCurrentPages();
             const isForeground = this.currentPageRoute === pages[pages.length - 1]?.route;
@@ -118,6 +119,66 @@ Component({
 
     fadeIn(data) {
       this.setData({ visible: true, fadeInClass: 'fade-in', ...data });
+    },
+
+    // 从收藏列表播放
+    playFromList(data) {
+      const { index, chapters } = data;
+      if (!chapters || chapters.length === 0 || index < 0) return;
+
+      const chapter = chapters[index];
+      if (!chapter?.audioUrl) {
+        wx.showToast({ title: '暂无音频', icon: 'none' });
+        return;
+      }
+
+      // 构建课程信息
+      const course = {
+        _id: chapter.course,
+        title: chapter.courseTitle || '收藏列表',
+        cover: chapter.courseCover || '',
+        author: chapter.author || '',
+        chapterCount: chapters.length
+      };
+
+      // 更新数据
+      this.setData({
+        chapters: chapters,
+        course: course,
+        currentChapter: chapter,
+        currentIndex: index,
+        courseCover: chapter.courseCover || '',
+        courseName: chapter.courseTitle || '收藏列表',
+        playlistSortOrder: 'asc'
+      });
+
+      // 更新全局数据
+      app.globalData.playingCourse = course;
+      app.globalData.playingChapter = chapter;
+      app.globalData.playingIndex = index;
+      app.globalData.playlistChaptersData = chapters;
+      app.globalData.playlistSortOrder = 'asc';
+      app.globalData.playMode = 'sequence';
+      app.globalData.miniPlayerActive = true;
+      app.globalData.miniPlayerIndexFadedIn = false;
+
+      // 淡入显示
+      this.fadeIn({
+        playerBottom: this.calcPosition(),
+        currentChapter: chapter,
+        currentIndex: index,
+        courseCover: chapter.courseCover || '',
+        courseName: chapter.courseTitle || '收藏列表',
+        chapters: chapters,
+        course: course,
+        playlistSortOrder: 'asc'
+      });
+
+      // 播放音频
+      this.bgAudioManager.title = chapter.title;
+      this.bgAudioManager.src = chapter.audioUrl;
+      this.bgAudioManager.episode = `${chapter.seq || 1}/${chapters.length}`;
+      this.bgAudioManager.coverUrl = chapter.courseCover || '';
     },
 
     async play(chapterId, playlistChapters, courseData, sortOrder) {

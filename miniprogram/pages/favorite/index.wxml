@@ -14,6 +14,8 @@
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
     </swiper>
+    <!-- 横幅占位 -->
+    <view class="banner-placeholder" wx:else></view>
 
     <!-- 未登录状态 -->
     <view class="empty-state" wx:if="{{!isLoggedIn}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
@@ -23,27 +25,47 @@
     </view>
 
     <!-- 已登录但无收藏 -->
-    <view class="empty-state" wx:if="{{isLoggedIn && !loading && favoriteChapters.length === 0}}">
+    <view class="empty-state" wx:if="{{isLoggedIn && favoriteChapters.length === 0}}">
       <image class="empty-icon" src="/icons/svg/favorite.svg" mode="aspectFit" />
       <text class="empty-text">暂无收藏章节</text>
     </view>
 
-    <!-- 加载中 -->
-    <view class="loading-state" wx:if="{{isLoggedIn && loading}}">
-      <text class="loading-text">加载中...</text>
-    </view>
-
     <!-- 收藏列表 -->
-    <view class="favorite-list" wx:if="{{isLoggedIn && !loading && favoriteChapters.length > 0}}">
+    <view class="favorite-list" wx:if="{{isLoggedIn && favoriteChapters.length > 0}}">
       <view class="chapter-card" wx:for="{{favoriteChapters}}" wx:key="_id"
-        data-id="{{item._id}}" data-course="{{item.course}}" bindtap="onChapterTap">
+        data-index="{{index}}" bindtap="onChapterTap">
+        <!-- 左边封面 -->
         <image class="chapter-cover" src="{{item.courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+        <!-- 右边信息 -->
         <view class="chapter-info">
-          <text class="chapter-title">{{item.title}}</text>
-          <text class="chapter-course">{{item.courseTitle}}</text>
-          <view class="chapter-meta">
+          <!-- 第一行：作者 · 课程名称 -->
+          <view class="info-row">
+            <text class="chapter-author">{{item.author || '未知作者'}}</text>
+            <text class="separator">·</text>
+            <text class="chapter-course">{{item.courseTitle || '未知课程'}}</text>
+          </view>
+          <!-- 分隔线 -->
+          <view class="info-divider"></view>
+          <!-- 第二行：序号 | 章节名称 -->
+          <view class="info-row">
+            <text class="chapter-seq">{{item.seq}}</text>
+            <text class="separator">|</text>
+            <text class="chapter-title">{{item.title}}</text>
+          </view>
+          <!-- 第三行：时长 | 学习进度 -->
+          <view class="info-row">
             <text class="chapter-duration">{{item.durationText}}</text>
-            <text class="chapter-progress">{{item.progressText}}</text>
+            <text class="separator">|</text>
+            <text class="chapter-progress {{item.progress === 100 ? 'finished' : ''}}">{{item.progressText}}</text>
+          </view>
+        </view>
+        <!-- 右下角按钮 -->
+        <view class="card-actions">
+          <view class="play-btn" catchtap="onPlayTap" data-index="{{index}}">
+            <view class="play-icon"></view>
+          </view>
+          <view class="close-btn" catchtap="onRemoveTap" data-id="{{item._id}}" data-index="{{index}}">
+            <text class="close-text">×</text>
           </view>
         </view>
       </view>

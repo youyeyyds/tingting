@@ -37,7 +37,12 @@
 .banner {
   width: 100%;
   height: 280rpx;
-  margin-bottom: 20rpx;
+}
+
+.banner-placeholder {
+  width: 100%;
+  height: 280rpx;
+  background: #f5f5f5;
 }
 
 .banner-image {
@@ -49,11 +54,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 80rpx 0;
 }
 
 .empty-icon {
   width: 120rpx;
   height: 120rpx;
+  opacity: 0.5;
 }
 
 .empty-text {
@@ -115,70 +122,141 @@
   border: none;
 }
 
-/* 加载状态 */
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-text {
-  font-size: 28rpx;
-  color: #999;
-}
-
 /* 收藏列表 */
 .favorite-list {
   width: 100%;
-  padding: 20rpx;
+  padding: 20rpx 30rpx;
 }
 
 .chapter-card {
   display: flex;
   padding: 20rpx;
   background: #fff;
-  border-radius: 12rpx;
-  margin-bottom: 16rpx;
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  position: relative;
 }
 
+/* 左边封面 */
 .chapter-cover {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 8rpx;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
   background: #eee;
 }
 
+/* 右边信息 */
 .chapter-info {
   flex: 1;
   margin-left: 16rpx;
   display: flex;
   flex-direction: column;
+  padding-right: 60rpx;
 }
 
-.chapter-title {
-  font-size: 30rpx;
-  color: #333;
-  font-weight: 500;
+.info-row {
+  display: flex;
+  align-items: center;
+}
+
+.separator {
+  color: #999;
+  margin: 0 8rpx;
+  font-size: 24rpx;
+}
+
+.info-divider {
+  height: 1rpx;
+  background: #eee;
+  margin: 12rpx 0;
+}
+
+/* 第一行 */
+.chapter-author {
+  font-size: 24rpx;
+  color: #666;
 }
 
 .chapter-course {
   font-size: 24rpx;
-  color: #999;
-  margin-top: 6rpx;
-}
-
-.chapter-meta {
-  display: flex;
-  margin-top: 10rpx;
-}
-
-.chapter-duration {
-  font-size: 22rpx;
   color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 第二行 */
+.chapter-seq {
+  font-size: 26rpx;
+  color: #FF6B00;
+  font-weight: 600;
+}
+
+.chapter-title {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 第三行 */
+.chapter-duration {
+  font-size: 24rpx;
+  color: #999;
 }
 
 .chapter-progress {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #FF6B00;
-  margin-left: 16rpx;
+}
+
+.chapter-progress.finished {
+  color: #52c41a;
+}
+
+/* 右下角按钮 */
+.card-actions {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.play-btn {
+  width: 48rpx;
+  height: 48rpx;
+  background: #FF6B00;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-icon {
+  width: 16rpx;
+  height: 16rpx;
+  border-left: 10rpx solid #fff;
+  border-bottom: 8rpx solid transparent;
+  border-top: 8rpx solid transparent;
+  margin-left: 6rpx;
+}
+
+.close-btn {
+  width: 48rpx;
+  height: 48rpx;
+  background: #f5f5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-text {
+  font-size: 32rpx;
+  color: #999;
+  line-height: 1;
 }
