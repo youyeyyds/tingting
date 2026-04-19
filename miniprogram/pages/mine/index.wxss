@@ -185,11 +185,11 @@
 .logout-btn {
   width: 100%;
   padding: 24rpx 0;
-  background: #fff;
-  color: #999;
+  background: #FF6B00;
+  color: #fff;
   font-size: 28rpx;
   border-radius: 16rpx;
-  border: 1rpx solid #eee;
+  border: none;
 }
 
 .logout-btn::after {
