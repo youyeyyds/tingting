@@ -169,8 +169,12 @@
 
 .stats-value {
   font-size: 26rpx;
+  color: #333;
+}
+
+.stats-number {
   color: #FF6B00;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 退出登录 */

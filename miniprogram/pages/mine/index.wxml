@@ -39,27 +39,47 @@
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">课程</text>
-        <text class="stats-value">学了 {{stats.learnedCourses || 0}} 门 / 毕业 {{stats.graduatedCourses || 0}} 门</text>
+        <view class="stats-value">
+          <text>学了 </text>
+          <text class="stats-number">{{stats.learnedCourses || 0}}</text>
+          <text> 门 / 毕业 </text>
+          <text class="stats-number">{{stats.graduatedCourses || 0}}</text>
+          <text> 门</text>
+        </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">收藏</text>
-        <text class="stats-value">共 {{stats.favoriteCount || 0}} 章</text>
+        <view class="stats-value">
+          <text>共 </text>
+          <text class="stats-number">{{stats.favoriteCount || 0}}</text>
+          <text> 章</text>
+        </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">播放次数</text>
-        <text class="stats-value">共 {{stats.totalPlayCount || 0}} 次</text>
+        <view class="stats-value">
+          <text>共 </text>
+          <text class="stats-number">{{stats.totalPlayCount || 0}}</text>
+          <text> 次</text>
+        </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">学习时长</text>
-        <text class="stats-value">{{stats.totalStudyMinutes || 0}} 分</text>
+        <view class="stats-value">
+          <text class="stats-number">{{stats.totalStudyMinutes || 0}}</text>
+          <text> 分</text>
+        </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">加入听听</text>
-        <text class="stats-value">{{stats.joinedMinutes || 0}} 分</text>
+        <view class="stats-value">
+          <text class="stats-number">{{stats.joinedMinutes || 0}}</text>
+          <text> 分</text>
+        </view>
       </view>
     </view>
 
