@@ -41,7 +41,7 @@
         </el-table-column>
         <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="title" label="标题" min-width="200" />
-        <el-table-column prop="image" label="图片" width="120">
+        <el-table-column prop="image" label="横幅" width="120">
           <template #default="{ row }">
             <el-image
               v-if="row.image"
@@ -63,6 +63,11 @@
             <el-link :href="row.image" target="_blank" type="primary">
               {{ row.image }}
             </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="positions" label="位置" min-width="180">
+          <template #default="{ row }">
+            <span>{{ formatPositions(row.positions) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
@@ -94,11 +99,19 @@
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
+        <el-form-item label="横幅" prop="image">
+          <el-input v-model="form.image" readonly placeholder="自动生成" />
+        </el-form-item>
         <el-form-item label="随机" prop="imageRandom">
           <el-switch v-model="form.imageRandom" @change="updateImageUrl" />
         </el-form-item>
-        <el-form-item label="链接" prop="image">
-          <el-input v-model="form.image" readonly placeholder="自动生成" />
+        <el-form-item label="位置" prop="positions">
+          <el-checkbox-group v-model="form.positions">
+            <el-checkbox value="index">首页</el-checkbox>
+            <el-checkbox value="favorite">收藏</el-checkbox>
+            <el-checkbox value="login">登录</el-checkbox>
+            <el-checkbox value="mine">个人</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
 
@@ -135,7 +148,8 @@ const form = reactive({
   seq: 1,
   title: '',
   image: '',
-  imageRandom: true
+  imageRandom: true,
+  positions: ['index', 'favorite', 'login', 'mine']
 })
 
 const rules = {
@@ -230,6 +244,7 @@ function showAddDialog() {
   // 计算下一个序号
   const maxSeq = headlines.value.length > 0 ? Math.max(...headlines.value.map(h => h.seq || 0)) : 0
   form.seq = maxSeq + 1
+  form.positions = ['index', 'favorite', 'login', 'mine'] // 默认全选
   updateImageUrl()
   dialogVisible.value = true
 }
@@ -242,7 +257,8 @@ function showEditDialog(row) {
     seq: row.seq || 1,
     title: row.title,
     image: row.image || '',
-    imageRandom: row.imageRandom !== false
+    imageRandom: row.imageRandom !== false,
+    positions: row.positions || ['index', 'favorite', 'login', 'mine']
   })
   dialogVisible.value = true
 }
@@ -253,7 +269,8 @@ function resetForm() {
     seq: 1,
     title: '',
     image: '',
-    imageRandom: true
+    imageRandom: true,
+    positions: ['index', 'favorite', 'login', 'mine']
   })
 }
 
@@ -271,7 +288,8 @@ async function handleSubmit() {
       seq: form.seq,
       title: form.title,
       image: form.image,
-      imageRandom: form.imageRandom
+      imageRandom: form.imageRandom,
+      positions: form.positions
     }
 
     let res
@@ -332,7 +350,8 @@ async function toggleRowImageRandom(row) {
       seq: row.seq,
       title: row.title,
       image: imageUrl,
-      imageRandom: row.imageRandom
+      imageRandom: row.imageRandom,
+      positions: row.positions || ['index', 'favorite', 'login', 'mine']
     })
     if (res.success) {
       ElMessage.success(row.imageRandom ? '已切换为随机' : '已切换为固定')
@@ -409,6 +428,18 @@ function formatDate(dateStr) {
   const hour = String(date.getHours()).padStart(2, '0')
   const min = String(date.getMinutes()).padStart(2, '0')
   return `${year}-${month}-${day} ${hour}:${min}`
+}
+
+// 格式化位置
+function formatPositions(positions) {
+  if (!positions || positions.length === 0) return '-'
+  const map = {
+    index: '首页',
+    favorite: '收藏',
+    login: '登录',
+    mine: '个人'
+  }
+  return positions.map(p => map[p] || p).join('、')
 }
 
 onMounted(() => {

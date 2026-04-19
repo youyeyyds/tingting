@@ -981,10 +981,11 @@ app.get('/api/headlines', async (req, res) => {
     const db = tcb.database();
     const result = await db.collection('headlines').orderBy('seq', 'asc').get();
 
-    // 默认 imageRandom 为 true
+    // 默认 imageRandom 为 true，positions 默认全选
     const headlines = result.data.map(h => ({
       ...h,
-      imageRandom: h.imageRandom !== false
+      imageRandom: h.imageRandom !== false,
+      positions: h.positions || ['index', 'favorite', 'login', 'mine']
     }));
 
     res.json(success(headlines));
@@ -1007,6 +1008,7 @@ app.post('/api/headlines', async (req, res) => {
       title: data.title,
       image: data.image || '',
       imageRandom: data.imageRandom !== false,
+      positions: data.positions || ['index', 'favorite', 'login', 'mine'],
       _createTime: new Date()
     });
 
@@ -1030,7 +1032,8 @@ app.put('/api/headlines/:id', async (req, res) => {
       seq: data.seq,
       title: data.title,
       image: data.image || '',
-      imageRandom: data.imageRandom !== false
+      imageRandom: data.imageRandom !== false,
+      positions: data.positions || ['index', 'favorite', 'login', 'mine']
     });
 
     res.json(success({ updated: true }));

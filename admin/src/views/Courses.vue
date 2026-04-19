@@ -113,11 +113,11 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="封面" prop="cover">
+          <el-input v-model="form.cover" readonly placeholder="自动生成" />
+        </el-form-item>
         <el-form-item label="随机" prop="coverRandom">
           <el-switch v-model="form.coverRandom" @change="updateCoverUrl" />
-        </el-form-item>
-        <el-form-item label="链接" prop="cover">
-          <el-input v-model="form.cover" readonly placeholder="自动生成" />
         </el-form-item>
         <el-form-item label="简介" prop="description">
           <el-input
