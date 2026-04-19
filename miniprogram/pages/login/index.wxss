@@ -3,57 +3,24 @@
 .page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: #f6f6f6;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8f8f8 0%, #fff 100%);
+  padding: 0 40rpx;
+  box-sizing: border-box;
 }
 
-.status-bar {
-  background: #fff;
+/* 顶部空白 */
+.top-space {
+  width: 100%;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  position: relative;
-}
-
-.back-btn {
-  position: absolute;
-  left: 30rpx;
-  display: flex;
-  align-items: center;
-}
-
-.back-arrow {
-  font-size: 36rpx;
-  color: #333;
-}
-
-.back-text {
-  font-size: 28rpx;
-  color: #333;
-  margin-left: 10rpx;
-}
-
-.header-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 头条轮播 */
+/* 横幅 */
 .banner {
   width: 100%;
-  height: 280rpx;
-  margin-bottom: 20rpx;
+  height: 300rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  margin-bottom: 40rpx;
 }
 
 .banner-image {
@@ -61,91 +28,131 @@
   height: 100%;
 }
 
-.login-form {
-  padding: 60rpx 40rpx;
+/* 品牌区域 */
+.brand-section {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  margin-bottom: 60rpx;
+}
+
+.app-name {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #FF6B00;
+  letter-spacing: 8rpx;
+}
+
+.app-slogan {
+  font-size: 28rpx;
+  color: #666;
+  margin-top: 16rpx;
+  letter-spacing: 4rpx;
+}
+
+/* 登录表单 */
+.login-form {
+  width: 100%;
 }
 
 .form-item {
-  margin-bottom: 40rpx;
-}
-
-.form-label {
-  font-size: 28rpx;
-  color: #333;
-  margin-bottom: 16rpx;
-  display: block;
+  margin-bottom: 30rpx;
 }
 
 .form-input {
   width: 100%;
-  height: 90rpx;
+  height: 100rpx;
   background: #fff;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   padding: 0 30rpx;
-  font-size: 30rpx;
+  font-size: 32rpx;
   color: #333;
+  border: 2rpx solid #eee;
+  box-sizing: border-box;
 }
 
+.form-input:focus {
+  border-color: #FF6B00;
+}
+
+/* 密码输入框 */
+.password-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.password-input {
+  flex: 1;
+  padding-right: 100rpx;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 20rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+}
+
+.toggle-text {
+  font-size: 28rpx;
+  color: #FF6B00;
+}
+
+/* 登录按钮 */
 .login-btn {
   width: 100%;
-  height: 90rpx;
-  background: #FF6B00;
-  border-radius: 12rpx;
+  height: 100rpx;
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 0, 0.3);
 }
 
 .login-btn.disabled {
   background: #ccc;
+  box-shadow: none;
 }
 
 .login-text {
-  font-size: 32rpx;
+  font-size: 36rpx;
   color: #fff;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 8rpx;
 }
 
-.register-tip {
-  margin-top: 40rpx;
-  text-align: center;
-}
-
-.tip-text {
-  font-size: 26rpx;
-  color: #999;
-}
-
-/* 底部导航栏 */
-.tab-bar {
-  display: flex;
-  background: #fff;
-  padding: 10rpx 0;
-  border-top: 1rpx solid #eee;
-}
-
-.tab-item {
-  flex: 1;
+/* 底部版权 */
+.footer-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  margin-top: 80rpx;
+  padding-bottom: 40rpx;
 }
 
-.tab-icon {
-  width: 48rpx;
-  height: 48rpx;
+.copyright-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
-.tab-text {
+.copyright-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.copyright-text {
   font-size: 24rpx;
   color: #999;
-  margin-top: 6rpx;
 }
 
-.tab-item.active .tab-text {
-  color: #FF6B00;
+.powered-text {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 12rpx;
 }

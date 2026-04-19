@@ -1116,6 +1116,61 @@ app.post('/api/banner-config', async (req, res) => {
   }
 });
 
+// 获取版权配置
+app.get('/api/copyright-config', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const result = await db.collection('config').where({ key: 'copyright' }).limit(1).get();
+
+    if (result.data.length > 0) {
+      const value = result.data[0].value || {};
+      res.json(success({
+        copyrightText: value.copyrightText || 'youyeyyds'
+      }));
+    } else {
+      res.json(success({ copyrightText: 'youyeyyds' }));
+    }
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 保存版权配置
+app.post('/api/copyright-config', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { copyrightText } = req.body;
+
+    // 查询是否已有配置
+    const existing = await db.collection('config').where({ key: 'copyright' }).limit(1).get();
+
+    const configValue = {
+      copyrightText: copyrightText || 'youyeyyds'
+    };
+
+    if (existing.data.length > 0) {
+      await db.collection('config').doc(existing.data[0]._id).update({
+        value: configValue
+      });
+    } else {
+      await db.collection('config').add({
+        key: 'copyright',
+        value: configValue
+      });
+    }
+
+    res.json(success({ saved: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 分类 API ==========
 
 // 获取分类列表

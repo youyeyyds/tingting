@@ -183,10 +183,7 @@ Page({
   onCourseTap(e) {
     // 检查登录状态，未登录则跳转到登录页
     if (!app.globalData.isLoggedIn || !app.globalData.userId) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
-      setTimeout(() => {
-        wx.navigateTo({ url: '/pages/login/index' });
-      }, 500);
+      wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
     wx.navigateTo({ url: `/pages/chapter/index?id=${e.currentTarget.dataset.id}` });
@@ -199,8 +196,8 @@ Page({
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
     if (index === 0) return;
-    // 点击收藏且未登录，跳转登录页
-    if (index === 1 && !app.globalData.isLoggedIn) {
+    // 未登录时，首页、收藏、我的都跳转登录页
+    if (!app.globalData.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }

@@ -470,6 +470,28 @@ const toggleFavorite = async (event) => {
   }
 };
 
+// 获取版权信息
+const getCopyright = async () => {
+  try {
+    const configRes = await db.collection("config").where({ key: 'copyright' }).limit(1).get();
+    if (configRes.data.length > 0) {
+      return {
+        success: true,
+        data: configRes.data[0].value || { copyrightText: 'youyeyyds' }
+      };
+    }
+    return {
+      success: true,
+      data: { copyrightText: 'youyeyyds' }
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   switch (event.type) {
@@ -492,6 +514,8 @@ exports.main = async (event, context) => {
       return await updateChapterProgress(event);
     case "toggleFavorite":
       return await toggleFavorite(event);
+    case "getCopyright":
+      return await getCopyright();
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }

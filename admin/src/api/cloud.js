@@ -260,6 +260,22 @@ export async function saveBannerConfig(data) {
   return response.data
 }
 
+/**
+ * 获取版权配置
+ */
+export async function getCopyrightConfig() {
+  const response = await api.get('/copyright-config')
+  return response.data
+}
+
+/**
+ * 保存版权配置
+ */
+export async function saveCopyrightConfig(data) {
+  const response = await api.post('/copyright-config', data)
+  return response.data
+}
+
 // ========== 分类 API ==========
 
 /**

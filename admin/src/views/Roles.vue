@@ -120,7 +120,7 @@ const menuOrder = ref(defaultMenuOrder)
 const permissionLabels = {
   courses: '课程管理',
   audios: '音频管理',
-  headlines: '头条管理',
+  headlines: '首尾管理',
   categories: '分类管理',
   users: '用户管理',
   roles: '角色管理',

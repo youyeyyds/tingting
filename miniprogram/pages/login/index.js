@@ -4,29 +4,30 @@ const app = getApp();
 Page({
   data: {
     statusBarHeight: 0,
-    navBarHeight: 0,
-    activeTab: -1,
     phone: '',
     password: '',
     loading: false,
     headlines: [],
-    refresherTriggered: false
+    refresherTriggered: false,
+    showPassword: false,
+    copyrightText: 'youyeyyds'
   },
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
-    const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     this.setData({
-      statusBarHeight: windowInfo.statusBarHeight,
-      navBarHeight: navBarHeight
+      statusBarHeight: windowInfo.statusBarHeight
     });
     this.loadHeadlines();
+    this.loadCopyright();
   },
 
   onRefresh() {
     this.setData({ refresherTriggered: true });
-    this.loadHeadlinesAsync().then(() => {
+    Promise.all([
+      this.loadHeadlinesAsync(),
+      this.loadCopyrightAsync()
+    ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
   },
@@ -48,6 +49,21 @@ Page({
     .catch(err => console.error('获取头条失败', err));
   },
 
+  loadCopyrightAsync() {
+    return wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getCopyright' }
+    })
+    .then(res => {
+      if (res.result.success && res.result.data) {
+        this.setData({
+          copyrightText: res.result.data.copyrightText || 'youyeyyds'
+        });
+      }
+    })
+    .catch(err => console.error('获取版权信息失败', err));
+  },
+
   addTimestamp(url) {
     if (!url) return url;
     const t = Date.now();
@@ -58,16 +74,20 @@ Page({
     this.loadHeadlinesAsync();
   },
 
+  loadCopyright() {
+    this.loadCopyrightAsync();
+  },
+
+  togglePassword() {
+    this.setData({ showPassword: !this.data.showPassword });
+  },
+
   onPhoneInput(e) {
     this.setData({ phone: e.detail.value });
   },
 
   onPasswordInput(e) {
     this.setData({ password: e.detail.value });
-  },
-
-  handleBack() {
-    wx.navigateBack({ delta: 1 });
   },
 
   async handleLogin() {
@@ -116,9 +136,9 @@ Page({
 
         wx.showToast({ title: '登录成功', icon: 'success' });
 
-        // 跳转到我的页面
+        // 跳转到首页
         setTimeout(() => {
-          wx.redirectTo({ url: '/pages/mine/index' });
+          wx.redirectTo({ url: '/pages/index/index' });
         }, 500);
       } else {
         wx.showToast({ title: res.result.error || '登录失败', icon: 'none' });
@@ -128,18 +148,6 @@ Page({
       wx.showToast({ title: '登录失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
-    }
-  },
-
-  onTabChange(e) {
-    const index = e.currentTarget.dataset.index;
-    if (index === 0) {
-      wx.redirectTo({ url: '/pages/index/index' });
-    } else if (index === 1) {
-      // 收藏需要登录，已在登录页，不跳转
-      return;
-    } else if (index === 2) {
-      wx.redirectTo({ url: '/pages/mine/index' });
     }
   }
 });

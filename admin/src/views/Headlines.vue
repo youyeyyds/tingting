@@ -1,9 +1,10 @@
 <template>
   <div class="headlines-page">
+    <!-- 横幅列表卡片 -->
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>头条列表</span>
+          <span>横幅列表</span>
           <div class="header-right">
             <div class="protect-setting">
               <span class="protect-label">首页保护：</span>
@@ -17,7 +18,7 @@
             </div>
             <el-button type="primary" @click="showAddDialog">
               <el-icon><Plus /></el-icon>
-              新增头条
+              新增横幅
             </el-button>
           </div>
         </div>
@@ -86,10 +87,27 @@
       </el-table>
     </el-card>
 
+    <!-- 版权信息卡片 -->
+    <el-card class="copyright-card">
+      <template #header>
+        <div class="card-header">
+          <span>版权信息</span>
+        </div>
+      </template>
+      <el-form label-width="100px">
+        <el-form-item label="版权文字">
+          <el-input v-model="copyrightText" placeholder="如：youyeyyds" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="saveCopyright">保存</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
     <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑头条' : '新增头条'"
+      :title="isEdit ? '编辑横幅' : '新增横幅'"
       width="500px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
@@ -130,7 +148,7 @@ import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getHeadlines, createHeadline, updateHeadline, deleteHeadline, batchUpdateSeq, getBannerConfig, saveBannerConfig } from '@/api/cloud'
+import { getHeadlines, createHeadline, updateHeadline, deleteHeadline, batchUpdateSeq, getBannerConfig, saveBannerConfig, getCopyrightConfig, saveCopyrightConfig } from '@/api/cloud'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -143,6 +161,7 @@ const tableRef = ref(null)
 const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
 const homeProtect = ref(true) // 首页保护，默认开启
+const copyrightText = ref('youyeyyds') // 版权文字
 
 const form = reactive({
   seq: 1,
@@ -170,7 +189,7 @@ function updateImageUrl() {
     : `https://picsum.photos/seed/index${form.seq}/400/200`
 }
 
-// 加载头条列表
+// 加载横幅列表
 async function loadHeadlines() {
   loading.value = true
   try {
@@ -179,10 +198,10 @@ async function loadHeadlines() {
       headlines.value = res.data
       initSortable()
     } else {
-      ElMessage.error('加载头条失败: ' + res.error)
+      ElMessage.error('加载横幅失败: ' + res.error)
     }
   } catch (err) {
-    ElMessage.error('加载头条失败')
+    ElMessage.error('加载横幅失败')
   } finally {
     loading.value = false
   }
@@ -198,6 +217,32 @@ async function loadBannerSpeed() {
     }
   } catch (err) {
     console.error('加载配置失败:', err)
+  }
+}
+
+// 加载版权信息
+async function loadCopyright() {
+  try {
+    const res = await getCopyrightConfig()
+    if (res.success && res.data) {
+      copyrightText.value = res.data.copyrightText || 'youyeyyds'
+    }
+  } catch (err) {
+    console.error('加载版权信息失败:', err)
+  }
+}
+
+// 保存版权信息
+async function saveCopyright() {
+  try {
+    const res = await saveCopyrightConfig({ copyrightText: copyrightText.value })
+    if (res.success) {
+      ElMessage.success('版权信息已保存')
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
   }
 }
 
@@ -313,10 +358,10 @@ async function handleSubmit() {
   }
 }
 
-// 删除头条
+// 删除横幅
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除头条 "${row.title}" 吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除横幅 "${row.title}" 吗？`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -445,6 +490,7 @@ function formatPositions(positions) {
 onMounted(() => {
   loadHeadlines()
   loadBannerSpeed()
+  loadCopyright()
 })
 </script>
 
@@ -486,6 +532,10 @@ onMounted(() => {
 .speed-unit {
   font-size: 14px;
   color: #666;
+}
+
+.copyright-card {
+  margin-top: 20px;
 }
 
 .drag-handle {

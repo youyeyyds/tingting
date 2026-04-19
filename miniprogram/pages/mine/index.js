@@ -203,8 +203,8 @@ Page({
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index === 2) return;
-    // 点击收藏且未登录，跳转登录页
-    if (index === 1 && !app.globalData.isLoggedIn) {
+    // 未登录时跳转登录页
+    if (!app.globalData.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
