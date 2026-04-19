@@ -128,7 +128,10 @@ Component({
       this.setData({ sortOrder: newOrder });
       app.globalData.playlistSortOrder = newOrder;
       this.applySort();
-      this.triggerEvent('syncSort', { chapters: this.data.sortedChapters });
+      // 收藏列表的排序只是视图展示切换，不同步回播放器
+      if (!this.properties.isFavoriteList) {
+        this.triggerEvent('syncSort', { chapters: this.data.sortedChapters });
+      }
       setTimeout(() => this.scrollToCurrent(), 100);
     },
 
