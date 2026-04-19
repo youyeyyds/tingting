@@ -111,7 +111,7 @@ Component({
       if (!tabBarPages.includes(route)) return 15;
 
       const windowInfo = wx.getWindowInfo();
-      const tabBarHeight = 80 * (windowInfo.windowWidth / 750);
+      const tabBarHeight = 100 * (windowInfo.windowWidth / 750);
       const safeArea = windowInfo.screenHeight - (windowInfo.safeArea?.bottom || windowInfo.screenHeight);
       return 8 + tabBarHeight + safeArea;
     },

@@ -60,7 +60,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80rpx;
+  height: 100rpx;
   padding-bottom: env(safe-area-inset-bottom, 0);
   display: flex;
   background: #fff;
@@ -85,7 +85,7 @@
 .tab-text {
   font-size: 22rpx;
   color: #999;
-  margin-top: 4rpx;
+  margin-top: 6rpx;
 }
 
 .tab-item.active .tab-text {
