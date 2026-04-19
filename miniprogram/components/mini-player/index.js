@@ -174,11 +174,8 @@ Component({
         playlistSortOrder: 'asc'
       });
 
-      // 播放音频
-      this.bgAudioManager.title = chapter.title;
-      this.bgAudioManager.src = chapter.audioUrl;
-      this.bgAudioManager.episode = `${chapter.seq || 1}/${chapters.length}`;
-      this.bgAudioManager.coverUrl = chapter.courseCover || '';
+      // 播放音频（使用 loadAudio 处理云存储链接）
+      this.loadAudio(chapter);
     },
 
     async play(chapterId, playlistChapters, courseData, sortOrder) {
