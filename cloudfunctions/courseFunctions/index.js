@@ -478,16 +478,16 @@ const getCopyright = async () => {
       return {
         success: true,
         data: {
-          copyrightText: configRes.data[0].value?.copyrightText || 'youyeyyds',
-          icpNumber: configRes.data[0].value?.icpNumber || '粤ICP备2026041617号-1X'
+          copyrightText: configRes.data[0].value?.copyrightText || '',
+          icpNumber: configRes.data[0].value?.icpNumber || ''
         }
       };
     }
     return {
       success: true,
       data: {
-        copyrightText: 'youyeyyds',
-        icpNumber: '粤ICP备2026041617号-1X'
+        copyrightText: '',
+        icpNumber: ''
       }
     };
   } catch (e) {

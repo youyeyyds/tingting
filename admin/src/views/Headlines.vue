@@ -164,8 +164,8 @@ const tableRef = ref(null)
 const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
 const homeProtect = ref(true) // 首页保护，默认开启
-const copyrightText = ref('youyeyyds') // 版权文字
-const icpNumber = ref('粤ICP备2026041617号-1X') // 备案号
+const copyrightText = ref('') // 版权信息
+const icpNumber = ref('') // 备案号
 
 const form = reactive({
   seq: 1,
@@ -229,8 +229,8 @@ async function loadCopyright() {
   try {
     const res = await getCopyrightConfig()
     if (res.success && res.data) {
-      copyrightText.value = res.data.copyrightText || 'youyeyyds'
-      icpNumber.value = res.data.icpNumber || '粤ICP备2026041617号-1'
+      copyrightText.value = res.data.copyrightText || ''
+      icpNumber.value = res.data.icpNumber || ''
     }
   } catch (err) {
     console.error('加载版权信息失败:', err)
