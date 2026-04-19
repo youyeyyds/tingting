@@ -10,10 +10,13 @@ Page({
     userInfo: null,
     headlines: [],
     stats: {
+      learnedCourses: 0,
+      graduatedCourses: 0,
       finishedCount: 0,
       favoriteCount: 0,
       totalPlayCount: 0,
-      totalDuration: 0
+      totalStudyMinutes: 0,
+      joinedMinutes: 0
     },
     loading: false,
     refresherTriggered: false,
@@ -182,11 +185,14 @@ Page({
             isLoggedIn: false,
             userInfo: null,
             stats: {
-              finishedCount: 0,
-              favoriteCount: 0,
-              totalPlayCount: 0,
-              totalDuration: 0
-            }
+            learnedCourses: 0,
+            graduatedCourses: 0,
+            finishedCount: 0,
+            favoriteCount: 0,
+            totalPlayCount: 0,
+            totalStudyMinutes: 0,
+            joinedMinutes: 0
+          }
           });
           wx.showToast({ title: '已退出', icon: 'success' });
         }

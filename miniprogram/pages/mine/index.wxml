@@ -31,24 +31,33 @@
 
     <!-- 学习报告（已登录时显示） -->
     <view class="stats-card" wx:if="{{isLoggedIn}}">
-      <view class="stats-title">学习报告</view>
-      <view class="stats-grid">
-        <view class="stat-item">
-          <text class="stat-value">{{stats.finishedCount}}</text>
-          <text class="stat-label">已学完</text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-value">{{stats.favoriteCount}}</text>
-          <text class="stat-label">收藏</text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-value">{{stats.totalPlayCount}}</text>
-          <text class="stat-label">播放次数</text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-value">{{stats.totalDuration > 0 ? stats.totalDuration : 0}}</text>
-          <text class="stat-label">学习时长(秒)</text>
-        </view>
+      <view class="stats-row stats-header">
+        <text class="stats-title">学习报告</text>
+      </view>
+      <view class="stats-divider"></view>
+      <view class="stats-row">
+        <text class="stats-label">课程</text>
+        <text class="stats-value">学了 {{stats.learnedCourses || 0}} 门 / 毕业 {{stats.graduatedCourses || 0}} 门</text>
+      </view>
+      <view class="stats-divider"></view>
+      <view class="stats-row">
+        <text class="stats-label">收藏</text>
+        <text class="stats-value">共 {{stats.favoriteCount || 0}} 章</text>
+      </view>
+      <view class="stats-divider"></view>
+      <view class="stats-row">
+        <text class="stats-label">播放次数</text>
+        <text class="stats-value">共 {{stats.totalPlayCount || 0}} 次</text>
+      </view>
+      <view class="stats-divider"></view>
+      <view class="stats-row">
+        <text class="stats-label">学习时长</text>
+        <text class="stats-value">{{stats.totalStudyMinutes || 0}} 分</text>
+      </view>
+      <view class="stats-divider"></view>
+      <view class="stats-row">
+        <text class="stats-label">加入听听</text>
+        <text class="stats-value">{{stats.joinedMinutes || 0}} 分</text>
       </view>
     </view>
 

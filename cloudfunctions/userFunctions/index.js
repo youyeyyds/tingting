@@ -130,6 +130,19 @@ const getUserStats = async (event) => {
       return { success: false, error: '缺少用户ID' };
     }
 
+    // 获取用户信息
+    const userRes = await db.collection('users').where({ userId }).limit(1).get();
+    const user = userRes.data[0];
+    const createTime = user ? (user._createTime || user.createTime) : null;
+
+    // 计算加入听听的分钟数
+    let joinedMinutes = 0;
+    if (createTime) {
+      const joinedDate = new Date(createTime);
+      const now = new Date();
+      joinedMinutes = Math.floor((now - joinedDate) / (1000 * 60));
+    }
+
     // 获取用户所有进度记录
     const progressRes = await db.collection('userProgress').where({ userId }).get();
 
@@ -140,13 +153,54 @@ const getUserStats = async (event) => {
     let favoriteCount = 0;
     let totalPlayCount = 0;
     let totalDuration = 0;
+    let totalStudyMinutes = 0;
+
+    // 统计学了多少门课程（有进度记录的课程）
+    const courseIdsWithProgress = new Set();
+    // 统计毕业了多少门课程（课程所有章节都学完）
+    const finishedChapterCounts = {}; // courseId: finishedCount
 
     progresses.forEach(p => {
       if (p.finished) finishedCount++;
       if (p.isFavorite) favoriteCount++;
       totalPlayCount += p.playCount || 0;
       totalDuration += p.lastPlayTime || 0;
+      totalStudyMinutes += Math.floor((p.lastPlayTime || 0) / 60); // 学习时长（分钟）
+
+      if (p.courseId) {
+        courseIdsWithProgress.add(p.courseId);
+        if (p.finished) {
+          finishedChapterCounts[p.courseId] = (finishedChapterCounts[p.courseId] || 0) + 1;
+        }
+      }
     });
+
+    // 获取每门课程的章节总数，计算毕业课程数
+    const learnedCourseIds = Array.from(courseIdsWithProgress);
+    let graduatedCourses = 0;
+    let learnedCourses = learnedCourseIds.length;
+
+    if (learnedCourseIds.length > 0) {
+      // 获取这些课程的章节总数
+      const chaptersByCourseRes = await db.collection('chapters')
+        .where({ course: db.command.in(learnedCourseIds) })
+        .get();
+
+      // 统计每门课程的章节总数
+      const courseChapterCounts = {};
+      chaptersByCourseRes.data.forEach(ch => {
+        courseChapterCounts[ch.course] = (courseChapterCounts[ch.course] || 0) + 1;
+      });
+
+      // 判断毕业：该课程所有章节都学完
+      for (const courseId of learnedCourseIds) {
+        const totalChapters = courseChapterCounts[courseId] || 0;
+        const finishedChapters = finishedChapterCounts[courseId] || 0;
+        if (totalChapters > 0 && finishedChapters >= totalChapters) {
+          graduatedCourses++;
+        }
+      }
+    }
 
     // 获取收藏的章节详情
     const favoriteProgresses = progresses.filter(p => p.isFavorite);
@@ -184,10 +238,13 @@ const getUserStats = async (event) => {
     return {
       success: true,
       data: {
+        learnedCourses,
+        graduatedCourses,
         finishedCount,
-        favoriteCount,
+        favoriteCount, // 收藏章数
         totalPlayCount,
-        totalDuration,
+        totalStudyMinutes,
+        joinedMinutes,
         favoriteChapters
       }
     };
