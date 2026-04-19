@@ -1004,7 +1004,6 @@ app.post('/api/headlines', async (req, res) => {
       title: data.title,
       image: data.image || '',
       imageRandom: data.imageRandom !== false,
-      link: data.link || '',
       _createTime: new Date()
     });
 
@@ -1028,8 +1027,7 @@ app.put('/api/headlines/:id', async (req, res) => {
       seq: data.seq,
       title: data.title,
       image: data.image || '',
-      imageRandom: data.imageRandom !== false,
-      link: data.link || ''
+      imageRandom: data.imageRandom !== false
     });
 
     res.json(success({ updated: true }));

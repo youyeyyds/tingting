@@ -58,14 +58,6 @@
             <el-switch v-model="row.imageRandom" size="small" @change="toggleRowImageRandom(row)" />
           </template>
         </el-table-column>
-        <el-table-column prop="link" label="链接" min-width="200">
-          <template #default="{ row }">
-            <el-link v-if="row.link" :href="row.link" target="_blank" type="primary">
-              {{ row.link }}
-            </el-link>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row._createTime) }}
@@ -98,11 +90,8 @@
         <el-form-item label="随机" prop="imageRandom">
           <el-switch v-model="form.imageRandom" @change="updateImageUrl" />
         </el-form-item>
-        <el-form-item label="图片URL" prop="image">
+        <el-form-item label="链接" prop="image">
           <el-input v-model="form.image" readonly placeholder="自动生成" />
-        </el-form-item>
-        <el-form-item label="链接" prop="link">
-          <el-input v-model="form.link" placeholder="请输入链接地址" />
         </el-form-item>
       </el-form>
 
@@ -139,8 +128,7 @@ const form = reactive({
   seq: 1,
   title: '',
   image: '',
-  imageRandom: true,
-  link: ''
+  imageRandom: true
 })
 
 const rules = {
@@ -247,8 +235,7 @@ function showEditDialog(row) {
     seq: row.seq || 1,
     title: row.title,
     image: row.image || '',
-    imageRandom: row.imageRandom !== false,
-    link: row.link || ''
+    imageRandom: row.imageRandom !== false
   })
   dialogVisible.value = true
 }
@@ -259,8 +246,7 @@ function resetForm() {
     seq: 1,
     title: '',
     image: '',
-    imageRandom: true,
-    link: ''
+    imageRandom: true
   })
 }
 
@@ -278,8 +264,7 @@ async function handleSubmit() {
       seq: form.seq,
       title: form.title,
       image: form.image,
-      imageRandom: form.imageRandom,
-      link: form.link
+      imageRandom: form.imageRandom
     }
 
     let res
@@ -340,8 +325,7 @@ async function toggleRowImageRandom(row) {
       seq: row.seq,
       title: row.title,
       image: imageUrl,
-      imageRandom: row.imageRandom,
-      link: row.link
+      imageRandom: row.imageRandom
     })
     if (res.success) {
       ElMessage.success(row.imageRandom ? '已切换为随机' : '已切换为固定')
