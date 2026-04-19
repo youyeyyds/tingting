@@ -25,7 +25,7 @@
     <view class="form-item password-item">
       <input class="form-input password-input" type="{{showPassword ? 'text' : 'password'}}" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
       <view class="password-toggle" bindtap="togglePassword">
-        <text class="toggle-text">{{showPassword ? '隐藏' : '显示'}}</text>
+        <image class="eye-icon" src="{{showPassword ? '/icons/svg/eye-open.svg' : '/icons/svg/eye-close.svg'}}" mode="aspectFit" />
       </view>
     </view>
 
@@ -40,7 +40,11 @@
       <image class="copyright-icon" src="/icons/svg/copyright.svg" mode="aspectFit" />
       <text class="copyright-text">{{copyrightText}}</text>
     </view>
-    <text class="powered-text">Powered by Claude Code</text>
+    <view class="powered-row">
+      <text class="powered-text">Powered by</text>
+      <image class="terminal-icon" src="/icons/svg/terminal.svg" mode="aspectFit" />
+      <text class="powered-text">Claude Code</text>
+    </view>
   </view>
 
   <!-- 下拉刷新（用于刷新横幅和版权信息） -->

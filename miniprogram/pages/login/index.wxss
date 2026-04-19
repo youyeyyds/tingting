@@ -37,7 +37,7 @@
 .app-name {
   font-size: 56rpx;
   font-weight: 700;
-  color: #FF6B00;
+  color: #333;
   letter-spacing: 8rpx;
 }
 
@@ -83,39 +83,37 @@
 
 .password-input {
   flex: 1;
-  padding-right: 100rpx;
+  padding-right: 80rpx;
 }
 
 .password-toggle {
   position: absolute;
-  right: 20rpx;
+  right: 30rpx;
   height: 100rpx;
   display: flex;
   align-items: center;
-  padding: 0 20rpx;
+  justify-content: center;
 }
 
-.toggle-text {
-  font-size: 28rpx;
-  color: #FF6B00;
+.eye-icon {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 /* 登录按钮 */
 .login-btn {
   width: 100%;
   height: 100rpx;
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+  background: #FF6B00;
   border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 40rpx;
-  box-shadow: 0 8rpx 24rpx rgba(255, 107, 0, 0.3);
 }
 
 .login-btn.disabled {
   background: #ccc;
-  box-shadow: none;
 }
 
 .login-text {
@@ -131,18 +129,19 @@
   flex-direction: column;
   align-items: center;
   margin-top: 80rpx;
+  padding: 0 40rpx;
   padding-bottom: 40rpx;
 }
 
 .copyright-row {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: 6rpx;
 }
 
 .copyright-icon {
-  width: 32rpx;
-  height: 32rpx;
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .copyright-text {
@@ -150,8 +149,19 @@
   color: #999;
 }
 
+.powered-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 12rpx;
+}
+
+.terminal-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
 .powered-text {
   font-size: 22rpx;
   color: #bbb;
-  margin-top: 12rpx;
 }
