@@ -12,15 +12,17 @@
     <text class="header-title">登录</text>
   </view>
 
-  <!-- 头条轮播 -->
-  <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
-    <swiper-item wx:for="{{headlines}}" wx:key="_id">
-      <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
-    </swiper-item>
-  </swiper>
+  <scroll-view class="content" scroll-y="true" enhanced="true"
+    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
+    <!-- 头条轮播 -->
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+      <swiper-item wx:for="{{headlines}}" wx:key="_id">
+        <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
 
-  <!-- 登录表单 -->
-  <view class="login-form">
+    <!-- 登录表单 -->
+    <view class="login-form">
     <view class="form-item">
       <text class="form-label">手机号</text>
       <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
@@ -39,6 +41,7 @@
       <text class="tip-text">没有账号？请联系管理员注册</text>
     </view>
   </view>
+  </scroll-view>
 
   <!-- 底部导航栏 -->
   <view class="tab-bar">

@@ -6,7 +6,8 @@
     <text class="header-title">我的</text>
   </view>
 
-  <view class="content">
+  <scroll-view class="content" scroll-y="true" enhanced="true"
+    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <!-- 头条轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
@@ -55,7 +56,7 @@
     <view class="logout-section" wx:if="{{isLoggedIn}}">
       <button class="logout-btn" bindtap="handleLogout">退出登录</button>
     </view>
-  </view>
+  </scroll-view>
 
   <!-- 底部导航栏 -->
   <view class="tab-bar">

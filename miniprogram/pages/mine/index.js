@@ -15,7 +15,8 @@ Page({
       totalPlayCount: 0,
       totalDuration: 0
     },
-    loading: false
+    loading: false,
+    refresherTriggered: false
   },
 
   onLoad() {
@@ -32,18 +33,47 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadUserStats();
     }
   },
 
-  onPullDownRefresh() {
+  onRefresh() {
+    this.setData({ refresherTriggered: true });
     this.checkLoginStatus();
     this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
-      this.loadUserStats();
+      this.loadUserStatsAsync().then(() => {
+        this.setData({ refresherTriggered: false });
+      });
+    } else {
+      this.setData({ refresherTriggered: false });
     }
-    wx.stopPullDownRefresh();
+  },
+
+  loadUserStatsAsync() {
+    if (!app.globalData.userId) {
+      return Promise.resolve();
+    }
+
+    return wx.cloud.callFunction({
+      name: 'userFunctions',
+      data: {
+        type: 'getUserStats',
+        userId: app.globalData.userId
+      }
+    })
+    .then(res => {
+      if (res.result.success) {
+        this.setData({
+          stats: res.result.data
+        });
+      }
+    })
+    .catch(err => {
+      console.error('获取用户统计失败:', err);
+    });
   },
 
   loadHeadlines() {
@@ -53,10 +83,20 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
-        this.setData({ headlines: res.result.data });
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
+        this.setData({ headlines: headlines });
       }
     })
     .catch(err => console.error('获取头条失败', err));
+  },
+
+  addTimestamp(url) {
+    if (!url) return url;
+    const t = Date.now();
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   checkLoginStatus() {
@@ -163,6 +203,11 @@ Page({
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index === 2) return;
+    // 点击收藏且未登录，跳转登录页
+    if (index === 1 && !app.globalData.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/index' });
+      return;
+    }
     wx.redirectTo({ url: `/pages/${['index', 'favorite', ''][index]}/index` });
   }
 });

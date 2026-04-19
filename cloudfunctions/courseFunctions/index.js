@@ -154,9 +154,10 @@ const getCourses = async (event) => {
 };
 
 // 获取头条列表
-const getHeadlines = async (event) => {
+const getHeadlines = async (event = {}) => {
   try {
-    const { page } = event; // page: 'index', 'favorite', 'login', 'mine'
+    const page = event.page || 'index'; // page: 'index', 'favorite', 'login', 'mine'
+    console.log('getHeadlines 调用参数:', event, 'page:', page);
 
     // 获取头条列表
     const headlinesRes = await db.collection("headlines")
@@ -164,14 +165,17 @@ const getHeadlines = async (event) => {
       .limit(10)
       .get();
 
+    console.log('头条原始数据:', headlinesRes.data.length, '条');
+
     // 根据页面位置过滤头条
-    let filteredHeadlines = headlinesRes.data;
-    if (page) {
-      filteredHeadlines = headlinesRes.data.filter(h => {
-        const positions = h.positions || ['index', 'favorite', 'login', 'mine'];
-        return positions.includes(page);
-      });
-    }
+    let filteredHeadlines = headlinesRes.data.filter(h => {
+      const positions = h.positions || ['index', 'favorite', 'login', 'mine'];
+      const included = positions.includes(page);
+      console.log('头条:', h.title, 'positions:', positions, '是否包含', page, ':', included);
+      return included;
+    });
+
+    console.log('过滤后头条:', filteredHeadlines.length, '条');
 
     // 获取轮播配置
     let speed = 3; // 默认3秒
@@ -193,6 +197,7 @@ const getHeadlines = async (event) => {
       homeProtect: homeProtect
     };
   } catch (e) {
+    console.error('getHeadlines 错误:', e);
     return {
       success: false,
       errMsg: e.message || e
@@ -480,7 +485,7 @@ exports.main = async (event, context) => {
     case "getCourses":
       return await getCourses(event);
     case "getHeadlines":
-      return await getHeadlines();
+      return await getHeadlines(event);
     case "getCourseDetail":
       return await getCourseDetail(event);
     case "updateChapterProgress":

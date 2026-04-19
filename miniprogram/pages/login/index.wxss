@@ -43,10 +43,17 @@
   color: #333;
 }
 
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* 头条轮播 */
 .banner {
   width: 100%;
-  height: 200rpx;
+  height: 280rpx;
+  margin-bottom: 20rpx;
 }
 
 .banner-image {
@@ -55,7 +62,6 @@
 }
 
 .login-form {
-  flex: 1;
   padding: 60rpx 40rpx;
   display: flex;
   flex-direction: column;

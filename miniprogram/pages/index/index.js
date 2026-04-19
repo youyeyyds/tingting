@@ -32,9 +32,10 @@ Page({
     courses: [],
     headlines: [],
     bannerSpeed: 3000,
-    homeProtect: false,
+    homeProtect: true, // 默认开启首页保护
     loading: true,
-    activeTab: 0
+    activeTab: 0,
+    refresherTriggered: false
   },
 
   onLoad() {
@@ -49,43 +50,50 @@ Page({
     });
 
     this.checkLoginStatus();
-    this.loadHeadlines();
-    this.loadCourses();
+    this.loadHeadlinesAsync();
+    this.loadCoursesAsync();
   },
 
   onShow() {
     this.checkLoginStatus();
-    this.loadHeadlines();
-    this.loadCourses();
+    this.loadHeadlinesAsync();
+    this.loadCoursesAsync();
   },
 
-  onPullDownRefresh() {
-    this.loadHeadlines();
-    this.loadCourses();
-    wx.stopPullDownRefresh();
+  onRefresh() {
+    this.setData({ refresherTriggered: true });
+    Promise.all([
+      this.loadHeadlinesAsync(),
+      this.loadCoursesAsync()
+    ]).then(() => {
+      this.setData({ refresherTriggered: false });
+    });
   },
 
-  loadHeadlines() {
-    wx.cloud.callFunction({
+  loadHeadlinesAsync() {
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'index' }
     })
     .then(res => {
       if (res.result.success) {
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
         this.setData({
-          headlines: res.result.data,
+          headlines: headlines,
           bannerSpeed: (res.result.speed || 3) * 1000,
-          homeProtect: res.result.homeProtect || false
+          homeProtect: res.result.homeProtect !== false
         });
-        // 需要重新处理课程显示
         this.processCourses();
       }
     })
     .catch(err => console.error('获取头条失败', err));
   },
 
-  loadCourses() {
-    wx.cloud.callFunction({
+  loadCoursesAsync() {
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'getCourses',
@@ -96,8 +104,12 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
+        const courses = res.result.data.map(c => ({
+          ...c,
+          cover: this.addTimestamp(c.cover)
+        }));
         this.setData({
-          courses: res.result.data,
+          courses: courses,
           loading: false
         });
         this.processCourses();
@@ -108,6 +120,12 @@ Page({
     .catch(err => {
       this.setData({ loading: false });
     });
+  },
+
+  addTimestamp(url) {
+    if (!url) return url;
+    const t = Date.now();
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   // 处理课程显示（根据首页保护和登录状态）
@@ -175,18 +193,17 @@ Page({
   },
 
   onHeadlineTap(e) {
-    const link = e.currentTarget.dataset.link;
-    if (link) {
-      wx.setClipboardData({
-        data: link,
-        success: () => wx.showToast({ title: '链接已复制', icon: 'success' })
-      });
-    }
+    // 横幅点击不做任何操作
   },
 
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
     if (index === 0) return;
+    // 点击收藏且未登录，跳转登录页
+    if (index === 1 && !app.globalData.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/index' });
+      return;
+    }
     wx.redirectTo({ url: `/pages/${['', 'favorite', 'mine'][index]}/index` });
   }
 });

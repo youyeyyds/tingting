@@ -9,7 +9,8 @@ Page({
     isLoggedIn: false,
     favoriteChapters: [],
     headlines: [],
-    loading: true
+    loading: true,
+    refresherTriggered: false
   },
 
   onLoad() {
@@ -26,18 +27,55 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavorites();
     }
   },
 
-  onPullDownRefresh() {
+  onRefresh() {
+    this.setData({ refresherTriggered: true });
     this.checkLoginStatus();
     this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
-      this.loadFavorites();
+      this.loadFavoritesAsync().then(() => {
+        this.setData({ refresherTriggered: false });
+      });
+    } else {
+      this.setData({ refresherTriggered: false });
     }
-    wx.stopPullDownRefresh();
+  },
+
+  loadFavoritesAsync() {
+    if (!app.globalData.userId) {
+      this.setData({ loading: false, favoriteChapters: [] });
+      return Promise.resolve();
+    }
+
+    this.setData({ loading: true });
+
+    return wx.cloud.callFunction({
+      name: 'userFunctions',
+      data: {
+        type: 'getUserStats',
+        userId: app.globalData.userId
+      }
+    })
+    .then(res => {
+      if (res.result.success) {
+        const favorites = res.result.data.favoriteChapters || [];
+        this.setData({
+          favoriteChapters: favorites.map(ch => this.formatChapter(ch)),
+          loading: false
+        });
+      } else {
+        this.setData({ loading: false });
+      }
+    })
+    .catch(err => {
+      console.error('获取收藏失败:', err);
+      this.setData({ loading: false });
+    });
   },
 
   loadHeadlines() {
@@ -47,10 +85,20 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
-        this.setData({ headlines: res.result.data });
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
+        this.setData({ headlines: headlines });
       }
     })
     .catch(err => console.error('获取头条失败', err));
+  },
+
+  addTimestamp(url) {
+    if (!url) return url;
+    const t = Date.now();
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   checkLoginStatus() {
@@ -133,6 +181,7 @@ Page({
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index === 1) return;
+    // 点击首页或个人，正常跳转
     wx.redirectTo({ url: `/pages/${['index', '', 'mine'][index]}/index` });
   }
 });

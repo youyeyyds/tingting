@@ -1,5 +1,8 @@
 {
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "backgroundTextStyle": "dark",
+  "usingComponents": {
+    "mini-player": "/components/mini-player/index"
+  }
 }

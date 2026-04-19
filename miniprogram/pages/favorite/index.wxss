@@ -36,7 +36,8 @@
 /* 头条轮播 */
 .banner {
   width: 100%;
-  height: 200rpx;
+  height: 280rpx;
+  margin-bottom: 20rpx;
 }
 
 .banner-image {

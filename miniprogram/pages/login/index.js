@@ -9,7 +9,8 @@ Page({
     phone: '',
     password: '',
     loading: false,
-    headlines: []
+    headlines: [],
+    refresherTriggered: false
   },
 
   onLoad() {
@@ -23,22 +24,38 @@ Page({
     this.loadHeadlines();
   },
 
-  onPullDownRefresh() {
-    this.loadHeadlines();
-    wx.stopPullDownRefresh();
+  onRefresh() {
+    this.setData({ refresherTriggered: true });
+    this.loadHeadlinesAsync().then(() => {
+      this.setData({ refresherTriggered: false });
+    });
   },
 
-  loadHeadlines() {
-    wx.cloud.callFunction({
+  loadHeadlinesAsync() {
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'login' }
     })
     .then(res => {
       if (res.result.success) {
-        this.setData({ headlines: res.result.data });
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.addTimestamp(h.image)
+        }));
+        this.setData({ headlines: headlines });
       }
     })
     .catch(err => console.error('获取头条失败', err));
+  },
+
+  addTimestamp(url) {
+    if (!url) return url;
+    const t = Date.now();
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
+  },
+
+  loadHeadlines() {
+    this.loadHeadlinesAsync();
   },
 
   onPhoneInput(e) {
@@ -116,6 +133,13 @@ Page({
 
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
-    wx.redirectTo({ url: `/pages/${['index', 'favorite', 'mine'][index]}/index` });
+    if (index === 0) {
+      wx.redirectTo({ url: '/pages/index/index' });
+    } else if (index === 1) {
+      // 收藏需要登录，已在登录页，不跳转
+      return;
+    } else if (index === 2) {
+      wx.redirectTo({ url: '/pages/mine/index' });
+    }
   }
 });
