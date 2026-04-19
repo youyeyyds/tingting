@@ -58,6 +58,13 @@
             <el-switch v-model="row.imageRandom" size="small" @change="toggleRowImageRandom(row)" />
           </template>
         </el-table-column>
+        <el-table-column prop="image" label="链接" min-width="250">
+          <template #default="{ row }">
+            <el-link :href="row.image" target="_blank" type="primary">
+              {{ row.image }}
+            </el-link>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row._createTime) }}
