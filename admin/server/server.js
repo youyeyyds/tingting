@@ -1057,9 +1057,13 @@ app.get('/api/banner-config', async (req, res) => {
     const result = await db.collection('config').where({ key: 'banner' }).limit(1).get();
 
     if (result.data.length > 0) {
-      res.json(success(result.data[0].value || { speed: 3 }));
+      const value = result.data[0].value || {};
+      res.json(success({
+        speed: value.speed || 3,
+        homeProtect: value.homeProtect !== false // 默认开启
+      }));
     } else {
-      res.json(success({ speed: 3 }));
+      res.json(success({ speed: 3, homeProtect: true }));
     }
   } catch (err) {
     res.json(error(err.message));
@@ -1073,19 +1077,24 @@ app.post('/api/banner-config', async (req, res) => {
     if (!tcb) return res.json(error('未登录'));
 
     const db = tcb.database();
-    const { speed } = req.body;
+    const { speed, homeProtect } = req.body;
 
     // 查询是否已有配置
     const existing = await db.collection('config').where({ key: 'banner' }).limit(1).get();
 
+    const configValue = {
+      speed: speed || 3,
+      homeProtect: homeProtect !== false // 默认开启
+    };
+
     if (existing.data.length > 0) {
       await db.collection('config').doc(existing.data[0]._id).update({
-        value: { speed }
+        value: configValue
       });
     } else {
       await db.collection('config').add({
         key: 'banner',
-        value: { speed }
+        value: configValue
       });
     }
 
