@@ -4,6 +4,12 @@ const app = getApp();
 // 随机作者名称列表
 const randomAuthors = ['王老师', '李博士', '张教授', '刘老师', '陈博士', '杨教授', '赵老师', '周博士'];
 
+// 根据课程序号获取固定的随机作者
+function getFixedAuthor(seq) {
+  const index = (seq || 1) % randomAuthors.length;
+  return randomAuthors[index];
+}
+
 Page({
   data: {
     statusBarHeight: 0,
@@ -96,7 +102,7 @@ Page({
     const maskedCourses = courses.map(course => ({
       ...course,
       title: '登录后可见',
-      author: randomAuthors[Math.floor(Math.random() * randomAuthors.length)]
+      author: getFixedAuthor(course.seq)
     }));
     this.setData({ courses: maskedCourses });
   },

@@ -125,7 +125,7 @@ const tableRef = ref(null)
 
 const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
-const homeProtect = ref(false) // 首页保护，默认关闭
+const homeProtect = ref(true) // 首页保护，默认开启
 
 const form = reactive({
   seq: 1,

@@ -164,12 +164,12 @@ const getHeadlines = async () => {
 
     // 获取轮播配置
     let speed = 3; // 默认3秒
-    let homeProtect = false; // 默认关闭首页保护
+    let homeProtect = true; // 默认开启首页保护
     try {
       const configRes = await db.collection("config").where({ key: 'banner' }).limit(1).get();
       if (configRes.data.length > 0 && configRes.data[0].value) {
         speed = configRes.data[0].value.speed || 3;
-        homeProtect = configRes.data[0].value.homeProtect || false;
+        homeProtect = configRes.data[0].value.homeProtect !== false; // 默认开启，只有明确设为 false 才关闭
       }
     } catch (e) {
       console.error('获取轮播配置失败:', e);
