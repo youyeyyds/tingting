@@ -18,24 +18,20 @@ Page({
       totalStudyMinutes: 0,
       joinedMinutes: 0
     },
-    studyTimeText: '', // 学习时长格式化文本
-    joinedTimeText: '', // 加入听听格式化文本
+    studyTime: { days: 0, hours: 0, mins: 0 }, // 学习时长拆分
+    joinedTime: { days: 0, hours: 0, mins: 0 }, // 加入听听拆分
     loading: false,
     refresherTriggered: false,
     loadTime: ''
   },
 
-  // 格式化分钟数为 X天X时X分
-  formatMinutes(minutes) {
-    if (!minutes || minutes <= 0) return '0分';
+  // 格式化分钟数，返回拆分后的对象
+  formatMinutesToObj(minutes) {
+    if (!minutes || minutes <= 0) return { days: 0, hours: 0, mins: 0 };
     const days = Math.floor(minutes / (24 * 60));
     const hours = Math.floor((minutes % (24 * 60)) / 60);
     const mins = minutes % 60;
-    let result = '';
-    if (days > 0) result += `${days}天`;
-    if (hours > 0) result += `${hours}时`;
-    if (mins > 0 || result === '') result += `${mins}分`;
-    return result;
+    return { days, hours, mins };
   },
 
   onLoad() {
@@ -94,12 +90,12 @@ Page({
     .then(res => {
       if (res.result.success) {
         const stats = res.result.data;
-        const studyTimeText = this.formatMinutes(stats.totalStudyMinutes || 0);
-        const joinedTimeText = this.formatMinutes(stats.joinedMinutes || 0);
+        const studyTime = this.formatMinutesToObj(stats.totalStudyMinutes || 0);
+        const joinedTime = this.formatMinutesToObj(stats.joinedMinutes || 0);
         this.setData({
           stats: stats,
-          studyTimeText: studyTimeText,
-          joinedTimeText: joinedTimeText
+          studyTime: studyTime,
+          joinedTime: joinedTime
         });
       }
     })
@@ -168,12 +164,12 @@ Page({
 
       if (res.result.success) {
         const stats = res.result.data;
-        const studyTimeText = this.formatMinutes(stats.totalStudyMinutes || 0);
-        const joinedTimeText = this.formatMinutes(stats.joinedMinutes || 0);
+        const studyTime = this.formatMinutesToObj(stats.totalStudyMinutes || 0);
+        const joinedTime = this.formatMinutesToObj(stats.joinedMinutes || 0);
         this.setData({
           stats: stats,
-          studyTimeText: studyTimeText,
-          joinedTimeText: joinedTimeText
+          studyTime: studyTime,
+          joinedTime: joinedTime
         });
       }
     } catch (err) {
