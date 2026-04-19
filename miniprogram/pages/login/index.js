@@ -12,7 +12,7 @@ Page({
     copyrightText: '',
     icpNumber: '',
     loadTime: '', // 加载时间戳，用于图片URL
-    pageAnimating: false // 页面退出动画
+    bannerSpeed: 5000 // 轮播速度
   },
 
   onLoad() {
@@ -31,12 +31,7 @@ Page({
   },
 
   handleBack() {
-    // 触发退出动画
-    this.setData({ pageAnimating: true });
-    // 动画完成后跳转
-    setTimeout(() => {
-      wx.redirectTo({ url: '/pages/index/index' });
-    }, 200);
+    wx.navigateBack();
   },
 
   onRefresh() {
@@ -62,7 +57,10 @@ Page({
           ...h,
           image: this.addTimestamp(h.image)
         }));
-        this.setData({ headlines: headlines });
+        this.setData({
+          headlines: headlines,
+          bannerSpeed: (res.result.speed || 5) * 1000
+        });
       }
     })
     .catch(err => console.error('获取头条失败', err));

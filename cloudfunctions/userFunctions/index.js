@@ -69,7 +69,8 @@ const login = async (event) => {
         userId: user._id,
         phone: user.phone,
         nickName: user.nickName || '用户',
-        avatarUrl: avatarUrl
+        avatarUrl: avatarUrl,
+        avatarFileID: user.avatarFileID || ''
       }
     };
   } catch (err) {
@@ -113,7 +114,8 @@ const getUserInfo = async (event) => {
         userId: user._id,
         phone: user.phone,
         nickName: user.nickName || '用户',
-        avatarUrl: avatarUrl
+        avatarUrl: avatarUrl,
+        avatarFileID: user.avatarFileID || ''
       }
     };
   } catch (err) {

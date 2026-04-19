@@ -9,7 +9,7 @@
   <scroll-view class="content" scroll-y="true" enhanced="true"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <!-- 头条轮播 -->
-    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
@@ -24,14 +24,26 @@
       <button class="login-btn" bindtap="handleLogin">登录</button>
     </view>
 
+    <!-- 加载状态 -->
+    <view class="favorite-list" wx:if="{{isLoggedIn && loading}}">
+      <view class="chapter-card skeleton" wx:for="{{3}}" wx:key="index">
+        <view class="chapter-cover skeleton-bg"></view>
+        <view class="chapter-info">
+          <view class="skeleton-row skeleton-bg"></view>
+          <view class="skeleton-row skeleton-bg" style="width: 60%;"></view>
+          <view class="skeleton-row skeleton-bg" style="width: 40%;"></view>
+        </view>
+      </view>
+    </view>
+
     <!-- 已登录但无收藏 -->
-    <view class="empty-state" wx:if="{{isLoggedIn && favoriteChapters.length === 0}}">
+    <view class="empty-state" wx:if="{{isLoggedIn && !loading && favoriteChapters.length === 0}}">
       <image class="empty-icon" src="/icons/svg/favorite.svg" mode="aspectFit" />
       <text class="empty-text">暂无收藏章节</text>
     </view>
 
     <!-- 收藏列表 -->
-    <view class="favorite-list" wx:if="{{isLoggedIn && favoriteChapters.length > 0}}">
+    <view class="favorite-list" wx:if="{{isLoggedIn && !loading && favoriteChapters.length > 0}}">
       <view class="chapter-card" wx:for="{{favoriteChapters}}" wx:key="_id"
         data-index="{{index}}" bindtap="onChapterTap">
         <!-- 左边封面 -->
@@ -62,7 +74,7 @@
         <!-- 右下角按钮 -->
         <view class="card-actions">
           <view class="play-btn" catchtap="onPlayTap" data-index="{{index}}">
-            <view class="play-icon"></view>
+            <view class="play-triangle"></view>
           </view>
           <view class="close-btn" catchtap="onRemoveTap" data-id="{{item._id}}" data-index="{{index}}">
             <text class="close-text">×</text>

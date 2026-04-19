@@ -8,22 +8,6 @@
   box-sizing: border-box;
 }
 
-/* 页面退出动画 */
-.page-exit {
-  animation: pageExit 0.2s ease forwards;
-}
-
-@keyframes pageExit {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-30rpx);
-  }
-}
-
 /* 固定顶部导航 */
 .header-fixed {
   position: fixed;

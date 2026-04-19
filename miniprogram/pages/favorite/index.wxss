@@ -126,32 +126,50 @@
 .favorite-list {
   width: 100%;
   padding: 20rpx 30rpx;
+  box-sizing: border-box;
 }
 
 .chapter-card {
   display: flex;
-  padding: 20rpx;
+  padding: 24rpx;
   background: #fff;
   border-radius: 16rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
   position: relative;
+  box-sizing: border-box;
+}
+
+/* 骨架占位 */
+.chapter-card.skeleton {
+  pointer-events: none;
+}
+
+.skeleton-bg {
+  background: #f0f0f0;
+}
+
+.skeleton-row {
+  height: 24rpx;
+  border-radius: 4rpx;
+  margin: 8rpx 0;
 }
 
 /* 左边封面 */
 .chapter-cover {
-  width: 120rpx;
-  height: 120rpx;
+  width: 140rpx;
+  height: 140rpx;
   border-radius: 12rpx;
   background: #eee;
+  flex-shrink: 0;
 }
 
 /* 右边信息 */
 .chapter-info {
   flex: 1;
-  margin-left: 16rpx;
+  margin-left: 20rpx;
   display: flex;
   flex-direction: column;
-  padding-right: 60rpx;
+  min-width: 0;
 }
 
 .info-row {
@@ -168,7 +186,7 @@
 .info-divider {
   height: 1rpx;
   background: #eee;
-  margin: 12rpx 0;
+  margin: 14rpx 0;
 }
 
 /* 第一行 */
@@ -188,13 +206,13 @@
 
 /* 第二行 */
 .chapter-seq {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #FF6B00;
   font-weight: 600;
 }
 
 .chapter-title {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #333;
   flex: 1;
   overflow: hidden;
@@ -220,43 +238,40 @@
 /* 右下角按钮 */
 .card-actions {
   position: absolute;
-  right: 16rpx;
-  bottom: 16rpx;
+  right: 20rpx;
+  bottom: 20rpx;
   display: flex;
   gap: 16rpx;
 }
 
 .play-btn {
-  width: 48rpx;
-  height: 48rpx;
-  background: #FF6B00;
-  border-radius: 50%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 12rpx 24rpx;
+  background: #FF6B00;
+  border-radius: 12rpx;
 }
 
-.play-icon {
-  width: 16rpx;
-  height: 16rpx;
-  border-left: 10rpx solid #fff;
-  border-bottom: 8rpx solid transparent;
+.play-triangle {
+  width: 0;
+  height: 0;
   border-top: 8rpx solid transparent;
-  margin-left: 6rpx;
+  border-bottom: 8rpx solid transparent;
+  border-left: 12rpx solid #fff;
 }
 
 .close-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 52rpx;
+  height: 52rpx;
   background: #f5f5f5;
-  border-radius: 50%;
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .close-text {
-  font-size: 32rpx;
+  font-size: 36rpx;
   color: #999;
   line-height: 1;
 }

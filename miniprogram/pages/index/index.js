@@ -45,14 +45,13 @@ Page({
     isLoggedIn: false,
     courses: [],
     headlines: [],
-    bannerSpeed: 3000,
+    bannerSpeed: 5000,
     homeProtect: true, // 默认开启首页保护
     loading: true,
     activeTab: 0,
     refresherTriggered: false,
     maskedAuthors: {}, // 存储课程ID对应的随机作者
-    loadTime: '', // 加载时间戳
-    pageAnimating: false // 页面退出动画
+    loadTime: '' // 加载时间戳
   },
 
   onLoad() {
@@ -120,7 +119,7 @@ Page({
         }));
         this.setData({
           headlines: headlines,
-          bannerSpeed: (res.result.speed || 3) * 1000,
+          bannerSpeed: (res.result.speed || 5) * 1000,
           homeProtect: res.result.homeProtect !== false
         });
         this.processCourses();
@@ -198,11 +197,8 @@ Page({
 
   handleLogin() {
     if (this.data.isLoggedIn) {
-      // 已登录时，触发动画后跳转到个人页面
-      this.setData({ pageAnimating: true });
-      setTimeout(() => {
-        wx.redirectTo({ url: '/pages/mine/index' });
-      }, 200);
+      // 已登录时跳转到个人页面
+      wx.navigateTo({ url: '/pages/mine/index' });
     } else {
       // 未登录时跳转到登录页
       wx.navigateTo({ url: '/pages/login/index' });
@@ -224,7 +220,7 @@ Page({
 
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
-    if (index === 0) return;
+    if (index == 0) return;
     // 未登录时，首页、收藏、我的都跳转登录页
     if (!app.globalData.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' });

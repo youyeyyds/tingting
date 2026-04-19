@@ -13,7 +13,7 @@
   <scroll-view class="content" scroll-y="true" enhanced="true"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <!-- 头条轮播 -->
-    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
@@ -25,7 +25,10 @@
     <view class="user-card">
       <image class="avatar" src="{{userInfo.avatarUrl || 'https://picsum.photos/seed/avatar/200/200'}}" mode="aspectFill" />
       <text class="nickname">{{userInfo.nickName || '用户'}}</text>
-      <text class="phone">{{userInfo.phone || ''}}</text>
+      <text class="phone">{{maskedPhone}}</text>
+      <view class="edit-btn" bindtap="handleEdit">
+        <view class="edit-arrow"></view>
+      </view>
     </view>
 
     <!-- 学习报告 -->
@@ -37,29 +40,29 @@
       <view class="stats-row">
         <text class="stats-label">课程</text>
         <view class="stats-value">
-          <text>学了 </text>
+          <text>学了</text>
           <text class="stats-number">{{stats.learnedCourses || 0}}</text>
-          <text> 门 / 毕业 </text>
+          <text>门 / 毕业</text>
           <text class="stats-number">{{stats.graduatedCourses || 0}}</text>
-          <text> 门</text>
+          <text>门</text>
         </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">收藏</text>
         <view class="stats-value">
-          <text>共 </text>
+          <text>共</text>
           <text class="stats-number">{{stats.favoriteCount || 0}}</text>
-          <text> 章</text>
+          <text>章</text>
         </view>
       </view>
       <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">播放次数</text>
         <view class="stats-value">
-          <text>共 </text>
+          <text>共</text>
           <text class="stats-number">{{stats.totalPlayCount || 0}}</text>
-          <text> 次</text>
+          <text>次</text>
         </view>
       </view>
       <view class="stats-divider"></view>
@@ -67,11 +70,11 @@
         <text class="stats-label">学习时长</text>
         <view class="stats-value">
           <text class="stats-number" wx:if="{{studyTime.days > 0}}">{{studyTime.days}}</text>
-          <text wx:if="{{studyTime.days > 0}}"> 天</text>
+          <text wx:if="{{studyTime.days > 0}}">天</text>
           <text class="stats-number" wx:if="{{studyTime.hours > 0}}">{{studyTime.hours}}</text>
-          <text wx:if="{{studyTime.hours > 0}}"> 时</text>
+          <text wx:if="{{studyTime.hours > 0}}">时</text>
           <text class="stats-number">{{studyTime.mins}}</text>
-          <text> 分</text>
+          <text>分</text>
         </view>
       </view>
       <view class="stats-divider"></view>
@@ -79,11 +82,11 @@
         <text class="stats-label">加入听听</text>
         <view class="stats-value">
           <text class="stats-number" wx:if="{{joinedTime.days > 0}}">{{joinedTime.days}}</text>
-          <text wx:if="{{joinedTime.days > 0}}"> 天</text>
+          <text wx:if="{{joinedTime.days > 0}}">天</text>
           <text class="stats-number" wx:if="{{joinedTime.hours > 0}}">{{joinedTime.hours}}</text>
-          <text wx:if="{{joinedTime.hours > 0}}"> 时</text>
+          <text wx:if="{{joinedTime.hours > 0}}">时</text>
           <text class="stats-number">{{joinedTime.mins}}</text>
-          <text> 分</text>
+          <text>分</text>
         </view>
       </view>
     </view>

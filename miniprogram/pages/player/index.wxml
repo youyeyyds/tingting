@@ -7,7 +7,7 @@
 
   <!-- 课程信息 -->
   <view class="course-info">
-    <image class="course-cover {{isPlaying ? 'rotating' : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+    <image class="course-cover {{isPlaying ? (sortOrder === 'asc' ? 'rotating' : 'rotating-reverse') : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
     <view class="course-details">
       <text class="course-title">{{courseTitle || '未知课程'}}</text>
       <text class="course-author">{{courseAuthor || '未知作者'}}</text>

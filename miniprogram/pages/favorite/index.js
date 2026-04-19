@@ -10,7 +10,9 @@ Page({
     favoriteChapters: [],
     headlines: [],
     refresherTriggered: false,
-    loadTime: ''
+    loadTime: '',
+    loading: true,
+    bannerSpeed: 5000
   },
 
   onLoad() {
@@ -25,12 +27,20 @@ Page({
     });
     this.checkLoginStatus();
     this.loadHeadlines();
+    if (this.data.isLoggedIn) {
+      this.loadFavorites();
+    } else {
+      this.setData({ loading: false });
+    }
   },
 
   onShow() {
     this.checkLoginStatus();
     // 切换页面时不重新加载，保持原有数据
     if (this.data.isLoggedIn && app.globalData.userId) {
+      if (this.data.favoriteChapters.length === 0) {
+        this.setData({ loading: true });
+      }
       this.loadFavorites();
     }
   },
@@ -86,7 +96,10 @@ Page({
           ...h,
           image: this.addTimestamp(h.image)
         }));
-        this.setData({ headlines: headlines });
+        this.setData({
+          headlines: headlines,
+          bannerSpeed: (res.result.speed || 5) * 1000
+        });
       }
     })
     .catch(err => console.error('获取头条失败', err));
@@ -115,7 +128,7 @@ Page({
 
   async loadFavorites() {
     if (!app.globalData.userId) {
-      this.setData({ favoriteChapters: [] });
+      this.setData({ favoriteChapters: [], loading: false });
       return;
     }
 
@@ -131,11 +144,13 @@ Page({
       if (res.result.success) {
         const favorites = res.result.data.favoriteChapters || [];
         this.setData({
-          favoriteChapters: favorites.map(ch => this.formatChapter(ch))
+          favoriteChapters: favorites.map(ch => this.formatChapter(ch)),
+          loading: false
         });
       }
     } catch (err) {
       console.error('获取收藏失败:', err);
+      this.setData({ loading: false });
     }
   },
 
@@ -265,7 +280,7 @@ Page({
 
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
-    if (index === 1) return;
+    if (index == 1) return;
     // 点击首页或个人，正常跳转
     wx.redirectTo({ url: `/pages/${['index', '', 'mine'][index]}/index` });
   }

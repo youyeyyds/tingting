@@ -8,6 +8,8 @@ Page({
     activeTab: 2,
     isLoggedIn: false,
     userInfo: null,
+    avatarUrl: '', // 头像URL（带时间戳刷新）
+    maskedPhone: '', // 隐藏中间5位的手机号
     headlines: [],
     stats: {
       learnedCourses: 0,
@@ -23,7 +25,8 @@ Page({
     loading: false,
     refresherTriggered: false,
     loadTime: '',
-    pageAnimating: false // 页面退出动画
+    canGoBack: true, // 是否可以返回上一页
+    bannerSpeed: 5000 // 轮播速度
   },
 
   // 格式化分钟数，返回拆分后的对象
@@ -35,15 +38,32 @@ Page({
     return { days, hours, mins };
   },
 
+  // 刷新头像URL（添加时间戳避免缓存过期）
+  refreshAvatarUrl(avatar) {
+    if (!avatar) return '/icons/svg/avatar.svg';
+    const t = Date.now();
+    return avatar.includes('?') ? `${avatar}&t=${t}` : `${avatar}?t=${t}`;
+  },
+
+  // 计算隐藏手机号中间5位
+  maskPhone(phone) {
+    if (!phone) return '';
+    return phone.replace(/(\d{3})\d{5}(\d{3})/, '$1*****$2');
+  },
+
   onLoad() {
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     const loadTime = Date.now();
+    // 检查是否有上一页可以返回
+    const pages = getCurrentPages();
+    const canGoBack = pages.length > 1;
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
-      loadTime: loadTime
+      loadTime: loadTime,
+      canGoBack: canGoBack
     });
     this.checkLoginStatus();
     this.loadHeadlines();
@@ -56,9 +76,54 @@ Page({
       wx.redirectTo({ url: '/pages/login/index' });
       return;
     }
+    // 重新获取用户信息（刷新头像临时URL）
+    this.refreshUserInfo();
     // 切换页面时不重新加载，保持原有数据
     if (app.globalData.userId) {
       this.loadUserStats();
+    }
+  },
+
+  // 重新获取用户信息（刷新头像临时URL）
+  async refreshUserInfo() {
+    if (!app.globalData.userId) return;
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'userFunctions',
+        data: {
+          type: 'getUserInfo',
+          userId: app.globalData.userId
+        }
+      });
+      if (res.result.success) {
+        const user = res.result.data;
+        app.globalData.userInfo = user;
+        wx.setStorageSync('userInfo', JSON.stringify(user));
+        // 如果有avatarFileID，用客户端API获取新的临时URL
+        if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
+          try {
+            const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
+            if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
+              this.setData({
+                userInfo: user,
+                avatarUrl: tempUrlRes.fileList[0].tempFileURL,
+                maskedPhone: this.maskPhone(user.phone)
+              });
+              return;
+            }
+          } catch (e) {
+            console.error('客户端获取头像临时URL失败:', e);
+          }
+        }
+        // 没有avatarFileID或获取失败，使用返回的avatarUrl
+        this.setData({
+          userInfo: user,
+          avatarUrl: user.avatarUrl || '/icons/svg/avatar.svg',
+          maskedPhone: this.maskPhone(user.phone)
+        });
+      }
+    } catch (err) {
+      console.error('刷新用户信息失败:', err);
     }
   },
 
@@ -77,12 +142,11 @@ Page({
   },
 
   handleBack() {
-    // 触发退出动画
-    this.setData({ pageAnimating: true });
-    // 动画完成后跳转首页
-    setTimeout(() => {
+    if (this.data.canGoBack) {
+      wx.navigateBack();
+    } else {
       wx.redirectTo({ url: '/pages/index/index' });
-    }, 200);
+    }
   },
 
   loadUserStatsAsync() {
@@ -125,7 +189,10 @@ Page({
           ...h,
           image: this.addTimestamp(h.image)
         }));
-        this.setData({ headlines: headlines });
+        this.setData({
+          headlines: headlines,
+          bannerSpeed: (res.result.speed || 5) * 1000
+        });
       }
     })
     .catch(err => console.error('获取头条失败', err));
@@ -139,21 +206,28 @@ Page({
 
   checkLoginStatus() {
     const { isLoggedIn, userInfo, userId } = app.globalData;
+    const avatarUrl = userInfo?.avatarUrl || '/icons/svg/avatar.svg';
+    const maskedPhone = userInfo?.phone ? this.maskPhone(userInfo.phone) : '';
     this.setData({
       isLoggedIn: isLoggedIn || false,
-      userInfo: userInfo || null
+      userInfo: userInfo || null,
+      avatarUrl: avatarUrl,
+      maskedPhone: maskedPhone
     });
     if (!isLoggedIn && userId) {
       // 尝试从本地存储恢复登录状态
       const storedUserId = wx.getStorageSync('userId');
       const storedUserInfo = wx.getStorageSync('userInfo');
       if (storedUserId && storedUserInfo) {
+        const parsedUserInfo = JSON.parse(storedUserInfo);
         app.globalData.isLoggedIn = true;
         app.globalData.userId = storedUserId;
-        app.globalData.userInfo = JSON.parse(storedUserInfo);
+        app.globalData.userInfo = parsedUserInfo;
         this.setData({
           isLoggedIn: true,
-          userInfo: app.globalData.userInfo
+          userInfo: parsedUserInfo,
+          avatarUrl: parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
+          maskedPhone: this.maskPhone(parsedUserInfo.phone)
         });
       }
     }
@@ -193,6 +267,10 @@ Page({
     wx.navigateTo({ url: '/pages/login/index' });
   },
 
+  handleEdit() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
   handleLogout() {
     // 停止播放器并清空播放状态
     app.bgAudioManager.stop();
@@ -229,7 +307,7 @@ Page({
 
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
-    if (index === 2) return;
+    if (index == 2) return;
     // 未登录时跳转登录页
     if (!app.globalData.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' });
