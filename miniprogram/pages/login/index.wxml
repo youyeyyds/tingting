@@ -43,7 +43,10 @@
       </view>
 
       <!-- 版权内容 -->
-      <text class="copyright-text">{{copyrightText}}</text>
+      <view class="copyright-section">
+        <text class="copyright-text">{{copyrightText}}</text>
+        <text class="powered-text">Powered by Claude Code</text>
+      </view>
     </view>
 
     <!-- 备案号在底部 -->

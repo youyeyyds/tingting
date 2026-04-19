@@ -151,11 +151,22 @@
 }
 
 /* 版权内容 */
+.copyright-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50rpx;
+}
+
 .copyright-text {
   font-size: 24rpx;
   color: #999;
-  text-align: center;
-  margin-top: 30rpx;
+}
+
+.powered-text {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 10rpx;
 }
 
 /* 备案号在底部 */
