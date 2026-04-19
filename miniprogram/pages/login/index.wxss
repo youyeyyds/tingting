@@ -160,3 +160,9 @@
   font-size: 24rpx;
   color: #999;
 }
+
+.icp-text {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 8rpx;
+}

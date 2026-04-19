@@ -46,6 +46,7 @@
     <!-- 底部版权信息 -->
     <view class="footer-section">
       <text class="copyright-text">{{copyrightText}}</text>
+      <text class="icp-text">{{icpNumber}}</text>
     </view>
   </view>
 </view>
