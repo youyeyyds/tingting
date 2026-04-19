@@ -1,6 +1,9 @@
 // index.js
 const app = getApp();
 
+// 随机作者名称列表
+const randomAuthors = ['王老师', '李博士', '张教授', '刘老师', '陈博士', '杨教授', '赵老师', '周博士'];
+
 Page({
   data: {
     statusBarHeight: 0,
@@ -10,6 +13,7 @@ Page({
     courses: [],
     headlines: [],
     bannerSpeed: 3000,
+    homeProtect: false,
     loading: true,
     activeTab: 0
   },
@@ -45,8 +49,11 @@ Page({
       if (res.result.success) {
         this.setData({
           headlines: res.result.data,
-          bannerSpeed: (res.result.speed || 3) * 1000
+          bannerSpeed: (res.result.speed || 3) * 1000,
+          homeProtect: res.result.homeProtect || false
         });
+        // 需要重新处理课程显示
+        this.processCourses();
       }
     })
     .catch(err => console.error('获取头条失败', err));
@@ -68,6 +75,7 @@ Page({
           courses: res.result.data,
           loading: false
         });
+        this.processCourses();
       } else {
         this.setData({ loading: false });
       }
@@ -77,8 +85,25 @@ Page({
     });
   },
 
+  // 处理课程显示（根据首页保护和登录状态）
+  processCourses() {
+    const { homeProtect, isLoggedIn, courses } = this.data;
+    if (!homeProtect || isLoggedIn) {
+      // 首页保护关闭或已登录，显示真实数据
+      return;
+    }
+    // 首页保护开启且未登录，隐藏课程信息
+    const maskedCourses = courses.map(course => ({
+      ...course,
+      title: '登录后可见',
+      author: randomAuthors[Math.floor(Math.random() * randomAuthors.length)]
+    }));
+    this.setData({ courses: maskedCourses });
+  },
+
   checkLoginStatus() {
     this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
+    this.processCourses();
   },
 
   handleLogin() {
@@ -103,6 +128,8 @@ Page({
       wx.removeStorageSync('userId');
       wx.removeStorageSync('userInfo');
       this.setData({ isLoggedIn: false });
+      // 重新加载课程（应用首页保护）
+      this.loadCourses();
       wx.showToast({ title: '已退出', icon: 'success' });
     } else {
       // 跳转到登录页

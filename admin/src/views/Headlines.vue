@@ -5,6 +5,10 @@
         <div class="card-header">
           <span>头条列表</span>
           <div class="header-right">
+            <div class="protect-setting">
+              <span class="protect-label">首页保护：</span>
+              <el-switch v-model="homeProtect" size="small" @change="saveHomeProtect" />
+            </div>
             <div class="speed-setting" @dblclick.stop>
               <span class="speed-label">轮播速度：</span>
               <el-input-number v-model="bannerSpeed" :min="1" :step="1" size="small" />
@@ -121,6 +125,7 @@ const tableRef = ref(null)
 
 const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
+const homeProtect = ref(false) // 首页保护，默认关闭
 
 const form = reactive({
   seq: 1,
@@ -155,18 +160,19 @@ async function loadHeadlines() {
 async function loadBannerSpeed() {
   try {
     const res = await getBannerConfig()
-    if (res.success && res.data.speed) {
-      bannerSpeed.value = res.data.speed
+    if (res.success && res.data) {
+      bannerSpeed.value = res.data.speed || 3
+      homeProtect.value = res.data.homeProtect || false
     }
   } catch (err) {
-    console.error('加载轮播速度失败:', err)
+    console.error('加载配置失败:', err)
   }
 }
 
 // 保存轮播速度
 async function saveBannerSpeed() {
   try {
-    const res = await saveBannerConfig({ speed: bannerSpeed.value })
+    const res = await saveBannerConfig({ speed: bannerSpeed.value, homeProtect: homeProtect.value })
     if (res.success) {
       ElMessage.success('轮播速度已保存')
     } else {
@@ -174,6 +180,23 @@ async function saveBannerSpeed() {
     }
   } catch (err) {
     ElMessage.error('保存失败')
+  }
+}
+
+// 保存首页保护状态
+async function saveHomeProtect() {
+  try {
+    const res = await saveBannerConfig({ speed: bannerSpeed.value, homeProtect: homeProtect.value })
+    if (res.success) {
+      ElMessage.success(homeProtect.value ? '首页保护已开启' : '首页保护已关闭')
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+      // 恢复原状态
+      homeProtect.value = !homeProtect.value
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
+    homeProtect.value = !homeProtect.value
   }
 }
 
@@ -343,6 +366,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.protect-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.protect-label {
+  font-size: 14px;
+  color: #666;
 }
 
 .speed-label {
