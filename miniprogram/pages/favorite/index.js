@@ -281,6 +281,12 @@ Page({
     const favoriteChapters = this.data.favoriteChapters;
     if (favoriteChapters.length === 0) return;
 
+    // 先保存当前播放进度（如果有正在播放的章节）
+    const miniPlayer = this.selectComponent('#miniPlayer');
+    if (miniPlayer && this.data.favoriteChapters.some(ch => ch.isPlaying)) {
+      miniPlayer.saveProgress();
+    }
+
     // 构建播放列表数据
     const playlistData = favoriteChapters.map(ch => ({
       _id: ch._id,
