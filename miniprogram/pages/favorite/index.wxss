@@ -216,6 +216,10 @@
   flex-shrink: 0;
 }
 
+.chapter-seq.playing {
+  color: #FF6B00;
+}
+
 .chapter-sep {
   font-size: 30rpx;
   color: #333;

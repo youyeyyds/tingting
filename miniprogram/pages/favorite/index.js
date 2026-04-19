@@ -30,6 +30,35 @@ Page({
     if (this.data.isLoggedIn) {
       this.loadFavorites();
     }
+
+    // 注册播放器回调
+    this.audioCallback = {
+      onChapterChange: (data) => {
+        const { chapterId } = data;
+        this.setData({
+          favoriteChapters: this.data.favoriteChapters.map(ch => ({
+            ...ch,
+            isPlaying: ch._id === chapterId
+          }))
+        });
+      },
+      onClose: () => {
+        this.setData({
+          favoriteChapters: this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }))
+        });
+      },
+      onStop: () => {
+        this.setData({
+          favoriteChapters: this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }))
+        });
+      }
+    };
+    app.registerMiniPlayer(this.audioCallback);
+  },
+
+  onUnload() {
+    // 页面卸载时移除回调
+    app.unregisterMiniPlayer(this.audioCallback);
   },
 
   onShow() {
@@ -221,6 +250,7 @@ Page({
       _id: ch._id,
       title: ch.title,
       duration: ch.duration,
+      durationText: ch.durationText || this.formatDuration(ch.duration), // 添加时长文本
       audioUrl: ch.audioUrl,
       seq: ch.seq,
       course: ch.course,
@@ -229,8 +259,19 @@ Page({
       author: ch.author,
       // 用户进度信息（formatChapter 已放到顶层）
       lastPlayTime: ch.lastPlayTime || 0,
-      finished: ch.finished || false
+      finished: ch.finished || false,
+      progress: ch.progress || 0,
+      progressText: ch.progressText || '未学习'
     }));
+
+    // 更新当前播放章节的 isPlaying 状态
+    const startChapterId = favoriteChapters[startIndex]._id;
+    this.setData({
+      favoriteChapters: favoriteChapters.map(ch => ({
+        ...ch,
+        isPlaying: ch._id === startChapterId
+      }))
+    });
 
     // 保存到全局
     app.globalData.playlistChaptersData = playlistData;
