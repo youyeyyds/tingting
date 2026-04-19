@@ -1,5 +1,5 @@
 <!--login/index.wxml-->
-<view class="page-container">
+<view class="page-container {{pageAnimating ? 'page-exit' : ''}}">
   <!-- 顶部导航栏 -->
   <view class="header-fixed">
     <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>

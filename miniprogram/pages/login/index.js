@@ -11,7 +11,8 @@ Page({
     refresherTriggered: false,
     copyrightText: '',
     icpNumber: '',
-    loadTime: '' // 加载时间戳，用于图片URL
+    loadTime: '', // 加载时间戳，用于图片URL
+    pageAnimating: false // 页面退出动画
   },
 
   onLoad() {
@@ -30,7 +31,12 @@ Page({
   },
 
   handleBack() {
-    wx.redirectTo({ url: '/pages/index/index' });
+    // 触发退出动画
+    this.setData({ pageAnimating: true });
+    // 动画完成后跳转
+    setTimeout(() => {
+      wx.redirectTo({ url: '/pages/index/index' });
+    }, 200);
   },
 
   onRefresh() {
