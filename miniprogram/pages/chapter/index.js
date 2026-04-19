@@ -125,6 +125,13 @@ Page({
     }
   },
 
+  onPullDownRefresh() {
+    if (this.data.courseId) {
+      this.loadCourseData();
+    }
+    wx.stopPullDownRefresh();
+  },
+
   onUnload() {
     // 页面卸载时移除回调
     app.unregisterMiniPlayer(this.audioCallback);

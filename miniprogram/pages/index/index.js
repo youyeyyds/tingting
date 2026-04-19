@@ -59,6 +59,12 @@ Page({
     this.loadCourses();
   },
 
+  onPullDownRefresh() {
+    this.loadHeadlines();
+    this.loadCourses();
+    wx.stopPullDownRefresh();
+  },
+
   loadHeadlines() {
     wx.cloud.callFunction({
       name: 'courseFunctions',

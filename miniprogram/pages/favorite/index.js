@@ -29,6 +29,14 @@ Page({
     }
   },
 
+  onPullDownRefresh() {
+    this.checkLoginStatus();
+    if (this.data.isLoggedIn && app.globalData.userId) {
+      this.loadFavorites();
+    }
+    wx.stopPullDownRefresh();
+  },
+
   checkLoginStatus() {
     const { isLoggedIn, userId } = app.globalData;
     this.setData({ isLoggedIn: isLoggedIn || false });

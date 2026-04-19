@@ -21,6 +21,10 @@ Page({
     });
   },
 
+  onPullDownRefresh() {
+    wx.stopPullDownRefresh();
+  },
+
   onPhoneInput(e) {
     this.setData({ phone: e.detail.value });
   },

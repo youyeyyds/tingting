@@ -35,6 +35,14 @@ Page({
     }
   },
 
+  onPullDownRefresh() {
+    this.checkLoginStatus();
+    if (this.data.isLoggedIn && app.globalData.userId) {
+      this.loadUserStats();
+    }
+    wx.stopPullDownRefresh();
+  },
+
   checkLoginStatus() {
     const { isLoggedIn, userInfo, userId } = app.globalData;
     this.setData({
