@@ -53,11 +53,9 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="imageRandom" label="图片随机" width="90">
+        <el-table-column prop="imageRandom" label="随机" width="70">
           <template #default="{ row }">
-            <el-tag :type="row.imageRandom ? 'success' : 'info'" size="small">
-              {{ row.imageRandom ? '随机' : '固定' }}
-            </el-tag>
+            <el-switch v-model="row.imageRandom" size="small" @change="toggleRowImageRandom(row)" />
           </template>
         </el-table-column>
         <el-table-column prop="link" label="链接" min-width="200">
@@ -97,11 +95,8 @@
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
-        <el-form-item label="图片随机" prop="imageRandom">
+        <el-form-item label="随机" prop="imageRandom">
           <el-switch v-model="form.imageRandom" />
-          <span class="form-tip" style="margin-left: 10px; color: #999;">
-            {{ form.imageRandom ? '每次刷新图片变化' : '图片固定不变' }}
-          </span>
         </el-form-item>
         <el-form-item label="链接" prop="link">
           <el-input v-model="form.link" placeholder="请输入链接地址" />
@@ -310,6 +305,44 @@ async function handleDelete(row) {
     }
   } catch {
     // 用户取消
+  }
+}
+
+// 切换表格行图片随机状态
+async function toggleRowImageRandom(row) {
+  // 生成新的图片 URL
+  const imageUrl = row.imageRandom
+    ? `https://picsum.photos/400/200?random=${row.seq}`
+    : `https://picsum.photos/seed/index${row.seq}/400/200`
+
+  // 更新本地数据
+  row.image = imageUrl
+
+  // 保存到数据库
+  try {
+    const res = await updateHeadline(row._id, {
+      seq: row.seq,
+      title: row.title,
+      image: imageUrl,
+      imageRandom: row.imageRandom,
+      link: row.link
+    })
+    if (res.success) {
+      ElMessage.success(row.imageRandom ? '已切换为随机' : '已切换为固定')
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+      // 恢复原状态
+      row.imageRandom = !row.imageRandom
+      row.image = row.imageRandom
+        ? `https://picsum.photos/400/200?random=${row.seq}`
+        : `https://picsum.photos/seed/index${row.seq}/400/200`
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
+    row.imageRandom = !row.imageRandom
+    row.image = row.imageRandom
+      ? `https://picsum.photos/400/200?random=${row.seq}`
+      : `https://picsum.photos/seed/index${row.seq}/400/200`
   }
 }
 
