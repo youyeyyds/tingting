@@ -96,7 +96,10 @@
           <el-input v-model="form.title" placeholder="请输入标题" />
         </el-form-item>
         <el-form-item label="随机" prop="imageRandom">
-          <el-switch v-model="form.imageRandom" />
+          <el-switch v-model="form.imageRandom" @change="updateImageUrl" />
+        </el-form-item>
+        <el-form-item label="图片URL" prop="image">
+          <el-input v-model="form.image" readonly placeholder="自动生成" />
         </el-form-item>
         <el-form-item label="链接" prop="link">
           <el-input v-model="form.link" placeholder="请输入链接地址" />
@@ -114,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
@@ -135,12 +138,27 @@ const homeProtect = ref(true) // 首页保护，默认开启
 const form = reactive({
   seq: 1,
   title: '',
+  image: '',
   imageRandom: true,
   link: ''
 })
 
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }]
+}
+
+// 监听序号变化，更新图片URL
+watch(() => form.seq, () => {
+  if (dialogVisible.value) {
+    updateImageUrl()
+  }
+})
+
+// 更新图片 URL
+function updateImageUrl() {
+  form.image = form.imageRandom
+    ? `https://picsum.photos/400/200?random=${form.seq}`
+    : `https://picsum.photos/seed/index${form.seq}/400/200`
 }
 
 // 加载头条列表
@@ -217,6 +235,7 @@ function showAddDialog() {
   // 计算下一个序号
   const maxSeq = headlines.value.length > 0 ? Math.max(...headlines.value.map(h => h.seq || 0)) : 0
   form.seq = maxSeq + 1
+  updateImageUrl()
   dialogVisible.value = true
 }
 
@@ -227,6 +246,7 @@ function showEditDialog(row) {
   Object.assign(form, {
     seq: row.seq || 1,
     title: row.title,
+    image: row.image || '',
     imageRandom: row.imageRandom !== false,
     link: row.link || ''
   })
@@ -238,6 +258,7 @@ function resetForm() {
   Object.assign(form, {
     seq: 1,
     title: '',
+    image: '',
     imageRandom: true,
     link: ''
   })
@@ -253,15 +274,10 @@ async function handleSubmit() {
 
   submitLoading.value = true
   try {
-    // 根据序号和随机设置生成图片 URL
-    const imageUrl = form.imageRandom
-      ? `https://picsum.photos/400/200?random=${form.seq}`
-      : `https://picsum.photos/seed/index${form.seq}/400/200`
-
     const submitData = {
       seq: form.seq,
       title: form.title,
-      image: imageUrl,
+      image: form.image,
       imageRandom: form.imageRandom,
       link: form.link
     }
