@@ -145,7 +145,7 @@ Page({
         wx.setStorageSync('userInfo', JSON.stringify(user));
 
         // 直接跳转到个人页面
-        wx.switchTab({ url: '/pages/mine/index' });
+        wx.redirectTo({ url: '/pages/mine/index' });
       } else {
         wx.showToast({ title: res.result.error || '登录失败', icon: 'none' });
       }
