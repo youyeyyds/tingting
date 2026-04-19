@@ -63,24 +63,27 @@ Page({
   onRefresh() {
     this.setData({ refresherTriggered: true });
     Promise.all([
-      this.loadHeadlinesAsync(),
-      this.loadCoursesAsync()
+      this.loadHeadlinesAsync(true),
+      this.loadCoursesAsync(true)
     ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
   },
 
-  loadHeadlinesAsync() {
+  loadHeadlinesAsync(refresh = false) {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'index' }
     })
     .then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({
-          ...h,
-          image: this.addTimestamp(h.image)
-        }));
+        let headlines = res.result.data;
+        if (refresh) {
+          headlines = headlines.map(h => ({
+            ...h,
+            image: this.addTimestamp(h.image)
+          }));
+        }
         this.setData({
           headlines: headlines,
           bannerSpeed: (res.result.speed || 3) * 1000,
@@ -92,7 +95,7 @@ Page({
     .catch(err => console.error('获取头条失败', err));
   },
 
-  loadCoursesAsync() {
+  loadCoursesAsync(refresh = false) {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
@@ -104,10 +107,13 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
-        const courses = res.result.data.map(c => ({
-          ...c,
-          cover: this.addTimestamp(c.cover)
-        }));
+        let courses = res.result.data;
+        if (refresh) {
+          courses = courses.map(c => ({
+            ...c,
+            cover: this.addTimestamp(c.cover)
+          }));
+        }
         this.setData({
           courses: courses,
           loading: false

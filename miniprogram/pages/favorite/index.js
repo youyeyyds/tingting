@@ -36,7 +36,7 @@ Page({
   onRefresh() {
     this.setData({ refresherTriggered: true });
     this.checkLoginStatus();
-    this.loadHeadlines();
+    this.loadHeadlines(true);
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavoritesAsync().then(() => {
         this.setData({ refresherTriggered: false });
@@ -78,17 +78,20 @@ Page({
     });
   },
 
-  loadHeadlines() {
+  loadHeadlines(refresh = false) {
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'favorite' }
     })
     .then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({
-          ...h,
-          image: this.addTimestamp(h.image)
-        }));
+        let headlines = res.result.data;
+        if (refresh) {
+          headlines = headlines.map(h => ({
+            ...h,
+            image: this.addTimestamp(h.image)
+          }));
+        }
         this.setData({ headlines: headlines });
       }
     })

@@ -25,31 +25,34 @@ Page({
   onRefresh() {
     this.setData({ refresherTriggered: true });
     Promise.all([
-      this.loadHeadlinesAsync(),
-      this.loadCopyrightAsync()
+      this.loadHeadlinesAsync(true),
+      this.loadCopyrightAsync(true)
     ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
   },
 
-  loadHeadlinesAsync() {
+  loadHeadlinesAsync(refresh = false) {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'login' }
     })
     .then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({
-          ...h,
-          image: this.addTimestamp(h.image)
-        }));
+        let headlines = res.result.data;
+        if (refresh) {
+          headlines = headlines.map(h => ({
+            ...h,
+            image: this.addTimestamp(h.image)
+          }));
+        }
         this.setData({ headlines: headlines });
       }
     })
     .catch(err => console.error('获取头条失败', err));
   },
 
-  loadCopyrightAsync() {
+  loadCopyrightAsync(refresh = false) {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCopyright' }
