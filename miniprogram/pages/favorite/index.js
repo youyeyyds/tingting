@@ -46,9 +46,13 @@ Page({
         const { chapterId, lastPlayTime, finished } = data;
         const favoriteChapters = this.data.favoriteChapters.map(ch => {
           if (ch._id === chapterId) {
+            // 如果之前已学完，且本次 finished 不是 true，保持已学完状态
+            if (ch.finished && finished !== true) {
+              return { ...ch, lastPlayTime };
+            }
             const duration = Number(ch.duration) || 0;
             let progress = 0;
-            if (finished) {
+            if (finished === true) {
               progress = 100;
             } else if (lastPlayTime > 0 && duration > 0) {
               progress = Math.min(Math.round((lastPlayTime / duration) * 100), 100);
@@ -56,7 +60,7 @@ Page({
             let progressText = '未学习';
             if (progress === 100) progressText = '已学完';
             else if (progress > 0) progressText = `已学${progress}%`;
-            return { ...ch, lastPlayTime, finished, progress, progressText };
+            return { ...ch, lastPlayTime, finished: finished === true, progress, progressText };
           }
           return ch;
         });
