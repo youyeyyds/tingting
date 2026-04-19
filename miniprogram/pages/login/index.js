@@ -8,7 +8,8 @@ Page({
     activeTab: -1,
     phone: '',
     password: '',
-    loading: false
+    loading: false,
+    headlines: []
   },
 
   onLoad() {
@@ -19,10 +20,25 @@ Page({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight
     });
+    this.loadHeadlines();
   },
 
   onPullDownRefresh() {
+    this.loadHeadlines();
     wx.stopPullDownRefresh();
+  },
+
+  loadHeadlines() {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getHeadlines', page: 'login' }
+    })
+    .then(res => {
+      if (res.result.success) {
+        this.setData({ headlines: res.result.data });
+      }
+    })
+    .catch(err => console.error('获取头条失败', err));
   },
 
   onPhoneInput(e) {

@@ -8,6 +8,7 @@ Page({
     activeTab: 1,
     isLoggedIn: false,
     favoriteChapters: [],
+    headlines: [],
     loading: true
   },
 
@@ -20,6 +21,7 @@ Page({
       navBarHeight: navBarHeight
     });
     this.checkLoginStatus();
+    this.loadHeadlines();
   },
 
   onShow() {
@@ -31,10 +33,24 @@ Page({
 
   onPullDownRefresh() {
     this.checkLoginStatus();
+    this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavorites();
     }
     wx.stopPullDownRefresh();
+  },
+
+  loadHeadlines() {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getHeadlines', page: 'favorite' }
+    })
+    .then(res => {
+      if (res.result.success) {
+        this.setData({ headlines: res.result.data });
+      }
+    })
+    .catch(err => console.error('获取头条失败', err));
   },
 
   checkLoginStatus() {

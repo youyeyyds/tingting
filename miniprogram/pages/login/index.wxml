@@ -12,6 +12,13 @@
     <text class="header-title">登录</text>
   </view>
 
+  <!-- 头条轮播 -->
+  <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+    <swiper-item wx:for="{{headlines}}" wx:key="_id">
+      <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+    </swiper-item>
+  </swiper>
+
   <!-- 登录表单 -->
   <view class="login-form">
     <view class="form-item">

@@ -154,13 +154,24 @@ const getCourses = async (event) => {
 };
 
 // 获取头条列表
-const getHeadlines = async () => {
+const getHeadlines = async (event) => {
   try {
+    const { page } = event; // page: 'index', 'favorite', 'login', 'mine'
+
     // 获取头条列表
     const headlinesRes = await db.collection("headlines")
       .orderBy("seq", "asc")
       .limit(10)
       .get();
+
+    // 根据页面位置过滤头条
+    let filteredHeadlines = headlinesRes.data;
+    if (page) {
+      filteredHeadlines = headlinesRes.data.filter(h => {
+        const positions = h.positions || ['index', 'favorite', 'login', 'mine'];
+        return positions.includes(page);
+      });
+    }
 
     // 获取轮播配置
     let speed = 3; // 默认3秒
@@ -177,7 +188,7 @@ const getHeadlines = async () => {
 
     return {
       success: true,
-      data: headlinesRes.data,
+      data: filteredHeadlines,
       speed: speed,
       homeProtect: homeProtect
     };

@@ -68,7 +68,7 @@ Page({
   loadHeadlines() {
     wx.cloud.callFunction({
       name: 'courseFunctions',
-      data: { type: 'getHeadlines' }
+      data: { type: 'getHeadlines', page: 'index' }
     })
     .then(res => {
       if (res.result.success) {
