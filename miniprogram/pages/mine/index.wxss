@@ -28,7 +28,6 @@
 
 .content {
   flex: 1;
-  padding: 20rpx 0;
   padding-bottom: 100rpx;
 }
 
