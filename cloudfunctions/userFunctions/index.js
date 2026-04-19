@@ -221,8 +221,14 @@ const getUserStats = async (event) => {
       }
     }
 
-    // 获取收藏的章节详情
+    // 获取收藏的章节详情（按收藏时间排序）
     const favoriteProgresses = progresses.filter(p => p.isFavorite);
+    // 按收藏时间排序（没有收藏时间的按更新时间）
+    favoriteProgresses.sort((a, b) => {
+      const timeA = a.favoriteTime || a._updateTime || 0;
+      const timeB = b.favoriteTime || b._updateTime || 0;
+      return timeB - timeA; // 最新收藏的在前
+    });
     const favoriteChapterIds = favoriteProgresses.map(p => p.chapterId);
 
     let favoriteChapters = [];

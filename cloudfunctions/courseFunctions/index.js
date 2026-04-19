@@ -429,6 +429,12 @@ const toggleFavorite = async (event) => {
     // 更新或创建用户进度记录
     if (existingProgress) {
       const updateData = { isFavorite: newIsFavorite };
+      // 收藏时记录收藏时间，取消收藏时清除
+      if (newIsFavorite) {
+        updateData.favoriteTime = Date.now();
+      } else {
+        updateData.favoriteTime = null;
+      }
       // 如果旧记录没有 courseId，补充上
       if (!existingProgress.courseId && (courseId || chapter.course)) {
         updateData.courseId = courseId || chapter.course;
@@ -444,7 +450,8 @@ const toggleFavorite = async (event) => {
           lastPlayTime: 0,
           finished: false,
           playCount: 0,
-          isFavorite: newIsFavorite
+          isFavorite: newIsFavorite,
+          favoriteTime: newIsFavorite ? Date.now() : null
         }
       });
     }
