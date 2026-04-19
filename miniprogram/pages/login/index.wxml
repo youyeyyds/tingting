@@ -1,7 +1,7 @@
 <!--login/index.wxml-->
 <view class="page-container">
   <!-- 顶部空白区域 -->
-  <view class="top-space" style="height: {{statusBarHeight + 40}}px;"></view>
+  <view class="top-space" style="height: {{statusBarHeight + 20}}px;"></view>
 
   <!-- 横幅轮播 -->
   <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{3000}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
@@ -9,6 +9,8 @@
       <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
     </swiper-item>
   </swiper>
+  <!-- 横幅占位 -->
+  <view class="banner-placeholder" wx:else></view>
 
   <!-- 品牌区域 -->
   <view class="brand-section">

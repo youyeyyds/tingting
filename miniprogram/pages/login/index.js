@@ -16,7 +16,11 @@ Page({
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
-    const loadTime = Date.now();
+    // 使用全局 loadTime，保持图片稳定，只在首次或下拉刷新时更新
+    if (!app.globalData.loginPageLoadTime) {
+      app.globalData.loginPageLoadTime = Date.now();
+    }
+    const loadTime = app.globalData.loginPageLoadTime;
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       loadTime: loadTime
@@ -27,6 +31,7 @@ Page({
 
   onRefresh() {
     const newLoadTime = Date.now();
+    app.globalData.loginPageLoadTime = newLoadTime; // 更新全局时间戳
     this.setData({ refresherTriggered: true, loadTime: newLoadTime });
     Promise.all([
       this.loadHeadlinesAsync(),

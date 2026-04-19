@@ -30,7 +30,8 @@ App({
     miniPlayerIndexFadedIn: false,
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
-    playlistSortOrder: 'asc' // 'asc' | 'desc'
+    playlistSortOrder: 'asc', // 'asc' | 'desc'
+    loginPageLoadTime: null // 登录页图片加载时间戳，保持稳定
   },
 
   restoreLoginState() {
