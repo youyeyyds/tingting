@@ -63,11 +63,11 @@
         <text class="stats-label">学习时长</text>
         <view class="stats-value">
           <text class="stats-number" wx:if="{{studyTime.days > 0}}">{{studyTime.days}}</text>
-          <text wx:if="{{studyTime.days > 0}}">天</text>
+          <text wx:if="{{studyTime.days > 0}}"> 天</text>
           <text class="stats-number" wx:if="{{studyTime.hours > 0}}">{{studyTime.hours}}</text>
-          <text wx:if="{{studyTime.hours > 0}}">时</text>
+          <text wx:if="{{studyTime.hours > 0}}"> 时</text>
           <text class="stats-number">{{studyTime.mins}}</text>
-          <text>分</text>
+          <text> 分</text>
         </view>
       </view>
       <view class="stats-divider"></view>
@@ -75,11 +75,11 @@
         <text class="stats-label">加入听听</text>
         <view class="stats-value">
           <text class="stats-number" wx:if="{{joinedTime.days > 0}}">{{joinedTime.days}}</text>
-          <text wx:if="{{joinedTime.days > 0}}">天</text>
+          <text wx:if="{{joinedTime.days > 0}}"> 天</text>
           <text class="stats-number" wx:if="{{joinedTime.hours > 0}}">{{joinedTime.hours}}</text>
-          <text wx:if="{{joinedTime.hours > 0}}">时</text>
+          <text wx:if="{{joinedTime.hours > 0}}"> 时</text>
           <text class="stats-number">{{joinedTime.mins}}</text>
-          <text>分</text>
+          <text> 分</text>
         </view>
       </view>
     </view>
