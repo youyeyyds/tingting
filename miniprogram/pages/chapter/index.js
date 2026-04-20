@@ -111,6 +111,16 @@ Page({
           filteredChapters: chapters,
           course: { ...this.data.course, progress: courseProgress, progressText: courseProgressText }
         });
+      },
+      onFavoriteChange: (data) => {
+        // 收藏状态变化，同步更新章节列表
+        const { chapterId, isFavorite } = data;
+        this.setData({
+          chapters: this.data.chapters.map(ch =>
+            ch._id === chapterId ? { ...ch, isFavorite } : ch
+          )
+        });
+        this.applyFilterAndSort();
       }
     };
     app.registerMiniPlayer(this.audioCallback);

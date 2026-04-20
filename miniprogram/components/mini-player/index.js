@@ -15,26 +15,51 @@ Component({
     currentIndex: 0,
     courseCover: '',
     courseName: '',
+    course: {},
     isPlaying: false,
     currentTime: 0,
     duration: 0,
     progressPercent: 0,
     playbackRate: 2,
-    speedOptions: [1, 2],
+    speedOptions: [0.75, 1, 1.25, 1.5, 2],
     chapters: [], // 播放列表
-    course: {}, // 当前播放的课程
     playlistSortOrder: 'asc', // 播放列表排序
-    isFavoriteList: false // 是否是收藏列表
+    isFavoriteList: false, // 是否是收藏列表
+    showPlayerPanel: false, // 播放器面板显示状态
+    currentTimeText: '0:00',
+    remainingTimeText: '-0:00',
+    showTotalTime: false, // 显示总时长还是剩余时长
+    playMode: 'sequence', // sequence, loop, single
+    isFavorite: false,
+    speedIndicatorPos: 70 // 倍速指示器位置百分比（默认2倍速对应70%）
   },
 
   lifetimes: {
     created() {
       this.bgAudioManager = app.bgAudioManager;
       this.audioCallback = {
-        onCanplay: (data) => this.data.visible && this.setData({ duration: data.duration }),
+        onCanplay: (data) => {
+          if (this.data.visible) {
+            this.setData({ duration: data.duration });
+            this.updateProgressDisplay();
+          }
+        },
         onPlay: () => this.data.visible && this.setData({ isPlaying: true }),
         onPause: () => this.data.visible && this.setData({ isPlaying: false }),
-        onTimeUpdate: (data) => this.data.visible && this.setData({ currentTime: data.currentTime, progressPercent: data.progressPercent }),
+        onTimeUpdate: (data) => {
+          if (this.data.visible) {
+            const currentTime = data.currentTime;
+            const duration = this.bgAudioManager.duration || this.data.duration;
+            const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+            this.setData({
+              currentTime: currentTime,
+              progressPercent: progressPercent
+            });
+            if (this.data.showPlayerPanel) {
+              this.updateProgressDisplay();
+            }
+          }
+        },
         onEnded: () => this.onAudioEnded(),
         onError: () => this.data.visible && this.setData({ isPlaying: false }),
         onStop: () => this.data.visible && this.setData({ isPlaying: false }),
@@ -48,6 +73,7 @@ Component({
               this.setData({
                 visible: false,
                 fadeInClass: '',
+                showPlayerPanel: false,
                 chapters: [],
                 currentChapter: {},
                 currentIndex: 0,
@@ -76,11 +102,19 @@ Component({
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
 
       if (!app.globalData.miniPlayerActive) {
-        this.setData({ visible: false, fadeInClass: '' });
+        this.setData({ visible: false, fadeInClass: '', showPlayerPanel: false });
         return;
       }
 
-      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, isFavoriteList } = app.globalData;
+      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode, isFavoriteList } = app.globalData;
+      // 从 bgAudioManager 获取倍速，如果还没设置则使用默认值2
+      let playbackRate = this.bgAudioManager.playbackRate || 2;
+      // 如果倍速不在支持范围内，使用默认值2
+      const supportedRates = [0.75, 1, 1.25, 1.5, 2];
+      if (!supportedRates.includes(playbackRate)) {
+        playbackRate = 2;
+      }
+
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
@@ -91,7 +125,11 @@ Component({
         chapters: playlistChaptersData || [],
         course: playingCourse || {},
         playlistSortOrder: playlistSortOrder || 'asc',
-        isFavoriteList: isFavoriteList || false
+        playMode: playMode || 'sequence',
+        isFavoriteList: isFavoriteList || false,
+        currentTime: this.bgAudioManager.currentTime || 0,
+        duration: this.bgAudioManager.duration || 0,
+        playbackRate: playbackRate
       };
 
       // 首页/收藏页/我的页：如果还没淡入过，则淡入
@@ -102,6 +140,8 @@ Component({
         // 其他情况直接显示（无动画）
         this.setData({ visible: true, fadeInClass: '', ...data });
       }
+      // 更新倍速指示器位置
+      this.updateSpeedIndicator();
     }
   },
 
@@ -456,9 +496,382 @@ Component({
 
     preventMove() {},
 
-    // 打开播放控制页面
-    openPlayerPage() {
-      wx.navigateTo({ url: '/pages/player/index' });
+    // 打开播放控制面板
+    openPlayerPanel() {
+      // 从 bgAudioManager 获取当前状态
+      const currentTime = this.bgAudioManager.currentTime || 0;
+      const duration = this.bgAudioManager.duration || 0;
+      const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+      // 从 bgAudioManager 获取倍速，如果还没设置或不在支持范围内则使用默认值2
+      let playbackRate = this.bgAudioManager.playbackRate || 2;
+      const supportedRates = [0.75, 1, 1.25, 1.5, 2];
+      if (!supportedRates.includes(playbackRate)) {
+        playbackRate = 2;
+      }
+
+      this.setData({
+        showPlayerPanel: true,
+        currentTime: currentTime,
+        duration: duration,
+        progressPercent: progressPercent,
+        playbackRate: playbackRate
+      });
+      this.checkFavoriteStatus();
+      this.updateProgressDisplay();
+      this.updateSpeedIndicator();
+    },
+
+    // 关闭播放控制面板
+    closePlayerPanel() {
+      this.setData({ showPlayerPanel: false });
+    },
+
+    // 播放器面板关闭后回调
+    onPlayerPanelLeave() {
+      // 面板已完全关闭
+    },
+
+    // 检查收藏状态
+    checkFavoriteStatus() {
+      const chapterId = this.data.currentChapter._id;
+      if (!chapterId || !app.globalData.userId) return;
+
+      wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: {
+          type: 'checkFavorite',
+          chapterId: chapterId,
+          userId: app.globalData.userId
+        }
+      }).then(res => {
+        if (res.result.success) {
+          this.setData({ isFavorite: res.result.data.isFavorite });
+        }
+      }).catch(err => console.error('检查收藏状态失败:', err));
+    },
+
+    // 切换收藏
+    toggleFavorite() {
+      const chapterId = this.data.currentChapter._id;
+      if (!chapterId) return;
+
+      wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: {
+          type: 'toggleFavorite',
+          chapterId: chapterId,
+          courseId: this.data.currentChapter.course || this.data.course._id,
+          userId: app.globalData.userId
+        }
+      }).then(res => {
+        if (res.result.success) {
+          const newIsFavorite = res.result.data.isFavorite;
+          this.setData({ isFavorite: newIsFavorite });
+          // 更新 chapters 数组中的收藏状态
+          const chapters = this.data.chapters.map(ch =>
+            ch._id === chapterId ? { ...ch, isFavorite: newIsFavorite } : ch
+          );
+          this.setData({ chapters });
+          // 同步全局数据
+          app.globalData.playlistChaptersData = chapters;
+          // 通知其他页面更新收藏状态
+          app.notifyCallbacks('onFavoriteChange', { chapterId, isFavorite: newIsFavorite });
+          wx.showToast({
+            title: newIsFavorite ? '已收藏' : '已取消收藏',
+            icon: 'success'
+          });
+        }
+      }).catch(err => {
+        console.error('切换收藏失败:', err);
+        wx.showToast({ title: '操作失败', icon: 'none' });
+      });
+    },
+
+    // 切换时间显示
+    toggleTimeDisplay() {
+      this.setData({ showTotalTime: !this.data.showTotalTime });
+      this.updateProgressDisplay();
+    },
+
+    // 更新进度显示
+    updateProgressDisplay() {
+      const { currentTime, duration, showTotalTime } = this.data;
+      const current = currentTime || 0;
+      const dur = duration || 0;
+      const remaining = dur - current;
+      this.setData({
+        currentTimeText: this.formatTime(current),
+        remainingTimeText: showTotalTime ? this.formatTime(dur) : '-' + this.formatTime(remaining > 0 ? remaining : 0)
+      });
+    },
+
+    // 格式化时间
+    formatTime(seconds) {
+      if (!seconds || seconds < 0) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    // 更新倍速指示器位置
+    updateSpeedIndicator() {
+      const { playbackRate } = this.data;
+      const speeds = [0.75, 1, 1.25, 1.5, 2];
+      // 找到最接近的倍速索引
+      let index = -1;
+      for (let i = 0; i < speeds.length; i++) {
+        if (Math.abs(speeds[i] - playbackRate) < 0.01) {
+          index = i;
+          break;
+        }
+      }
+      // 位置分布：约10%, 30%, 50%, 70%, 90%
+      if (index >= 0) {
+        const pos = 10 + index * 20;
+        this.setData({ speedIndicatorPos: pos });
+      } else {
+        this.setData({ speedIndicatorPos: 50 });
+      }
+    },
+
+    // 进度条拖动
+    onSliderChanging(e) {
+      const value = e.detail.value;
+      const duration = this.bgAudioManager.duration;
+      const currentTime = (value / 100) * duration;
+      this.setData({
+        currentTime,
+        progressPercent: value
+      });
+      this.updateProgressDisplay();
+    },
+
+    // 进度条变化完成
+    onSliderChange(e) {
+      const value = e.detail.value;
+      const duration = this.bgAudioManager.duration;
+      const currentTime = (value / 100) * duration;
+      this.bgAudioManager.seek(currentTime);
+      this.setData({
+        currentTime,
+        progressPercent: value
+      });
+      this.updateProgressDisplay();
+    },
+
+    // 快退15秒
+    rewind15() {
+      const currentTime = this.bgAudioManager.currentTime;
+      const newTime = Math.max(0, currentTime - 15);
+      this.bgAudioManager.seek(newTime);
+    },
+
+    // 快进30秒
+    forward30() {
+      const currentTime = this.bgAudioManager.currentTime;
+      const duration = this.bgAudioManager.duration;
+      const newTime = Math.min(duration, currentTime + 30);
+      this.bgAudioManager.seek(newTime);
+    },
+
+    // 上一条
+    playPrev() {
+      const { currentIndex, chapters, playMode } = this.data;
+      let newIndex;
+
+      if (playMode === 'single') {
+        this.bgAudioManager.seek(0);
+        this.bgAudioManager.play();
+        return;
+      }
+
+      if (currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      } else if (playMode === 'loop') {
+        newIndex = chapters.length - 1;
+      } else {
+        wx.showToast({ title: '已经是第一条', icon: 'none' });
+        return;
+      }
+
+      this.playChapterByIndex(newIndex);
+    },
+
+    // 下一条
+    playNext() {
+      const { currentIndex, chapters, playMode } = this.data;
+      let newIndex;
+
+      if (playMode === 'single') {
+        this.bgAudioManager.seek(0);
+        this.bgAudioManager.play();
+        return;
+      }
+
+      if (currentIndex < chapters.length - 1) {
+        newIndex = currentIndex + 1;
+      } else if (playMode === 'loop') {
+        newIndex = 0;
+      } else {
+        wx.showToast({ title: '已经是最后一条', icon: 'none' });
+        this.bgAudioManager.stop();
+        this.setData({ isPlaying: false });
+        return;
+      }
+
+      this.playChapterByIndex(newIndex);
+    },
+
+    // 播放指定章节
+    playChapterByIndex(index) {
+      const { chapters } = this.data;
+      if (index < 0 || index >= chapters.length) return;
+
+      const chapter = chapters[index];
+      if (!chapter.audioUrl) {
+        wx.showToast({ title: '暂无音频', icon: 'none' });
+        return;
+      }
+
+      this.saveProgress();
+
+      // 更新数据
+      this.setData({
+        currentChapter: chapter,
+        currentIndex: index
+      });
+
+      // 更新全局
+      app.globalData.playingChapter = chapter;
+      app.globalData.playingIndex = index;
+
+      // 通知章节页更新播放状态
+      app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
+
+      // 播放音频
+      this.loadAudio(chapter);
+
+      // 检查收藏状态
+      this.checkFavoriteStatus();
+    },
+
+    // 切换播放模式
+    togglePlayMode() {
+      const modes = ['sequence', 'loop', 'single'];
+      const currentIdx = modes.indexOf(this.data.playMode);
+      const nextIdx = (currentIdx + 1) % modes.length;
+      const newMode = modes[nextIdx];
+
+      this.setData({ playMode: newMode });
+      app.globalData.playMode = newMode;
+
+      wx.showToast({
+        title: newMode === 'sequence' ? '顺序播放' : newMode === 'loop' ? '列表循环' : '单曲循环',
+        icon: 'none'
+      });
+    },
+
+    // 切换排序
+    toggleSort() {
+      const newOrder = this.data.playlistSortOrder === 'asc' ? 'desc' : 'asc';
+      const newChapters = [...this.data.chapters].reverse();
+
+      this.setData({
+        playlistSortOrder: newOrder,
+        chapters: newChapters,
+        currentIndex: newChapters.length - 1 - this.data.currentIndex
+      });
+
+      app.globalData.playlistSortOrder = newOrder;
+      app.globalData.playlistChaptersData = newChapters;
+    },
+
+    // 设置倍速
+    setSpeed(e) {
+      const rate = e.currentTarget.dataset.rate;
+      this.bgAudioManager.playbackRate = rate;
+      this.setData({ playbackRate: rate });
+      this.updateSpeedIndicator();
+    },
+
+    // 倍速条点击（根据点击位置选择倍速）
+    onSpeedTrackTap(e) {
+      // 如果刚刚进行了滑动，不处理点击
+      if (this.speedMoved) {
+        this.speedMoved = false;
+        return;
+      }
+
+      const touch = e.detail.x ? e : e.touches?.[0] || e;
+      const clientX = touch.clientX || touch.detail?.x || 0;
+
+      const query = this.createSelectorQuery();
+      query.select('.speed-track-wrap').boundingClientRect((rect) => {
+        if (!rect) return;
+        const x = clientX - rect.left;
+        const width = rect.width;
+        // 计算位置百分比
+        const pos = Math.max(10, Math.min(90, (x / width) * 100));
+        // 根据位置计算对应倍速
+        const speeds = [0.75, 1, 1.25, 1.5, 2];
+        const index = Math.round((pos - 10) / 20);
+        const clampedIndex = Math.max(0, Math.min(speeds.length - 1, index));
+        const rate = speeds[clampedIndex];
+        this.setData({ playbackRate: rate });
+        this.bgAudioManager.playbackRate = rate;
+        this.updateSpeedIndicator();
+      }).exec();
+    },
+
+    // 倍速滑动开始
+    onSpeedTouchStart(e) {
+      this.speedTouching = true;
+      this.speedTouchStartX = e.touches[0].clientX;
+      this.speedMoved = false;
+    },
+
+    // 倍速滑动移动
+    onSpeedTouchMove(e) {
+      if (!this.speedTouching) return;
+      // 如果移动距离大于10px，认为是滑动而非点击
+      const moveDistance = Math.abs(e.touches[0].clientX - this.speedTouchStartX);
+      if (moveDistance > 10) {
+        this.speedMoved = true;
+      }
+
+      const touch = e.touches[0];
+      const query = this.createSelectorQuery();
+      query.select('.speed-track-wrap').boundingClientRect((rect) => {
+        if (!rect) return;
+        const x = touch.clientX - rect.left;
+        const width = rect.width;
+        // 计算位置百分比
+        const pos = Math.max(10, Math.min(90, (x / width) * 100));
+        // 根据位置计算对应倍速
+        const speeds = [0.75, 1, 1.25, 1.5, 2];
+        const index = Math.round((pos - 10) / 20);
+        const clampedIndex = Math.max(0, Math.min(speeds.length - 1, index));
+        const rate = speeds[clampedIndex];
+        this.setData({ playbackRate: rate });
+        this.bgAudioManager.playbackRate = rate;
+        this.updateSpeedIndicator();
+      }).exec();
+    },
+
+    // 倍速滑动结束
+    onSpeedTouchEnd(e) {
+      this.speedTouching = false;
+    },
+
+    // 播放/暂停切换
+    togglePlayPause() {
+      if (this.data.isPlaying) {
+        this.bgAudioManager.pause();
+        this.saveProgress();
+      } else {
+        this.bgAudioManager.play();
+      }
     },
 
     // 播放列表相关方法

@@ -79,7 +79,7 @@
 .action-buttons {
   display: flex;
   align-items: center;
-  gap: 4rpx;
+  gap: 12rpx;
 }
 
 .playlist-btn {
@@ -185,4 +185,326 @@
   height: 100%;
   background: #FF6B00;
   border-radius: 2rpx;
+}
+
+/* ========== 播放器面板样式 ========== */
+
+.player-container {
+  position: relative;
+  height: 100vh;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 0 40rpx;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10001;
+}
+
+/* 收起按钮（向下箭头） */
+.header-area {
+  display: flex;
+  justify-content: center;
+  padding: 30rpx 0;
+}
+
+.collapse-icon {
+  width: 24rpx;
+  height: 24rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(-45deg);
+}
+
+/* 封面图 */
+.cover-section {
+  display: flex;
+  justify-content: center;
+  padding: 60rpx 0 40rpx;
+}
+
+.cover-image {
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 160rpx;
+}
+
+.cover-image.rotating {
+  animation: rotate 12s linear infinite;
+}
+
+.cover-image.rotating-reverse {
+  animation: rotateReverse 12s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotateReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* 课程信息 */
+.course-info-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx 0 40rpx;
+}
+
+.course-info-section .course-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.course-info-section .course-author {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 16rpx;
+}
+
+.chapter-title-line {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 20rpx;
+}
+
+.chapter-title-line .chapter-seq {
+  font-size: 28rpx;
+  color: #FF6B00;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.chapter-title-line .chapter-sep {
+  font-size: 28rpx;
+  color: #FF6B00;
+  margin: 0 8rpx;
+  flex-shrink: 0;
+}
+
+.chapter-title-line .chapter-name {
+  font-size: 28rpx;
+  color: #FF6B00;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* 进度行 */
+.progress-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.time-text {
+  font-size: 26rpx;
+  color: #fff;
+  width: 100rpx;
+  text-align: center;
+}
+
+.progress-slider {
+  flex: 1;
+  margin: 0 20rpx;
+}
+
+/* 播放控制按钮 */
+.play-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 55rpx;
+  padding: 50rpx 0;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prev-btn, .next-btn {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.prev-icon {
+  width: 24rpx;
+  height: 24rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(45deg);
+  margin-right: 6rpx;
+}
+
+.next-icon {
+  width: 24rpx;
+  height: 24rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(-135deg);
+  margin-left: 6rpx;
+}
+
+.rewind-btn, .forward-btn {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 35rpx;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rewind-text, .forward-text {
+  font-size: 22rpx;
+  color: #fff;
+}
+
+.play-pause-btn {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  background: #FF6B00;
+}
+
+.play-pause-btn .play-icon {
+  width: 0;
+  height: 0;
+  border-top: 16rpx solid transparent;
+  border-bottom: 16rpx solid transparent;
+  border-left: 24rpx solid #fff;
+  margin-left: 10rpx;
+}
+
+.play-pause-btn .pause-icon {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.play-pause-btn .pause-bar {
+  width: 8rpx;
+  height: 36rpx;
+  background: #fff;
+  border-radius: 4rpx;
+}
+
+/* 功能按钮行 */
+.func-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 45rpx;
+  padding: 40rpx 0;
+}
+
+.func-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.mode-icon {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-text {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.playlist-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.list-bar {
+  width: 30rpx;
+  height: 4rpx;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1rpx;
+}
+
+.func-btn .speed-text {
+  font-size: 26rpx;
+  color: #FF6B00;
+  font-weight: 600;
+}
+
+.sort-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.favorite-btn.favorited .favorite-icon {
+  color: #FF6B00;
+}
+
+.favorite-icon {
+  font-size: 36rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 倍速控制 */
+.speed-control {
+  padding: 30rpx 0 60rpx;
+}
+
+.speed-track-wrap {
+  position: relative;
+  width: 100%;
+  height: 120rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 60rpx;
+  box-sizing: border-box;
+}
+
+.speed-track-wrap .speed-mark {
+  font-size: 30rpx;
+  color: rgba(255, 255, 255, 0.6);
+  z-index: 1;
+  flex-shrink: 0;
+  width: 60rpx;
+  text-align: center;
+}
+
+.speed-track-wrap .speed-mark.active {
+  color: transparent;
+}
+
+.speed-indicator {
+  position: absolute;
+  width: 90rpx;
+  height: 90rpx;
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8C42 100%);
+  border-radius: 45rpx;
+  top: 15rpx;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20rpx rgba(255, 107, 0, 0.6), 0 0 40rpx rgba(255, 140, 66, 0.3);
+}
+
+.speed-indicator-text {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 600;
 }
