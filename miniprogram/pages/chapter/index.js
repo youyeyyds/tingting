@@ -6,6 +6,8 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
+    scrollHeight: 0, // scroll-view 高度
+    refresherTriggered: false, // 下拉刷新状态
     listMinHeight: 0,
     courseId: '',
     course: {},
@@ -28,11 +30,14 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     const headerHeight = windowInfo.statusBarHeight + navBarHeight;
+    // scroll-view 高度 = 屏幕高度 - header（迷你播放器是浮层，不占用空间）
+    const scrollHeight = windowInfo.windowHeight - headerHeight;
 
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
+      scrollHeight: scrollHeight,
       courseId: options.id || ''
     });
 
@@ -125,11 +130,15 @@ Page({
     }
   },
 
-  onPullDownRefresh() {
+  onRefresh() {
+    this.setData({ refresherTriggered: true });
     if (this.data.courseId) {
-      this.loadCourseData();
+      this.loadCourseDataAsync().then(() => {
+        this.setData({ refresherTriggered: false });
+      });
+    } else {
+      this.setData({ refresherTriggered: false });
     }
-    wx.stopPullDownRefresh();
   },
 
   onUnload() {
@@ -152,7 +161,11 @@ Page({
   },
 
   loadCourseData() {
-    wx.cloud.callFunction({
+    this.loadCourseDataAsync();
+  },
+
+  loadCourseDataAsync() {
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'getCourseDetail',

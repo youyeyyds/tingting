@@ -4,6 +4,9 @@ const app = getApp();
 Page({
   data: {
     statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    contentInnerHeight: 0, // content-inner 高度（填满剩余空间）
     phone: '',
     password: '',
     loading: false,
@@ -17,6 +20,14 @@ Page({
 
   onLoad() {
     const windowInfo = wx.getWindowInfo();
+    const menuButton = wx.getMenuButtonBoundingClientRect();
+    // 计算导航栏高度（与首页一致）
+    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
+    // content-inner 高度 = 屏幕高度 - header - banner(280rpx转px)
+    const rpxToPx = windowInfo.windowWidth / 750;
+    const bannerHeightPx = 280 * rpxToPx;
+    const contentInnerHeight = windowInfo.windowHeight - headerHeight - bannerHeightPx;
     // 使用全局 loadTime，保持图片稳定，只在首次或下拉刷新时更新
     if (!app.globalData.loginPageLoadTime) {
       app.globalData.loginPageLoadTime = Date.now();
@@ -24,6 +35,9 @@ Page({
     const loadTime = app.globalData.loginPageLoadTime;
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
+      navBarHeight: navBarHeight,
+      headerHeight: headerHeight,
+      contentInnerHeight: contentInnerHeight,
       loadTime: loadTime
     });
     this.loadHeadlines();

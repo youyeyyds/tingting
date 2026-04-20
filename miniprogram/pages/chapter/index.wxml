@@ -12,7 +12,9 @@
   </view>
 
   <!-- 内容区域 -->
-  <scroll-view class="content-scroll" scroll-y="true" style="padding-top: {{headerHeight}}px;">
+  <scroll-view class="content-scroll" scroll-y="true" enhanced="true"
+    style="margin-top: {{headerHeight}}px; height: {{scrollHeight}}px;"
+    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <view class="content-inner">
       <!-- 课程信息区 -->
       <view class="course-info-section">

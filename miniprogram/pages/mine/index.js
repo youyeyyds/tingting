@@ -5,6 +5,8 @@ Page({
   data: {
     statusBarHeight: 0,
     navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0, // scroll-view 高度
     activeTab: 2,
     isLoggedIn: false,
     userInfo: null,
@@ -55,6 +57,11 @@ Page({
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
+    // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
+    const rpxToPx = windowInfo.windowWidth / 750;
+    const tabBarHeight = 100 * rpxToPx;
+    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
     const loadTime = Date.now();
     // 检查是否有上一页可以返回
     const pages = getCurrentPages();
@@ -62,6 +69,8 @@ Page({
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
+      headerHeight: headerHeight,
+      scrollHeight: scrollHeight,
       loadTime: loadTime,
       canGoBack: canGoBack
     });
@@ -272,6 +281,9 @@ Page({
   },
 
   handleLogout() {
+    // 标记退出登录，用于首页显示提示
+    app.globalData.logoutFlag = true;
+
     // 停止播放器并清空播放状态
     app.bgAudioManager.stop();
     app.globalData.miniPlayerActive = false;
@@ -291,8 +303,8 @@ Page({
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
 
-    // 直接跳转到登录页
-    wx.redirectTo({ url: '/pages/login/index' });
+    // 跳转到首页
+    wx.redirectTo({ url: '/pages/index/index' });
   },
 
   formatDuration(seconds) {

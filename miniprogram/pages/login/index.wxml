@@ -3,7 +3,7 @@
   <!-- 顶部导航栏 -->
   <view class="header-fixed">
     <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-    <view class="nav-bar" style="height: 44px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
       <view class="back-btn" bindtap="handleBack">
         <view class="back-arrow"></view>
         <text class="back-text">返回</text>
@@ -11,8 +11,11 @@
     </view>
   </view>
 
-  <!-- 内容区域 -->
-  <view class="content-area" style="padding-top: {{statusBarHeight + 44}}px;">
+  <!-- 内容区域（scroll-view 下拉刷新） -->
+  <scroll-view class="content-area" scroll-y="true" enhanced="true"
+    style="margin-top: {{headerHeight}}px; height: calc(100vh - {{headerHeight}}px);"
+    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}"
+    bindrefresherrefresh="onRefresh">
     <!-- 横幅轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
@@ -22,36 +25,39 @@
     <!-- 横幅占位 -->
     <view class="banner-placeholder" wx:else></view>
 
-    <!-- 品牌区域 -->
-    <view class="brand-section">
-      <text class="app-name">听听</text>
-      <text class="app-slogan">随时随地，学习成长</text>
+    <!-- 内容包裹层（填满剩余空间） -->
+    <view class="content-inner" style="height: {{contentInnerHeight}}px;">
+      <!-- 品牌区域 -->
+      <view class="brand-section">
+        <text class="app-name">听听</text>
+        <text class="app-slogan">随时随地，学习成长</text>
+      </view>
+
+      <!-- 登录表单 -->
+      <view class="login-form">
+        <view class="form-item">
+          <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
+        </view>
+
+        <view class="form-item">
+          <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+        </view>
+
+        <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
+          <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
+        </view>
+
+        <!-- 版权内容 -->
+        <view class="copyright-section">
+          <text class="copyright-text">{{copyrightText}}</text>
+          <text class="powered-text">Powered by Claude Code</text>
+        </view>
+      </view>
+
+      <!-- 备案号在底部 -->
+      <view class="icp-section">
+        <text class="icp-text">{{icpNumber}}</text>
+      </view>
     </view>
-
-    <!-- 登录表单 -->
-    <view class="login-form">
-      <view class="form-item">
-        <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
-      </view>
-
-      <view class="form-item">
-        <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
-      </view>
-
-      <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
-        <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
-      </view>
-
-      <!-- 版权内容 -->
-      <view class="copyright-section">
-        <text class="copyright-text">{{copyrightText}}</text>
-        <text class="powered-text">Powered by Claude Code</text>
-      </view>
-    </view>
-
-    <!-- 备案号在底部 -->
-    <view class="icp-section">
-      <text class="icp-text">{{icpNumber}}</text>
-    </view>
-  </view>
+  </scroll-view>
 </view>

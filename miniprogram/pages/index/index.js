@@ -42,6 +42,7 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
+    scrollHeight: 0, // scroll-view 高度
     isLoggedIn: false,
     courses: [],
     headlines: [],
@@ -58,6 +59,11 @@ Page({
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
+    // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
+    const rpxToPx = windowInfo.windowWidth / 750;
+    const tabBarHeight = 100 * rpxToPx;
+    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
 
     // 使用全局 loadTime 和 maskedAuthors，保持图片稳定
     if (!app.globalData.homePageLoadTime) {
@@ -72,7 +78,8 @@ Page({
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
-      headerHeight: windowInfo.statusBarHeight + navBarHeight,
+      headerHeight: headerHeight,
+      scrollHeight: scrollHeight,
       loadTime: loadTime,
       maskedAuthors: maskedAuthors
     });
@@ -84,6 +91,14 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    // 检查退出登录标志，显示提示
+    if (app.globalData.logoutFlag) {
+      app.globalData.logoutFlag = false;
+      // 等首页渲染完成后再显示提示
+      setTimeout(() => {
+        wx.showToast({ title: '已退出登录', icon: 'none', duration: 2000 });
+      }, 500);
+    }
     // 切换页面时不重新加载，保持原有数据
   },
 

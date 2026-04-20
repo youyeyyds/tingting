@@ -5,6 +5,8 @@ Page({
   data: {
     statusBarHeight: 0,
     navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0, // scroll-view 高度
     activeTab: 1,
     isLoggedIn: false,
     favoriteChapters: [],
@@ -19,10 +21,17 @@ Page({
     const windowInfo = wx.getWindowInfo();
     const menuButton = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
+    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
+    // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
+    const rpxToPx = windowInfo.windowWidth / 750;
+    const tabBarHeight = 100 * rpxToPx;
+    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
     const loadTime = Date.now();
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
+      headerHeight: headerHeight,
+      scrollHeight: scrollHeight,
       loadTime: loadTime
     });
     this.checkLoginStatus();

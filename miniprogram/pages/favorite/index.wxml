@@ -7,6 +7,7 @@
   </view>
 
   <scroll-view class="content" scroll-y="true" enhanced="true"
+    style="height: {{scrollHeight}}px;"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <!-- 头条轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
