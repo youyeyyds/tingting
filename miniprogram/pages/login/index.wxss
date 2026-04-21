@@ -25,6 +25,7 @@
 .nav-bar {
   display: flex;
   align-items: center;
+  padding-left: 16rpx;
   background: #fff;
 }
 
