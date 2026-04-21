@@ -379,7 +379,7 @@ function showEditDialog(row) {
     category: row.category,
     cover: row.coverRandom
       ? `https://picsum.photos/seed/${Date.now()}_cover_${row.seq || 1}/400/400`
-      : row.cover || `https://picsum.photos/seed/course_fixed_${row.seq || 1}/400/400`,
+      : row.cover || `https://picsum.photos/seed/fixed_cover_${row.seq || 1}/400/400`,
     coverRandom: row.coverRandom !== false,
     description: row.description,
     onlineTime: row.onlineTime || '',

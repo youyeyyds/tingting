@@ -503,7 +503,7 @@ function formatPositions(positions) {
 function getDisplayUrl(row) {
   return row.imageRandom
     ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq || 1}/800/300`
-    : row.image || `https://picsum.photos/seed/headline_fixed_${row.seq || 1}/800/300`
+    : row.image || `https://picsum.photos/seed/fixed_banner_${row.seq || 1}/800/300`
 }
 
 onMounted(() => {
