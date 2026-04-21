@@ -5,6 +5,13 @@
   flex-direction: column;
   background: linear-gradient(180deg, #f8f8f8 0%, #fff 100%);
   box-sizing: border-box;
+  height: 100vh;
+}
+
+.scroll-content {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 内容包裹层 */
@@ -12,6 +19,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 40rpx;
+  flex: 1;
 }
 
 /* 横幅（全宽） */
@@ -125,6 +133,7 @@
   justify-content: center;
   padding: 40rpx 0;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  flex-shrink: 0;
 }
 
 .icp-text {
