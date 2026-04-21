@@ -105,19 +105,24 @@
   margin-top: 50rpx;
 }
 
-.copyright-brand {
-  font-size: 24rpx;
-  color: #666;
+/* 版权内容 */
+.copyright-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50rpx;
 }
 
-.copyright-info {
+.copyright-line {
   font-size: 22rpx;
-  color: #bbb;
+  color: #999;
+  line-height: 1.6;
+}
+
+.copyright-line-2 {
   margin-top: 8rpx;
 }
 
-.copyright-version {
-  font-size: 22rpx;
-  color: #666;
-  margin-top: 8rpx;
+.copyright-line-3 {
+  margin-top: 16rpx;
 }
