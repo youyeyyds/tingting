@@ -147,9 +147,12 @@ Page({
   },
 
   onRefresh() {
-    // 更新全局横幅时间戳和清除本页缓存，刷新图片（封面不变）
+    // 更新全局横幅时间戳和清除所有横幅缓存，刷新图片（封面不变）
     const newLoadTime = Date.now();
     app.globalData.bannerLoadTime = newLoadTime;
+    app.globalData.indexHeadlines = [];
+    app.globalData.loginHeadlines = [];
+    app.globalData.favoriteHeadlines = [];
     app.globalData.mineHeadlines = [];
     this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
     this.checkLoginStatus();

@@ -137,7 +137,7 @@ Page({
   },
 
   onRefresh() {
-    // 更新全局时间戳和清除所有缓存，刷新图片
+    // 更新全局横幅时间戳和清除所有横幅缓存，刷新图片
     const newLoadTime = Date.now();
     app.globalData.bannerLoadTime = newLoadTime;
     app.globalData.coverLoadTime = newLoadTime; // 首页刷新才更新封面时间戳
