@@ -40,10 +40,10 @@
 }
 
 .back-arrow {
-  width: 24rpx;
-  height: 24rpx;
-  border-left: 5rpx solid #000;
-  border-bottom: 5rpx solid #000;
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #666;
+  border-bottom: 4rpx solid #666;
   transform: rotate(45deg);
 }
 
