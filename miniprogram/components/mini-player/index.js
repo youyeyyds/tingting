@@ -131,11 +131,11 @@ Component({
         return;
       }
 
-      // 获取封面时间戳，处理封面图片
+      // 获取封面时间戳
       if (!app.globalData.coverLoadTime) {
         app.globalData.coverLoadTime = Date.now();
       }
-      const coverLoadTime = app.globalData.coverLoadTime;
+      const globalCoverTime = app.globalData.coverLoadTime;
 
       const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode, isFavoriteList } = app.globalData;
       // 从 bgAudioManager 获取倍速，如果还没设置则使用默认值2
@@ -146,8 +146,11 @@ Component({
         playbackRate = 2;
       }
 
-      // 处理封面图片
-      const courseCover = this.fixImageUrl(playingCourse?.cover || '', coverLoadTime);
+      // 检查封面时间戳是否变化，变化则重新构建URL
+      let courseCover = this.data.courseCover;
+      if (globalCoverTime !== this.data.coverLoadTime) {
+        courseCover = this.rebuildImageUrl(playingCourse?.cover || '', globalCoverTime);
+      }
 
       const data = {
         playerBottom: this.calcPosition(),
@@ -164,7 +167,7 @@ Component({
         currentTime: this.bgAudioManager.currentTime || 0,
         duration: this.bgAudioManager.duration || 0,
         playbackRate: playbackRate,
-        coverLoadTime: coverLoadTime
+        coverLoadTime: globalCoverTime
       };
 
       // 首页/收藏页/我的页：如果还没淡入过，则淡入
@@ -590,6 +593,25 @@ Component({
 
       // 其他URL直接返回
       return url;
+    },
+
+    // 从已处理的URL中提取信息，用新时间戳重新构建
+    rebuildImageUrl(url, newLoadTime) {
+      if (!url) return url;
+
+      // 如果已经是时间戳格式的seed，提取原始信息替换时间戳
+      if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_cover_/)) {
+        const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_cover_([^\/]+)\/(\d+(\/\d+)?)/);
+        if (seedMatch) {
+          const originalSeed = seedMatch[2];
+          const size = seedMatch[3];
+          const newSeed = `${newLoadTime}_cover_${originalSeed}`;
+          return `https://picsum.photos/seed/${newSeed}/${size}`;
+        }
+      }
+
+      // 如果不是已处理的URL，使用 fixImageUrl 处理
+      return this.fixImageUrl(url, newLoadTime);
     },
 
     preventMove() {},
