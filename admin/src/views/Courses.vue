@@ -42,6 +42,16 @@
             </div>
           </template>
         </el-table-column>
+        <el-table-column prop="coverRandom" label="随机" width="70">
+          <template #default="{ row }">
+            <el-switch
+              :model-value="row.coverRandom !== false"
+              size="small"
+              @change="toggleRowCoverRandom(row, $event)"
+              @click.stop
+            />
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="课程名称" min-width="200" />
         <el-table-column prop="author" label="作者" width="120" />
         <el-table-column prop="categoryName" label="分类" width="120" />
@@ -470,6 +480,43 @@ async function toggleStatus(row) {
     }
   } catch (err) {
     ElMessage.error(`${actionText}失败`)
+  }
+}
+
+// 切换表格行封面随机状态
+async function toggleRowCoverRandom(row, newVal) {
+  // 生成新的封面 URL
+  const coverUrl = newVal
+    ? `https://picsum.photos/seed/${Date.now()}_cover_${row.seq}/400/400`
+    : `https://picsum.photos/seed/fixed_cover_${row.seq}/400/400`
+
+  // 先更新本地数据（直接修改 row，不重新渲染整个表格）
+  row.coverRandom = newVal
+  row.cover = coverUrl
+
+  // 保存到数据库
+  try {
+    const res = await updateCourse(row._id, {
+      seq: row.seq,
+      title: row.title,
+      author: row.author,
+      category: row.category,
+      cover: coverUrl,
+      coverRandom: newVal,
+      description: row.description || '',
+      onlineTime: row.onlineTime || '',
+      status: row.status || 'draft'
+    })
+    if (res.success) {
+      ElMessage.success(newVal ? '已切换为随机（刷新后更新）' : '已切换为固定（刷新后不变）')
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+      // 恢复原状态
+      row.coverRandom = !newVal
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
+    row.coverRandom = !newVal
   }
 }
 

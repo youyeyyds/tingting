@@ -56,14 +56,12 @@
         </el-table-column>
         <el-table-column prop="imageRandom" label="随机" width="70">
           <template #default="{ row }">
-            <el-switch v-model="row.imageRandom" size="small" @change="toggleRowImageRandom(row)" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="image" label="链接" min-width="250">
-          <template #default="{ row }">
-            <el-link :href="getDisplayUrl(row)" target="_blank" type="primary">
-              {{ getDisplayUrl(row) }}
-            </el-link>
+            <el-switch
+              :model-value="row.imageRandom !== false"
+              size="small"
+              @change="toggleRowImageRandom(row, $event)"
+              @click.stop
+            />
           </template>
         </el-table-column>
         <el-table-column prop="positions" label="位置" min-width="180">
@@ -392,13 +390,14 @@ async function handleDelete(row) {
 }
 
 // 切换表格行图片随机状态
-async function toggleRowImageRandom(row) {
+async function toggleRowImageRandom(row, newVal) {
   // 生成新的图片 URL
-  const imageUrl = row.imageRandom
+  const imageUrl = newVal
     ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
     : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
 
-  // 更新本地数据
+  // 先更新本地数据（直接修改 row，不重新渲染整个表格）
+  row.imageRandom = newVal
   row.image = imageUrl
 
   // 保存到数据库
@@ -407,25 +406,19 @@ async function toggleRowImageRandom(row) {
       seq: row.seq,
       title: row.title,
       image: imageUrl,
-      imageRandom: row.imageRandom,
+      imageRandom: newVal,
       positions: row.positions || ['index', 'favorite', 'login', 'mine']
     })
     if (res.success) {
-      ElMessage.success(row.imageRandom ? '已切换为随机（刷新后更新）' : '已切换为固定（刷新后不变）')
+      ElMessage.success(newVal ? '已切换为随机（刷新后更新）' : '已切换为固定（刷新后不变）')
     } else {
       ElMessage.error('保存失败: ' + res.error)
       // 恢复原状态
-      row.imageRandom = !row.imageRandom
-      row.image = row.imageRandom
-        ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
-        : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
+      row.imageRandom = !newVal
     }
   } catch (err) {
     ElMessage.error('保存失败')
-    row.imageRandom = !row.imageRandom
-    row.image = row.imageRandom
-      ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
-      : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
+    row.imageRandom = !newVal
   }
 }
 
@@ -497,13 +490,6 @@ function formatPositions(positions) {
     mine: '个人'
   }
   return positions.map(p => map[p] || p).join('、')
-}
-
-// 获取显示URL（动态生成）
-function getDisplayUrl(row) {
-  return row.imageRandom
-    ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq || 1}/800/300`
-    : row.image || `https://picsum.photos/seed/fixed_banner_${row.seq || 1}/800/300`
 }
 
 onMounted(() => {
