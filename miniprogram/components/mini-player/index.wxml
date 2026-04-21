@@ -156,8 +156,8 @@
     <!-- 下一条信息 -->
     <view class="next-info">
       <text class="next-info-label">下一条：</text>
-      <text class="next-info-seq">{{nextChapterSeq}}</text>
-      <text class="next-info-sep">|</text>
+      <text class="next-info-seq" wx:if="{{nextChapterSeq}}">{{nextChapterSeq}}</text>
+      <text class="next-info-sep" wx:if="{{nextChapterSeq}}">|</text>
       <text class="next-info-title">{{nextChapterTitle}}</text>
     </view>
   </view>

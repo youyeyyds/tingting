@@ -497,9 +497,9 @@
 /* 下一条信息 */
 .next-info {
   padding: 20rpx 0;
-  text-align: center;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 80rpx;
 }
 
 .next-info-label {
