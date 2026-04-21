@@ -44,9 +44,9 @@
 }
 
 .title-text {
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: 500;
-  color: #333;
+  color: #000;
 }
 
 /* 课程列表 */
