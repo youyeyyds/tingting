@@ -187,10 +187,12 @@ watch(() => form.seq, () => {
 })
 
 // 更新图片 URL
+// 随机开启：使用 random 参数，小程序下拉刷新后更新图片
+// 随机关闭：使用 seed 且包含 _fixed_，小程序下拉刷新后不更新
 function updateImageUrl() {
   form.image = form.imageRandom
     ? `https://picsum.photos/800/300?random=${form.seq}`
-    : `https://picsum.photos/seed/index${form.seq}/800/300`
+    : `https://picsum.photos/seed/headline_fixed_${form.seq}/800/300`
 }
 
 // 加载横幅列表
@@ -392,7 +394,7 @@ async function toggleRowImageRandom(row) {
   // 生成新的图片 URL
   const imageUrl = row.imageRandom
     ? `https://picsum.photos/800/300?random=${row.seq}`
-    : `https://picsum.photos/seed/index${row.seq}/800/300`
+    : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
 
   // 更新本地数据
   row.image = imageUrl
@@ -407,21 +409,21 @@ async function toggleRowImageRandom(row) {
       positions: row.positions || ['index', 'favorite', 'login', 'mine']
     })
     if (res.success) {
-      ElMessage.success(row.imageRandom ? '已切换为随机' : '已切换为固定')
+      ElMessage.success(row.imageRandom ? '已切换为随机（刷新后更新）' : '已切换为固定（刷新后不变）')
     } else {
       ElMessage.error('保存失败: ' + res.error)
       // 恢复原状态
       row.imageRandom = !row.imageRandom
       row.image = row.imageRandom
         ? `https://picsum.photos/800/300?random=${row.seq}`
-        : `https://picsum.photos/seed/index${row.seq}/800/300`
+        : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
     }
   } catch (err) {
     ElMessage.error('保存失败')
     row.imageRandom = !row.imageRandom
     row.image = row.imageRandom
       ? `https://picsum.photos/800/300?random=${row.seq}`
-      : `https://picsum.photos/seed/index${row.seq}/800/300`
+      : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
   }
 }
 

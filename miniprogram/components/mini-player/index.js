@@ -572,6 +572,11 @@ Component({
     fixImageUrl(url, coverLoadTime) {
       if (!url) return url;
 
+      // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
+      if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+        return url; // 固定图片，直接返回
+      }
+
       // 检查URL是否已经包含时间戳格式的seed（如 123456_cover_xxx），说明已处理过
       if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_cover_/)) {
         return url; // 已处理过，直接返回

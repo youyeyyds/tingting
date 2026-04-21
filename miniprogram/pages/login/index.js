@@ -113,6 +113,12 @@ Page({
   // 横幅图片使用 bannerLoadTime
   fixImageUrl(url, type = 'banner') {
     if (!url) return url;
+
+    // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
+    if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+      return url; // 固定图片，直接返回
+    }
+
     const loadTime = this.data.loadTime;
 
     // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx），说明已处理过

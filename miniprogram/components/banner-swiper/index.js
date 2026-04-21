@@ -66,6 +66,11 @@ Component({
       if (!url) return url;
       const loadTime = this.data.loadTime || Date.now();
 
+      // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
+      if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+        return url; // 固定图片，直接返回
+      }
+
       // 处理 picsum.photos URL
       if (url.includes('picsum.photos')) {
         // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合

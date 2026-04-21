@@ -217,10 +217,12 @@ watch(() => form.seq, () => {
 })
 
 // 更新封面 URL
+// 随机开启：使用 random 参数，小程序下拉刷新后更新图片
+// 随机关闭：使用 seed 且包含 _fixed_，小程序下拉刷新后不更新
 function updateCoverUrl() {
   form.cover = form.coverRandom
     ? `https://picsum.photos/400?random=${form.seq}`
-    : `https://picsum.photos/seed/course${form.seq}/400/400`
+    : `https://picsum.photos/seed/course_fixed_${form.seq}/400/400`
 }
 
 // 加载课程列表

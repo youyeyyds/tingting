@@ -224,6 +224,12 @@ Page({
   // 封面使用 coverLoadTime（只有首页刷新才更新）
   fixImageUrl(url, type = 'cover') {
     if (!url) return url;
+
+    // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
+    if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+      return url; // 固定图片，直接返回
+    }
+
     // 章节页只有封面，用 coverLoadTime
     const loadTime = this.data.coverLoadTime;
 

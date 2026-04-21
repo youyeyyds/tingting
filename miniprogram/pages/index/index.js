@@ -217,6 +217,12 @@ Page({
   // type: 'banner' 横幅图片, 'cover' 封面图片
   fixImageUrl(url, type = 'img') {
     if (!url) return url;
+
+    // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
+    if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+      return url; // 固定图片，直接返回
+    }
+
     // 横幅用 bannerLoadTime，封面用 coverLoadTime
     const loadTime = type === 'banner' ? this.data.bannerLoadTime : this.data.coverLoadTime;
 
