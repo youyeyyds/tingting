@@ -6,15 +6,14 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
-    contentInnerHeight: 0, // content-inner 高度（填满剩余空间）
+    contentInnerHeight: 0, // content-inner 最小高度
     phone: '',
     password: '',
     loading: false,
     headlines: [],
-    refresherTriggered: false,
     copyrightText: '',
     icpNumber: '',
-    loadTime: 0, // 横幅时间戳（封面只在首页刷新才更新）
+    loadTime: 0, // 横幅时间戳
     bannerSpeed: 5000 // 轮播速度
   },
 
@@ -24,7 +23,7 @@ Page({
     // 计算导航栏高度（与首页一致）
     const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
     const headerHeight = windowInfo.statusBarHeight + navBarHeight;
-    // content-inner 高度 = 屏幕高度 - header - banner(280rpx转px)
+    // content-inner 最小高度 = 屏幕高度 - header - banner(280rpx转px)
     const rpxToPx = windowInfo.windowWidth / 750;
     const bannerHeightPx = 280 * rpxToPx;
     const contentInnerHeight = windowInfo.windowHeight - headerHeight - bannerHeightPx;
@@ -52,23 +51,6 @@ Page({
 
   handleBack() {
     wx.navigateBack();
-  },
-
-  onRefresh() {
-    // 更新全局横幅时间戳和清除所有横幅缓存，刷新图片（封面不变）
-    const newLoadTime = Date.now();
-    app.globalData.bannerLoadTime = newLoadTime;
-    app.globalData.indexHeadlines = [];
-    app.globalData.loginHeadlines = [];
-    app.globalData.favoriteHeadlines = [];
-    app.globalData.mineHeadlines = [];
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
-    Promise.all([
-      this.loadHeadlinesAsync(),
-      this.loadCopyrightAsync()
-    ]).then(() => {
-      this.setData({ refresherTriggered: false });
-    });
   },
 
   loadHeadlinesAsync() {

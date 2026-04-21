@@ -7,25 +7,22 @@
       <view class="back-btn" bindtap="handleBack">
         <view class="back-arrow"></view>
       </view>
+      <text class="nav-title">登录</text>
     </view>
   </view>
 
-  <!-- 内容区域（scroll-view 下拉刷新） -->
-  <scroll-view class="content-area" scroll-y="true" enhanced="true"
-    style="margin-top: {{headerHeight}}px; height: calc(100vh - {{headerHeight}}px);"
-    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}"
-    bindrefresherrefresh="onRefresh">
+  <!-- 内容区域 -->
+  <scroll-view class="content-area" scroll-y="true" enhanced="true" bounces="{{true}}"
+    style="margin-top: {{headerHeight}}px; height: calc(100vh - {{headerHeight}}px);">
     <!-- 横幅轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
     </swiper>
-    <!-- 横幅占位 -->
-    <view class="banner-placeholder" wx:else></view>
 
-    <!-- 内容包裹层（填满剩余空间） -->
-    <view class="content-inner" style="height: {{contentInnerHeight}}px;">
+    <!-- 内容包裹层 -->
+    <view class="content-inner" style="min-height: {{contentInnerHeight}}px;">
       <!-- 品牌区域 -->
       <view class="brand-section">
         <text class="app-name">听听</text>
