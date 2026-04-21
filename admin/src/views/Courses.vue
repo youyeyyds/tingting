@@ -222,7 +222,7 @@ watch(() => form.seq, () => {
 function updateCoverUrl() {
   form.cover = form.coverRandom
     ? `https://picsum.photos/seed/${Date.now()}_cover_${form.seq}/400/400`
-    : `https://picsum.photos/seed/course_fixed_${form.seq}/400/400`
+    : `https://picsum.photos/seed/fixed_cover_${form.seq}/400/400`
 }
 
 // 加载课程列表

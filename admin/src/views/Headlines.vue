@@ -192,7 +192,7 @@ watch(() => form.seq, () => {
 function updateImageUrl() {
   form.image = form.imageRandom
     ? `https://picsum.photos/seed/${Date.now()}_banner_${form.seq}/800/300`
-    : `https://picsum.photos/seed/headline_fixed_${form.seq}/800/300`
+    : `https://picsum.photos/seed/fixed_banner_${form.seq}/800/300`
 }
 
 // 加载横幅列表
