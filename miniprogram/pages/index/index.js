@@ -126,18 +126,35 @@ Page({
   onShow() {
     this.checkLoginStatus();
     // 检查横幅时间戳是否变化，变化则更新横幅URL
-    const currentBannerTime = app.globalData.bannerLoadTime;
-    if (currentBannerTime && currentBannerTime !== this.data.bannerLoadTime) {
-      // 时间戳变化，重新处理横幅URL
-      const headlines = this.data.headlines.map(h => ({
-        ...h,
-        image: this.fixImageUrl(h.image, 'banner')
-      }));
+    const globalBannerTime = app.globalData.bannerLoadTime;
+    const globalCoverTime = app.globalData.coverLoadTime;
+
+    if (globalBannerTime && globalBannerTime !== this.data.bannerLoadTime) {
+      // 先更新时间戳，再处理横幅URL
+      const headlines = this.data.headlines.map(h => {
+        // 从URL中提取原始信息，直接用新时间戳重新构建URL
+        const newUrl = this.rebuildImageUrl(h.image, globalBannerTime, 'banner');
+        return { ...h, image: newUrl };
+      });
       this.setData({
-        bannerLoadTime: currentBannerTime,
+        bannerLoadTime: globalBannerTime,
         headlines: headlines
       });
     }
+
+    if (globalCoverTime && globalCoverTime !== this.data.coverLoadTime) {
+      // 先更新时间戳，再处理封面URL
+      const courses = this.data.courses.map(c => {
+        const newUrl = this.rebuildImageUrl(c.cover, globalCoverTime, 'cover');
+        return { ...c, cover: newUrl };
+      });
+      this.setData({
+        coverLoadTime: globalCoverTime,
+        courses: courses
+      });
+      this.processCourses();
+    }
+
     // 检查退出登录标志，显示提示
     if (app.globalData.logoutFlag) {
       app.globalData.logoutFlag = false;
@@ -147,6 +164,25 @@ Page({
       }, 500);
     }
     // 切换页面时不重新加载，保持原有数据
+  },
+
+  // 从已处理的URL中提取信息，用新时间戳重新构建
+  rebuildImageUrl(url, newLoadTime, type) {
+    if (!url) return url;
+
+    // 如果已经是时间戳格式的seed，提取原始信息替换时间戳
+    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_(banner|cover)_/)) {
+      const seedMatch = url.match(/picsum\.photos\/seed\/\d+_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[2];
+        const size = seedMatch[3];
+        const newSeed = `${newLoadTime}_${type}_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+    }
+
+    // 如果不是已处理的URL，使用 fixImageUrl 处理
+    return this.fixImageUrl(url, type);
   },
 
   onRefresh() {
