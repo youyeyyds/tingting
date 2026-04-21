@@ -37,4 +37,9 @@
       </view>
     </view>
   </view>
+
+  <!-- 备案号（固定在底部安全区） -->
+  <view class="icp-footer">
+    <text class="icp-text">粤ICP备2026041617号-1X</text>
+  </view>
 </view>
