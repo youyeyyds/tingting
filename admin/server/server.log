@@ -1,0 +1,1581 @@
+◇ injected env (7) from ../../.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+(node:98258) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+后台服务已启动: http://localhost:3002
+请确保前端服务也在运行 (npm run dev)
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 66,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 42,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 12,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 66,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 42,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 12,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 17,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 46,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 96,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 46,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 96,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 46,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  lastPlayTime: 0,
+  finished: false,
+  playCount: 14
+}
+完整章节信息: {
+  _id: 'fdffe84d69e3a08200220cd302c6837d',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 1,
+  title: '心智活动的载体是什么',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3',
+  audioFileSize: 4041239,
+  duration: 808,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1, favoriteCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 808, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '291ff3e969e4551a002d6b1c5dc1ba96',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 808,
+  lastPlayTime: 96,
+  finished: true,
+  isFavorite: true,
+  playCount: 14
+}
+现有进度: { currentFinished: true, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 0,
+  duration: 808,
+  threshold: 798,
+  currentFinished: true,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 0, finished: false, playCount: 14 }
+用户进度更新结果: { updated: 1, requestId: '19da6119313_69' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 0,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 46,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  lastPlayTime: 0,
+  finished: false,
+  playCount: 14
+}
+完整章节信息: {
+  _id: 'bf476b7769e3a0950020fd906fa3c3c5',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 2,
+  title: '心智活动是如何发生的',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3',
+  audioFileSize: 3667296,
+  duration: 733,
+  lastPlayTime: 0,
+  playCount: 1,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 733, chapterTotalPlayCount: 1 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '775c8c1769e45774002abdb0679679de',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 733,
+  lastPlayTime: 46,
+  finished: true,
+  playCount: 14,
+  isFavorite: true
+}
+现有进度: { currentFinished: true, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 0,
+  duration: 733,
+  threshold: 723,
+  currentFinished: true,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 0, finished: false, playCount: 14 }
+用户进度更新结果: { updated: 1, requestId: '19da6119e6c_6e' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 0,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 0,
+    "finished": false,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新章节 ID: bf476b7769e3a0950020fd906fa3c3c5
+更新数据: {"course":"c3459b2a69df8a600468fcd1692cbdc8","seq":2,"title":"心智活动是如何发生的","duration":733,"audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3","audioFileSize":3667296}
+自动完播检查: {
+  duration: 733,
+  lastPlayTime: 0,
+  currentFinished: false,
+  inputPlayCount: undefined
+}
+实际更新字段: {"seq":2,"title":"心智活动是如何发生的","audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3","audioFileSize":3667296,"duration":733,"lastPlayTime":0,"playCount":0,"favorite":false}
+数据库更新结果: {"updated":1,"requestId":"19da611af96_72"}
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  lastPlayTime: 448,
+  finished: undefined,
+  playCount: 14
+}
+完整章节信息: {
+  _id: 'bf476b7769e3a0950020fd906fa3c3c5',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 2,
+  title: '心智活动是如何发生的',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3',
+  audioFileSize: 3667296,
+  duration: 733,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 733, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '775c8c1769e45774002abdb0679679de',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 733,
+  lastPlayTime: 0,
+  finished: false,
+  playCount: 14,
+  isFavorite: true
+}
+现有进度: { currentFinished: false, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 448,
+  duration: 733,
+  threshold: 723,
+  currentFinished: false,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 448, isFavorite: true, playCount: 14 }
+用户进度更新结果: { updated: 1, requestId: '19da611b209_75' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 0,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 448,
+    "finished": false,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 93,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 0,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 3,
+    "finished": false,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新章节 ID: fdffe84d69e3a08200220cd302c6837d
+更新数据: {"course":"c3459b2a69df8a600468fcd1692cbdc8","seq":1,"title":"心智活动的载体是什么","duration":808,"audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3","audioFileSize":4041239}
+自动完播检查: {
+  duration: 808,
+  lastPlayTime: 0,
+  currentFinished: false,
+  inputPlayCount: undefined
+}
+实际更新字段: {"seq":1,"title":"心智活动的载体是什么","audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3","audioFileSize":4041239,"duration":808,"lastPlayTime":0,"playCount":0,"favorite":false}
+数据库更新结果: {"updated":0,"requestId":"19da6265f4e_7f"}
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  lastPlayTime: 615,
+  finished: undefined,
+  playCount: 14
+}
+完整章节信息: {
+  _id: 'fdffe84d69e3a08200220cd302c6837d',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 1,
+  title: '心智活动的载体是什么',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3',
+  audioFileSize: 4041239,
+  duration: 808,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1, favoriteCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 808, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '291ff3e969e4551a002d6b1c5dc1ba96',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 808,
+  lastPlayTime: 0,
+  finished: false,
+  isFavorite: true,
+  playCount: 14
+}
+现有进度: { currentFinished: false, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 615,
+  duration: 808,
+  threshold: 798,
+  currentFinished: false,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 615, isFavorite: true, playCount: 14 }
+用户进度更新结果: { updated: 1, requestId: '19da6266203_82' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 615,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 3,
+    "finished": false,
+    "playCount": 14,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  lastPlayTime: 0,
+  finished: true,
+  playCount: 15
+}
+完整章节信息: {
+  _id: 'bf476b7769e3a0950020fd906fa3c3c5',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 2,
+  title: '心智活动是如何发生的',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3',
+  audioFileSize: 3667296,
+  duration: 733,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 733, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '775c8c1769e45774002abdb0679679de',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 733,
+  lastPlayTime: 3,
+  finished: false,
+  playCount: 14,
+  isFavorite: true
+}
+现有进度: { currentFinished: false, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 0,
+  duration: 733,
+  threshold: 723,
+  currentFinished: false,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 0, finished: true, playCount: 15 }
+用户进度更新结果: { updated: 1, requestId: '19da62686c8_87' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 615,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 0,
+    "finished": true,
+    "playCount": 15,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新章节 ID: bf476b7769e3a0950020fd906fa3c3c5
+更新数据: {"course":"c3459b2a69df8a600468fcd1692cbdc8","seq":2,"title":"心智活动是如何发生的","duration":733,"audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3","audioFileSize":3667296}
+自动完播检查: {
+  duration: 733,
+  lastPlayTime: 0,
+  currentFinished: false,
+  inputPlayCount: undefined
+}
+实际更新字段: {"seq":2,"title":"心智活动是如何发生的","audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3","audioFileSize":3667296,"duration":733,"lastPlayTime":0,"playCount":0,"favorite":false}
+数据库更新结果: {"updated":0,"requestId":"19da62696cb_8b"}
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  lastPlayTime: 340,
+  finished: undefined,
+  playCount: 15
+}
+完整章节信息: {
+  _id: 'bf476b7769e3a0950020fd906fa3c3c5',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 2,
+  title: '心智活动是如何发生的',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525460721_2.心智活动是如何发生的.mp3',
+  audioFileSize: 3667296,
+  duration: 733,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 733, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '775c8c1769e45774002abdb0679679de',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'bf476b7769e3a0950020fd906fa3c3c5',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 733,
+  lastPlayTime: 0,
+  finished: true,
+  playCount: 15,
+  isFavorite: true
+}
+现有进度: { currentFinished: true, currentPlayCount: 15 }
+自动完播判断: {
+  lastPlayTime: 340,
+  duration: 733,
+  threshold: 723,
+  currentFinished: true,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 340, isFavorite: true, playCount: 15 }
+用户进度更新结果: { updated: 1, requestId: '19da626996f_8e' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 615,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 340,
+    "finished": true,
+    "playCount": 15,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 678,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 439,
+    "finished": true,
+    "playCount": 15,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+更新章节 ID: fdffe84d69e3a08200220cd302c6837d
+更新数据: {"course":"c3459b2a69df8a600468fcd1692cbdc8","seq":1,"title":"心智活动的载体是什么","duration":808,"audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3","audioFileSize":4041239}
+自动完播检查: {
+  duration: 808,
+  lastPlayTime: 0,
+  currentFinished: false,
+  inputPlayCount: undefined
+}
+实际更新字段: {"seq":1,"title":"心智活动的载体是什么","audioUrl":"cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3","audioFileSize":4041239,"duration":808,"lastPlayTime":0,"playCount":0,"favorite":false}
+数据库更新结果: {"updated":0,"requestId":"19da6341ec7_98"}
+更新用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  lastPlayTime: 294,
+  finished: undefined,
+  playCount: 14
+}
+完整章节信息: {
+  _id: 'fdffe84d69e3a08200220cd302c6837d',
+  course: 'c3459b2a69df8a600468fcd1692cbdc8',
+  seq: 1,
+  title: '心智活动的载体是什么',
+  audioUrl: 'cloud://cloud1-2g5y53suf638dfb9.636c-cloud1-2g5y53suf638dfb9-1421010171/audio/1776525441288_1.心智活动的载体是什么.mp3',
+  audioFileSize: 4041239,
+  duration: 808,
+  lastPlayTime: 0,
+  playCount: 0,
+  favorite: false,
+  finished: false,
+  data: { playCount: 1, favoriteCount: 1 },
+  favoriteCount: 2
+}
+章节信息: { duration: 808, chapterTotalPlayCount: 0 }
+查询方式1 (userId+chapterId): 1
+最终找到的现有记录: {
+  _id: '291ff3e969e4551a002d6b1c5dc1ba96',
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  chapterId: 'fdffe84d69e3a08200220cd302c6837d',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8',
+  duration: 808,
+  lastPlayTime: 678,
+  finished: false,
+  isFavorite: true,
+  playCount: 14
+}
+现有进度: { currentFinished: false, currentPlayCount: 14 }
+自动完播判断: {
+  lastPlayTime: 294,
+  duration: 808,
+  threshold: 798,
+  currentFinished: false,
+  shouldAutoFinish: false
+}
+准备更新的数据: { lastPlayTime: 294, isFavorite: true, playCount: 14 }
+用户进度更新结果: { updated: 1, requestId: '19da6342176_9b' }
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 294,
+    "finished": false,
+    "isFavorite": true,
+    "playCount": 14
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 439,
+    "finished": true,
+    "playCount": 15,
+    "isFavorite": true
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 151,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": false
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: {
+  userId: '3bef321d69db2d1b03ed38ac2a33bf8e',
+  courseId: 'c3459b2a69df8a600468fcd1692cbdc8'
+}
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 639,
+    "finished": false,
+    "isFavorite": false,
+    "playCount": 14,
+    "favoriteTime": null
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 260,
+    "finished": false,
+    "playCount": 15,
+    "isFavorite": false,
+    "favoriteTime": null
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 379,
+    "finished": true,
+    "playCount": 10,
+    "isFavorite": true,
+    "favoriteTime": 1776610081553
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 383,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 17,
+    "favoriteTime": 1776761015816
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 54,
+    "finished": true,
+    "playCount": 18,
+    "isFavorite": true,
+    "favoriteTime": 1776760896757
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 70,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true,
+    "favoriteTime": 1776760905994
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 402,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 17,
+    "favoriteTime": 1776761015816
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 54,
+    "finished": true,
+    "playCount": 18,
+    "isFavorite": true,
+    "favoriteTime": 1776760896757
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 70,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true,
+    "favoriteTime": 1776760905994
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 402,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 17,
+    "favoriteTime": 1776761015816
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 54,
+    "finished": true,
+    "playCount": 18,
+    "isFavorite": true,
+    "favoriteTime": 1776760896757
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 70,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true,
+    "favoriteTime": 1776760905994
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 402,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 17,
+    "favoriteTime": 1776761015816
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 54,
+    "finished": true,
+    "playCount": 18,
+    "isFavorite": true,
+    "favoriteTime": 1776760896757
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 70,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true,
+    "favoriteTime": 1776760905994
+  }
+]
+获取用户进度请求: { userId: '3bef321d69db2d1b03ed38ac2a33bf8e', courseId: undefined }
+查询进度结果条数: 3
+查询进度结果详情: [
+  {
+    "_id": "291ff3e969e4551a002d6b1c5dc1ba96",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "fdffe84d69e3a08200220cd302c6837d",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 808,
+    "lastPlayTime": 402,
+    "finished": true,
+    "isFavorite": true,
+    "playCount": 17,
+    "favoriteTime": 1776761015816
+  },
+  {
+    "_id": "775c8c1769e45774002abdb0679679de",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "bf476b7769e3a0950020fd906fa3c3c5",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 733,
+    "lastPlayTime": 54,
+    "finished": true,
+    "playCount": 18,
+    "isFavorite": true,
+    "favoriteTime": 1776760896757
+  },
+  {
+    "_id": "3e5080e169e45786002cd0405c8bfdba",
+    "userId": "3bef321d69db2d1b03ed38ac2a33bf8e",
+    "chapterId": "b3bf7c4c69e3a0aa0021458f03816389",
+    "courseId": "c3459b2a69df8a600468fcd1692cbdc8",
+    "duration": 730,
+    "lastPlayTime": 70,
+    "finished": true,
+    "playCount": 14,
+    "isFavorite": true,
+    "favoriteTime": 1776760905994
+  }
+]

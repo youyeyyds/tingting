@@ -225,8 +225,8 @@ Page({
   fixImageUrl(url, type = 'cover') {
     if (!url) return url;
 
-    // 检查是否包含 _fixed_ 标记，表示固定图片，不替换时间戳
-    if (url.includes('picsum.photos/seed/') && url.includes('_fixed_')) {
+    // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
+    if (url.match(/picsum\.photos\/seed\/fixed_/)) {
       return url; // 固定图片，直接返回
     }
 
