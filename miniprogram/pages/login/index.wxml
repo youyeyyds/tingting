@@ -1,5 +1,5 @@
 <!--login/index.wxml-->
-<view class="page-container">
+<scroll-view class="page-container" scroll-y="true" enhanced="true" bounces="{{true}}">
   <!-- 横幅轮播 -->
   <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
     <swiper-item wx:for="{{headlines}}" wx:key="_id">
@@ -38,8 +38,8 @@
     </view>
   </view>
 
-  <!-- 备案号（固定在底部安全区） -->
+  <!-- 备案号（在内容底部） -->
   <view class="icp-footer">
     <text class="icp-text">粤ICP备2026041617号-1X</text>
   </view>
-</view>
+</scroll-view>

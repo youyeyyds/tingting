@@ -3,10 +3,8 @@
 .page-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   background: linear-gradient(180deg, #f8f8f8 0%, #fff 100%);
   box-sizing: border-box;
-  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
 }
 
 /* 内容包裹层 */
@@ -121,17 +119,12 @@
   margin-top: 16rpx;
 }
 
-/* 备案号（固定在底部安全区） */
+/* 备案号（在内容底部） */
 .icp-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   justify-content: center;
-  padding: 20rpx 0;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #fff;
+  padding: 40rpx 0;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .icp-text {
