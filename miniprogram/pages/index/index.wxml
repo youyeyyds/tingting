@@ -15,7 +15,7 @@
 
   <!-- 课程列表 -->
   <scroll-view class="course-list" scroll-y="true" enhanced="true"
-    style="margin-top: {{headerHeight}}px; height: {{scrollHeight}}px;"
+    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <view class="course-list-inner">
       <!-- 头条轮播 BANNER（有头条时才显示） -->
@@ -48,7 +48,7 @@
   </scroll-view>
 
   <!-- 底部导航栏 -->
-  <view class="tab-bar">
+  <view class="tab-bar" wx:if="{{isLoggedIn}}">
     <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" data-index="0" bindtap="onTabChange">
       <image class="tab-icon" src="{{activeTab === 0 ? '/icons/svg/home-active.svg' : '/icons/svg/home.svg'}}" mode="aspectFit" />
       <text class="tab-text">首页</text>

@@ -56,7 +56,8 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
-    scrollHeight: 0, // scroll-view 高度
+    scrollHeightWithTab: 0, // 有底部栏时的 scroll-view 高度
+    scrollHeightNoTab: 0, // 无底部栏时的 scroll-view 高度
     isLoggedIn: false,
     courses: [],
     headlines: [],
@@ -78,7 +79,8 @@ Page({
     // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
     const rpxToPx = windowInfo.windowWidth / 750;
     const tabBarHeight = 100 * rpxToPx;
-    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
+    const scrollHeightWithTab = windowInfo.windowHeight - headerHeight - tabBarHeight;
+    const scrollHeightNoTab = windowInfo.windowHeight - headerHeight;
 
     // 使用全局变量，只在首次加载时生成时间戳和数据
     if (!app.globalData.bannerLoadTime) {
@@ -102,7 +104,8 @@ Page({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
-      scrollHeight: scrollHeight,
+      scrollHeightWithTab: scrollHeightWithTab,
+      scrollHeightNoTab: scrollHeightNoTab,
       bannerLoadTime: bannerLoadTime,
       coverLoadTime: coverLoadTime,
       maskedAuthors: maskedAuthors,
