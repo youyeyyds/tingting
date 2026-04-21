@@ -105,8 +105,14 @@
   margin-top: 50rpx;
 }
 
-.copyright-text {
+.copyright-brand {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.copyright-info {
   font-size: 22rpx;
-  color: #999;
+  color: #bbb;
   line-height: 1.8;
+  margin-top: 8rpx;
 }
