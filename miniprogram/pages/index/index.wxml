@@ -14,7 +14,7 @@
   </view>
 
   <!-- 课程列表 -->
-  <scroll-view class="course-list" scroll-y="true" enhanced="true"
+  <scroll-view class="course-list" scroll-y="true" enhanced="true" bounces="{{true}}"
     style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px; padding-bottom: {{isLoggedIn ? '100rpx' : '0'}};"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <view class="course-list-inner">
