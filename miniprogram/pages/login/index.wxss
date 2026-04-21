@@ -3,58 +3,7 @@
 .page-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   background: linear-gradient(180deg, #f8f8f8 0%, #fff 100%);
-  box-sizing: border-box;
-}
-
-/* 固定顶部导航 */
-.header-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: #fff;
-}
-
-.status-bar {
-  background: #fff;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 16rpx;
-  background: #fff;
-  position: relative;
-}
-
-.back-btn {
-  position: absolute;
-  left: 16rpx;
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-}
-
-.back-arrow {
-  width: 18rpx;
-  height: 18rpx;
-  border-left: 4rpx solid #666;
-  border-bottom: 4rpx solid #666;
-  transform: rotate(45deg);
-}
-
-.nav-title {
-  font-size: 34rpx;
-  font-weight: 500;
-  color: #000;
-}
-
-/* 内容区域（scroll-view） */
-.content-area {
   box-sizing: border-box;
 }
 
@@ -165,18 +114,4 @@
   font-size: 22rpx;
   color: #bbb;
   margin-top: 10rpx;
-}
-
-/* 备案号在底部 */
-.icp-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: auto;
-  padding-bottom: 40rpx;
-}
-
-.icp-text {
-  font-size: 22rpx;
-  color: #bbb;
 }

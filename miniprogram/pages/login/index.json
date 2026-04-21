@@ -1,6 +1,5 @@
 {
-  "navigationStyle": "custom",
+  "navigationBarTitleText": "登录",
   "enablePullDownRefresh": false,
-  "navigationBarTitleText": "",
   "usingComponents": {}
 }

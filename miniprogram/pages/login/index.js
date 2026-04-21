@@ -3,30 +3,16 @@ const app = getApp();
 
 Page({
   data: {
-    statusBarHeight: 0,
-    navBarHeight: 0,
-    headerHeight: 0,
-    contentInnerHeight: 0, // content-inner 最小高度
     phone: '',
     password: '',
     loading: false,
     headlines: [],
     copyrightText: '',
-    icpNumber: '',
     loadTime: 0, // 横幅时间戳
     bannerSpeed: 5000 // 轮播速度
   },
 
   onLoad() {
-    const windowInfo = wx.getWindowInfo();
-    const menuButton = wx.getMenuButtonBoundingClientRect();
-    // 计算导航栏高度（与首页一致）
-    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
-    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
-    // content-inner 最小高度 = 屏幕高度 - header - banner(280rpx转px)
-    const rpxToPx = windowInfo.windowWidth / 750;
-    const bannerHeightPx = 280 * rpxToPx;
-    const contentInnerHeight = windowInfo.windowHeight - headerHeight - bannerHeightPx;
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
@@ -35,10 +21,6 @@ Page({
     // 检查是否有缓存的横幅数据
     const cachedHeadlines = app.globalData.loginHeadlines || [];
     this.setData({
-      statusBarHeight: windowInfo.statusBarHeight,
-      navBarHeight: navBarHeight,
-      headerHeight: headerHeight,
-      contentInnerHeight: contentInnerHeight,
       loadTime: loadTime,
       headlines: cachedHeadlines
     });
@@ -47,10 +29,6 @@ Page({
       this.loadHeadlines();
       this.loadCopyright();
     }
-  },
-
-  handleBack() {
-    wx.navigateBack();
   },
 
   loadHeadlinesAsync() {
@@ -83,8 +61,7 @@ Page({
     .then(res => {
       if (res.result.success && res.result.data) {
         this.setData({
-          copyrightText: res.result.data.copyrightText || '',
-          icpNumber: res.result.data.icpNumber || ''
+          copyrightText: res.result.data.copyrightText || ''
         });
       }
     })

@@ -1,59 +1,39 @@
 <!--login/index.wxml-->
 <view class="page-container">
-  <!-- 顶部导航栏 -->
-  <view class="header-fixed">
-    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-    <view class="nav-bar" style="height: {{navBarHeight}}px;">
-      <view class="back-btn" bindtap="handleBack">
-        <view class="back-arrow"></view>
+  <!-- 横幅轮播 -->
+  <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+    <swiper-item wx:for="{{headlines}}" wx:key="_id">
+      <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+    </swiper-item>
+  </swiper>
+
+  <!-- 内容包裹层 -->
+  <view class="content-inner">
+    <!-- 品牌区域 -->
+    <view class="brand-section">
+      <text class="app-name">听听</text>
+      <text class="app-slogan">随时随地，学习成长</text>
+    </view>
+
+    <!-- 登录表单 -->
+    <view class="login-form">
+      <view class="form-item">
+        <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
       </view>
-      <text class="nav-title">登录</text>
+
+      <view class="form-item">
+        <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+      </view>
+
+      <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
+        <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
+      </view>
+
+      <!-- 版权内容 -->
+      <view class="copyright-section">
+        <text class="copyright-text">{{copyrightText}}</text>
+        <text class="powered-text">Powered by Claude Code</text>
+      </view>
     </view>
   </view>
-
-  <!-- 内容区域 -->
-  <scroll-view class="content-area" scroll-y="true" enhanced="true" bounces="{{true}}"
-    style="margin-top: {{headerHeight}}px; height: calc(100vh - {{headerHeight}}px);">
-    <!-- 横幅轮播 -->
-    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
-      <swiper-item wx:for="{{headlines}}" wx:key="_id">
-        <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
-      </swiper-item>
-    </swiper>
-
-    <!-- 内容包裹层 -->
-    <view class="content-inner" style="min-height: {{contentInnerHeight}}px;">
-      <!-- 品牌区域 -->
-      <view class="brand-section">
-        <text class="app-name">听听</text>
-        <text class="app-slogan">随时随地，学习成长</text>
-      </view>
-
-      <!-- 登录表单 -->
-      <view class="login-form">
-        <view class="form-item">
-          <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
-        </view>
-
-        <view class="form-item">
-          <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
-        </view>
-
-        <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
-          <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
-        </view>
-
-        <!-- 版权内容 -->
-        <view class="copyright-section">
-          <text class="copyright-text">{{copyrightText}}</text>
-          <text class="powered-text">Powered by Claude Code</text>
-        </view>
-      </view>
-
-      <!-- 备案号在底部 -->
-      <view class="icp-section">
-        <text class="icp-text">{{icpNumber}}</text>
-      </view>
-    </view>
-  </scroll-view>
 </view>
