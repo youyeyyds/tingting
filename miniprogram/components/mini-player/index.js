@@ -131,6 +131,12 @@ Component({
         return;
       }
 
+      // 获取封面时间戳，处理封面图片
+      if (!app.globalData.coverLoadTime) {
+        app.globalData.coverLoadTime = Date.now();
+      }
+      const coverLoadTime = app.globalData.coverLoadTime;
+
       const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode, isFavoriteList } = app.globalData;
       // 从 bgAudioManager 获取倍速，如果还没设置则使用默认值2
       let playbackRate = this.bgAudioManager.playbackRate || 2;
@@ -140,21 +146,25 @@ Component({
         playbackRate = 2;
       }
 
+      // 处理封面图片
+      const courseCover = this.fixImageUrl(playingCourse?.cover || '', coverLoadTime);
+
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
         currentChapter: playingChapter || {},
         currentIndex: playingIndex || 0,
-        courseCover: playingCourse?.cover || '',
+        courseCover: courseCover,
         courseName: playingCourse?.title || '',
         chapters: playlistChaptersData || [],
-        course: playingCourse || {},
+        course: { ...playingCourse, cover: courseCover } || {},
         playlistSortOrder: playlistSortOrder || 'asc',
         playMode: playMode || 'sequence',
         isFavoriteList: isFavoriteList || false,
         currentTime: this.bgAudioManager.currentTime || 0,
         duration: this.bgAudioManager.duration || 0,
-        playbackRate: playbackRate
+        playbackRate: playbackRate,
+        coverLoadTime: coverLoadTime
       };
 
       // 首页/收藏页/我的页：如果还没淡入过，则淡入
@@ -204,11 +214,20 @@ Component({
         return;
       }
 
+      // 获取封面时间戳
+      if (!app.globalData.coverLoadTime) {
+        app.globalData.coverLoadTime = Date.now();
+      }
+      const coverLoadTime = app.globalData.coverLoadTime;
+
+      // 处理封面图片
+      const courseCover = this.fixImageUrl(chapter.courseCover || '', coverLoadTime);
+
       // 构建课程信息
       const course = {
         _id: chapter.course,
         title: chapter.courseTitle || '收藏列表',
-        cover: chapter.courseCover || '',
+        cover: courseCover,
         author: chapter.author || '',
         chapterCount: chapters.length
       };
@@ -219,10 +238,11 @@ Component({
         course: course,
         currentChapter: chapter,
         currentIndex: index,
-        courseCover: chapter.courseCover || '',
+        courseCover: courseCover,
         courseName: chapter.courseTitle || '收藏列表',
         playlistSortOrder: 'asc',
-        isFavoriteList: true // 标识这是收藏列表
+        isFavoriteList: true, // 标识这是收藏列表
+        coverLoadTime: coverLoadTime
       });
 
       // 更新全局数据
@@ -241,7 +261,7 @@ Component({
         playerBottom: this.calcPosition(),
         currentChapter: chapter,
         currentIndex: index,
-        courseCover: chapter.courseCover || '',
+        courseCover: courseCover,
         courseName: chapter.courseTitle || '收藏列表',
         chapters: chapters,
         course: course,
@@ -272,13 +292,23 @@ Component({
 
       const chapter = chapters[index];
 
+      // 获取封面时间戳
+      if (!app.globalData.coverLoadTime) {
+        app.globalData.coverLoadTime = Date.now();
+      }
+      const coverLoadTime = app.globalData.coverLoadTime;
+
+      // 处理封面图片
+      const courseCover = this.fixImageUrl(course.cover || '', coverLoadTime);
+      course.cover = courseCover;
+
       // 判断是否需要更新排序状态：第一次创建播放列表或切换了课程时使用传入的排序
       const currentCourseId = app.globalData.playingCourse && app.globalData.playingCourse._id;
       const isNewPlaylist = !app.globalData.miniPlayerActive || currentCourseId !== course._id;
       const order = isNewPlaylist ? (sortOrder || 'asc') : (app.globalData.playlistSortOrder || sortOrder || 'asc');
 
       // 更新播放列表数据
-      this.setData({ chapters: chapters, course: course, playlistSortOrder: order, isFavoriteList: false });
+      this.setData({ chapters: chapters, course: course, playlistSortOrder: order, isFavoriteList: false, coverLoadTime: coverLoadTime });
 
       // 保存到全局数据，以便其他页面恢复
       app.globalData.playingCourse = course;
@@ -298,7 +328,7 @@ Component({
         isPlaying: false,
         currentChapter: chapter,
         currentIndex: index,
-        courseCover: course.cover || '',
+        courseCover: courseCover,
         courseName: course.title || '',
         isFavoriteList: false
       });
@@ -522,6 +552,38 @@ Component({
       }).catch(err => {
         console.error('更新进度失败:', err);
       });
+    },
+
+    // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+    fixImageUrl(url, coverLoadTime) {
+      if (!url) return url;
+      const loadTime = coverLoadTime || app.globalData.coverLoadTime || Date.now();
+
+      // 处理 picsum.photos URL
+      if (url.includes('picsum.photos')) {
+        // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+        const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+        if (seedMatch) {
+          const originalSeed = seedMatch[1];
+          const size = seedMatch[2];
+          const newSeed = `${loadTime}_cover_${originalSeed}`;
+          return `https://picsum.photos/seed/${newSeed}/${size}`;
+        }
+
+        // 提取尺寸信息
+        const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+        const randomMatch = url.match(/random=(\d+)/);
+
+        if (sizeMatch) {
+          const size = sizeMatch[1];
+          const originalRandom = randomMatch ? randomMatch[1] : '0';
+          const seed = `${loadTime}_cover_${originalRandom}`;
+          return `https://picsum.photos/seed/${seed}/${size}`;
+        }
+      }
+
+      // 其他URL直接返回
+      return url;
     },
 
     preventMove() {},

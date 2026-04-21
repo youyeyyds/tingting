@@ -22,7 +22,8 @@ Page({
     playMode: 'sequence', // sequence, loop, single
     sortOrder: 'asc',
     isFavorite: false,
-    speedIndicatorPos: 50 // 倍速指示器位置百分比
+    speedIndicatorPos: 50, // 倍速指示器位置百分比
+    coverLoadTime: 0 // 封面时间戳
   },
 
   bgAudioManager: null,
@@ -31,11 +32,20 @@ Page({
     this.bgAudioManager = app.bgAudioManager;
     this.setupAudioEvents();
 
+    // 获取封面时间戳
+    if (!app.globalData.coverLoadTime) {
+      app.globalData.coverLoadTime = Date.now();
+    }
+    const coverLoadTime = app.globalData.coverLoadTime;
+
     // 从全局获取播放数据
     const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
 
+    // 处理封面图片
+    const courseCover = this.fixImageUrl(playingCourse?.cover || '', coverLoadTime);
+
     this.setData({
-      courseCover: playingCourse?.cover || '',
+      courseCover: courseCover,
       courseTitle: playingCourse?.title || '',
       courseAuthor: playingCourse?.author || '',
       chapterCount: playingCourse?.chapterCount || playlistChaptersData?.length || 0,
@@ -47,12 +57,45 @@ Page({
       isPlaying: !this.bgAudioManager.paused,
       currentTime: this.bgAudioManager.currentTime || 0,
       duration: this.bgAudioManager.duration || 0,
-      playbackRate: this.bgAudioManager.playbackRate || 2
+      playbackRate: this.bgAudioManager.playbackRate || 2,
+      coverLoadTime: coverLoadTime
     });
 
     this.updateProgress();
     this.updateSpeedIndicator();
     this.checkFavoriteStatus();
+  },
+
+  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+  fixImageUrl(url, coverLoadTime) {
+    if (!url) return url;
+    const loadTime = coverLoadTime || app.globalData.coverLoadTime || Date.now();
+
+    // 处理 picsum.photos URL
+    if (url.includes('picsum.photos')) {
+      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[1];
+        const size = seedMatch[2];
+        const newSeed = `${loadTime}_cover_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+
+      // 提取尺寸信息
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      const randomMatch = url.match(/random=(\d+)/);
+
+      if (sizeMatch) {
+        const size = sizeMatch[1];
+        const originalRandom = randomMatch ? randomMatch[1] : '0';
+        const seed = `${loadTime}_cover_${originalRandom}`;
+        return `https://picsum.photos/seed/${seed}/${size}`;
+      }
+    }
+
+    // 其他URL直接返回
+    return url;
   },
 
   onUnload() {
