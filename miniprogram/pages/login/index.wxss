@@ -105,8 +105,23 @@
   margin-top: 50rpx;
 }
 
-.copyright-text {
+.copyright-line {
+  line-height: 1.6;
+}
+
+.copyright-line-1 {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.copyright-line-2 {
   font-size: 24rpx;
   color: #999;
-  line-height: 1.6;
+  margin-top: 10rpx;
+}
+
+.copyright-line-3 {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 10rpx;
 }
