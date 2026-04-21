@@ -324,22 +324,9 @@
   height: 60rpx;
 }
 
-.prev-icon {
-  width: 24rpx;
-  height: 24rpx;
-  border-left: 4rpx solid #fff;
-  border-bottom: 4rpx solid #fff;
-  transform: rotate(45deg);
-  margin-right: 6rpx;
-}
-
-.next-icon {
-  width: 24rpx;
-  height: 24rpx;
-  border-left: 4rpx solid #fff;
-  border-bottom: 4rpx solid #fff;
-  transform: rotate(-135deg);
-  margin-left: 6rpx;
+.prev-icon-text, .next-icon-text {
+  font-size: 32rpx;
+  color: #fff;
 }
 
 .rewind-btn, .forward-btn {
@@ -361,26 +348,15 @@
   background: #FF6B00;
 }
 
-.play-pause-btn .play-icon {
-  width: 0;
-  height: 0;
-  border-top: 16rpx solid transparent;
-  border-bottom: 16rpx solid transparent;
-  border-left: 24rpx solid #fff;
-  margin-left: 10rpx;
+.play-pause-btn .play-icon-text {
+  font-size: 40rpx;
+  color: #fff;
+  margin-left: 6rpx;
 }
 
-.play-pause-btn .pause-icon {
-  display: flex;
-  gap: 12rpx;
-  align-items: center;
-}
-
-.play-pause-btn .pause-bar {
-  width: 8rpx;
-  height: 36rpx;
-  background: #fff;
-  border-radius: 4rpx;
+.play-pause-btn .pause-icon-text {
+  font-size: 32rpx;
+  color: #fff;
 }
 
 /* 功能按钮行 */
@@ -495,7 +471,18 @@
 }
 
 .speed-indicator-text {
-  font-size: 26rpx;
+  font-size: 32rpx;
   color: #fff;
   font-weight: bold;
+}
+
+/* 下一条信息 */
+.next-info {
+  padding: 20rpx 0;
+  text-align: center;
+}
+
+.next-info-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
 }

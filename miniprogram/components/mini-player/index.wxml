@@ -92,23 +92,20 @@
     <!-- 播放控制按钮 -->
     <view class="play-controls">
       <view class="control-btn prev-btn" bindtap="playPrev">
-        <view class="prev-icon"></view>
+        <text class="prev-icon-text">◀</text>
       </view>
       <view class="control-btn rewind-btn" bindtap="rewind15">
         <text class="rewind-text">-15</text>
       </view>
       <view class="control-btn play-pause-btn" bindtap="togglePlayPause">
-        <view class="play-icon" wx:if="{{!isPlaying}}"></view>
-        <view class="pause-icon" wx:else>
-          <view class="pause-bar"></view>
-          <view class="pause-bar"></view>
-        </view>
+        <text class="play-icon-text" wx:if="{{!isPlaying}}">▶</text>
+        <text class="pause-icon-text" wx:else>▮▮</text>
       </view>
       <view class="control-btn forward-btn" bindtap="forward30">
         <text class="forward-text">+30</text>
       </view>
       <view class="control-btn next-btn" bindtap="playNext">
-        <view class="next-icon"></view>
+        <text class="next-icon-text">▶</text>
       </view>
     </view>
 
@@ -151,6 +148,11 @@
           <text class="speed-indicator-text">{{playbackRate}}</text>
         </view>
       </view>
+    </view>
+
+    <!-- 下一条信息 -->
+    <view class="next-info">
+      <text class="next-info-text">下一条：{{nextChapterInfo}}</text>
     </view>
   </view>
 </page-container>

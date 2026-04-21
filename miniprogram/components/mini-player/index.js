@@ -32,7 +32,8 @@ Component({
     playMode: 'sequence', // sequence, loop, single
     isFavorite: false,
     speedIndicatorPos: 70, // 倍速指示器位置百分比（默认2倍速对应70%）
-    coverRotationAngle: 0 // 封面旋转角度
+    coverRotationAngle: 0, // 封面旋转角度
+    nextChapterInfo: '' // 下一条章节信息
   },
 
   lifetimes: {
@@ -188,6 +189,7 @@ Component({
 
     fadeIn(data) {
       this.setData({ visible: true, fadeInClass: 'fade-in', ...data });
+      this.updateNextChapterInfo();
     },
 
     // 从收藏列表播放
@@ -781,6 +783,7 @@ Component({
 
       // 检查收藏状态
       this.checkFavoriteStatus();
+      this.updateNextChapterInfo();
     },
 
     // 切换播放模式
@@ -792,6 +795,7 @@ Component({
 
       this.setData({ playMode: newMode });
       app.globalData.playMode = newMode;
+      this.updateNextChapterInfo();
 
       wx.showToast({
         title: newMode === 'sequence' ? '顺序播放' : newMode === 'loop' ? '列表循环' : '单曲循环',
@@ -812,6 +816,7 @@ Component({
 
       app.globalData.playlistSortOrder = newOrder;
       app.globalData.playlistChaptersData = newChapters;
+      this.updateNextChapterInfo();
     },
 
     // 设置倍速
@@ -901,6 +906,35 @@ Component({
       }
     },
 
+    // 更新下一条信息
+    updateNextChapterInfo() {
+      const { chapters, currentIndex, playMode } = this.data;
+      if (!chapters || chapters.length === 0) {
+        this.setData({ nextChapterInfo: '' });
+        return;
+      }
+      // 单曲循环模式：下一条就是当前条
+      if (playMode === 'single') {
+        const current = chapters[currentIndex];
+        this.setData({ nextChapterInfo: `${current.seq}|${current.title}` });
+        return;
+      }
+      // 列表循环模式：最后一条的下一条是第一条
+      if (playMode === 'loop' && currentIndex === chapters.length - 1) {
+        const first = chapters[0];
+        this.setData({ nextChapterInfo: `${first.seq}|${first.title}` });
+        return;
+      }
+      // 顺序播放模式：最后一条显示提示
+      if (currentIndex === chapters.length - 1) {
+        this.setData({ nextChapterInfo: '已经是最后一条' });
+        return;
+      }
+      // 其他情况：显示下一条
+      const next = chapters[currentIndex + 1];
+      this.setData({ nextChapterInfo: `${next.seq}|${next.title}` });
+    },
+
     // 开始封面旋转（根据排序方向）
     startCoverRotation() {
       if (this.rotationTimer) return; // 已在旋转
@@ -946,7 +980,7 @@ Component({
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
-      this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false, coverRotationAngle: 0 });
+      this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false, coverRotationAngle: 0, nextChapterInfo: '' });
     },
 
     onPlaylistSyncSort(e) {
@@ -956,6 +990,7 @@ Component({
       const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
       this.setData({ chapters: sortedChapters, currentIndex: newIndex });
       app.globalData.playingIndex = newIndex;
+      this.updateNextChapterInfo();
     },
 
     onPlaylistPlay(e) {
@@ -994,6 +1029,7 @@ Component({
         this.loadAudio(chapter);
         // 通知章节页更新播放状态
         app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
+        this.updateNextChapterInfo();
       }
     },
 
@@ -1023,14 +1059,17 @@ Component({
           this.loadAudio(nextChapter);
           // 通知章节页更新播放状态
           app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
+          this.updateNextChapterInfo();
         } else {
           this.bgAudioManager.stop();
           app.globalData.miniPlayerActive = false;
           app.globalData.playlistChaptersData = [];
-          this.setData({ visible: false, isPlaying: false });
+          this.setData({ visible: false, isPlaying: false, nextChapterInfo: '' });
           // 通知章节页清除播放状态
           app.notifyCallbacks('onStop', {});
         }
+      } else {
+        this.updateNextChapterInfo();
       }
     }
   }
