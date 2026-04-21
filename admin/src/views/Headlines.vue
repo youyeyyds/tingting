@@ -61,8 +61,8 @@
         </el-table-column>
         <el-table-column prop="image" label="链接" min-width="250">
           <template #default="{ row }">
-            <el-link :href="row.image" target="_blank" type="primary">
-              {{ row.image }}
+            <el-link :href="getDisplayUrl(row)" target="_blank" type="primary">
+              {{ getDisplayUrl(row) }}
             </el-link>
           </template>
         </el-table-column>
@@ -311,7 +311,9 @@ function showEditDialog(row) {
   Object.assign(form, {
     seq: row.seq || 1,
     title: row.title,
-    image: row.image || '',
+    image: row.imageRandom
+      ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq || 1}/800/300`
+      : row.image || `https://picsum.photos/seed/headline_fixed_${row.seq || 1}/800/300`,
     imageRandom: row.imageRandom !== false,
     positions: row.positions || ['index', 'favorite', 'login', 'mine']
   })
@@ -495,6 +497,13 @@ function formatPositions(positions) {
     mine: '个人'
   }
   return positions.map(p => map[p] || p).join('、')
+}
+
+// 获取显示URL（动态生成）
+function getDisplayUrl(row) {
+  return row.imageRandom
+    ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq || 1}/800/300`
+    : row.image || `https://picsum.photos/seed/headline_fixed_${row.seq || 1}/800/300`
 }
 
 onMounted(() => {
