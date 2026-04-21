@@ -24,8 +24,6 @@
           <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
         </swiper-item>
       </swiper>
-      <!-- 横幅占位 -->
-      <view class="banner-placeholder" wx:else></view>
 
       <view class="course-card" wx:for="{{courses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onCourseTap">
         <image class="course-image" src="{{item.cover}}" mode="aspectFill" />
