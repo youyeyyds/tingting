@@ -233,8 +233,8 @@
   animation: rotate 12s linear infinite;
 }
 
-.cover-image.rotating-reverse {
-  animation: rotateReverse 12s linear infinite;
+.cover-image.rotating.reverse {
+  animation-direction: reverse;
 }
 
 .cover-image.paused {
@@ -244,11 +244,6 @@
 @keyframes rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-@keyframes rotateReverse {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
 }
 
 /* 课程信息 */
