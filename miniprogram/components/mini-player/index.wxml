@@ -66,7 +66,7 @@
 
     <!-- 封面图 -->
     <view class="cover-section">
-      <image class="cover-image {{isPlaying ? (playlistSortOrder === 'asc' ? 'rotating' : 'rotating-reverse') : 'paused'}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+      <image class="cover-image {{playlistSortOrder === 'asc' ? 'rotating' : 'rotating-reverse'}} {{!isPlaying ? 'paused' : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
     </view>
 
     <!-- 课程信息 -->
