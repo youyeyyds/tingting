@@ -557,11 +557,17 @@ Component({
     // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
     fixImageUrl(url, coverLoadTime) {
       if (!url) return url;
+
+      // 检查URL是否已经包含时间戳格式的seed（如 123456_cover_xxx），说明已处理过
+      if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_cover_/)) {
+        return url; // 已处理过，直接返回
+      }
+
       const loadTime = coverLoadTime || app.globalData.coverLoadTime || Date.now();
 
       // 处理 picsum.photos URL
       if (url.includes('picsum.photos')) {
-        // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+        // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
         const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
         if (seedMatch) {
           const originalSeed = seedMatch[1];

@@ -195,9 +195,27 @@ Page({
     // 横幅用 bannerLoadTime，封面用 coverLoadTime
     const loadTime = type === 'banner' ? this.data.loadTime : this.data.coverLoadTime;
 
+    // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx 或 123456_cover_xxx），说明已处理过
+    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_(banner|cover)_/)) {
+      // 已处理过，但时间戳可能变化，需要替换新的时间戳
+      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const oldTime = seedMatch[1];
+        const urlType = seedMatch[2];
+        const originalSeed = seedMatch[3];
+        const size = seedMatch[4];
+        // 只有类型匹配且时间戳变化时才替换
+        if (urlType === type && oldTime != loadTime) {
+          const newSeed = `${loadTime}_${type}_${originalSeed}`;
+          return `https://picsum.photos/seed/${newSeed}/${size}`;
+        }
+        return url;
+      }
+    }
+
     // 处理 picsum.photos URL
     if (url.includes('picsum.photos')) {
-      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
       // 格式: https://picsum.photos/seed/course1/400/400
       const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
       if (seedMatch) {

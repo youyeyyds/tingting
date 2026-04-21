@@ -231,9 +231,26 @@ Page({
     if (!url) return url;
     const loadTime = this.data.loadTime;
 
+    // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx），说明已处理过
+    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_banner_/)) {
+      // 已处理过，但时间戳可能变化，需要替换新的时间戳
+      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_banner_([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const oldTime = seedMatch[1];
+        const originalSeed = seedMatch[2];
+        const size = seedMatch[3];
+        // 时间戳变化时才替换
+        if (oldTime != loadTime) {
+          const newSeed = `${loadTime}_banner_${originalSeed}`;
+          return `https://picsum.photos/seed/${newSeed}/${size}`;
+        }
+        return url;
+      }
+    }
+
     // 处理 picsum.photos URL
     if (url.includes('picsum.photos')) {
-      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
       // 格式: https://picsum.photos/seed/course1/400/400
       const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
       if (seedMatch) {
