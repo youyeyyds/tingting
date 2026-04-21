@@ -31,9 +31,7 @@
 
       <!-- 版权内容 -->
       <view class="copyright-section">
-        <text class="copyright-line copyright-line-1" wx:if="{{copyrightLines[0]}}">{{copyrightLines[0]}}</text>
-        <text class="copyright-line copyright-line-2" wx:if="{{copyrightLines[1]}}">{{copyrightLines[1]}}</text>
-        <text class="copyright-line copyright-line-3" wx:if="{{copyrightLines[2]}}">{{copyrightLines[2]}}</text>
+        <text class="copyright-text" wx:for="{{copyrightLines}}" wx:key="index">{{item}}</text>
       </view>
     </view>
   </view>
