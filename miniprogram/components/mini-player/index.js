@@ -909,9 +909,10 @@ Component({
       this.rotationTimer = setInterval(() => {
         const { coverRotationAngle, playlistSortOrder } = this.data;
         // 正序顺时针（角度增加），倒序逆时针（角度减少）
+        // 不使用取模，让角度连续累加，CSS会自动处理周期性
         const newAngle = playlistSortOrder === 'asc'
-          ? (coverRotationAngle + rotationSpeed) % 360
-          : (coverRotationAngle - rotationSpeed + 360) % 360;
+          ? coverRotationAngle + rotationSpeed
+          : coverRotationAngle - rotationSpeed;
         this.setData({ coverRotationAngle: newAngle });
       }, 50);
     },
