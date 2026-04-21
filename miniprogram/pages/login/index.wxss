@@ -113,6 +113,11 @@
 .copyright-info {
   font-size: 22rpx;
   color: #bbb;
-  line-height: 1.8;
+  margin-top: 8rpx;
+}
+
+.copyright-version {
+  font-size: 22rpx;
+  color: #666;
   margin-top: 8rpx;
 }
