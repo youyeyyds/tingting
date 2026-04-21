@@ -110,7 +110,7 @@ Page({
       app.globalData.logoutFlag = false;
       // 等首页渲染完成后再显示提示
       setTimeout(() => {
-        wx.showToast({ title: '已退出登录', icon: 'none', duration: 2000 });
+        wx.showToast({ title: '已退出登录', icon: 'success', duration: 2000 });
       }, 500);
     }
     // 切换页面时不重新加载，保持原有数据
