@@ -6,7 +6,6 @@
     <view class="nav-bar" style="height: {{navBarHeight}}px;">
       <view class="back-btn" bindtap="handleBack">
         <view class="back-arrow"></view>
-        <text class="back-text">返回</text>
       </view>
     </view>
   </view>

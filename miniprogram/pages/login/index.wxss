@@ -32,6 +32,7 @@
 .back-btn {
   display: flex;
   align-items: center;
+  padding: 20rpx 30rpx;
 }
 
 .back-arrow {
@@ -40,12 +41,6 @@
   border-left: 3rpx solid #333;
   border-bottom: 3rpx solid #333;
   transform: rotate(45deg);
-  margin-right: 8rpx;
-}
-
-.back-text {
-  font-size: 30rpx;
-  color: #333;
 }
 
 /* 内容区域（scroll-view） */

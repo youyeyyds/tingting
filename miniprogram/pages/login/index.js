@@ -166,11 +166,12 @@ Page({
         wx.redirectTo({ url: '/pages/mine/index' });
         return; // 成功时不执行 finally 中的 loading: false
       } else {
-        wx.showToast({ title: res.result.error || '登录失败', icon: 'none' });
+        // 统一提示：手机号或密码错误
+        wx.showToast({ title: '手机号或密码错误', icon: 'none' });
       }
     } catch (err) {
       console.error('登录失败:', err);
-      wx.showToast({ title: '登录失败', icon: 'none' });
+      wx.showToast({ title: '手机号或密码错误', icon: 'none' });
     }
 
     // 只有失败时才恢复按钮状态
