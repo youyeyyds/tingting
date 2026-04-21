@@ -313,7 +313,7 @@ function showEditDialog(row) {
     title: row.title,
     image: row.imageRandom
       ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq || 1}/800/300`
-      : row.image || `https://picsum.photos/seed/headline_fixed_${row.seq || 1}/800/300`,
+      : row.image || `https://picsum.photos/seed/fixed_banner_${row.seq || 1}/800/300`,
     imageRandom: row.imageRandom !== false,
     positions: row.positions || ['index', 'favorite', 'login', 'mine']
   })
@@ -396,7 +396,7 @@ async function toggleRowImageRandom(row) {
   // 生成新的图片 URL
   const imageUrl = row.imageRandom
     ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
-    : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
+    : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
 
   // 更新本地数据
   row.image = imageUrl
@@ -418,14 +418,14 @@ async function toggleRowImageRandom(row) {
       row.imageRandom = !row.imageRandom
       row.image = row.imageRandom
         ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
-        : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
+        : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
     }
   } catch (err) {
     ElMessage.error('保存失败')
     row.imageRandom = !row.imageRandom
     row.image = row.imageRandom
       ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
-      : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
+      : `https://picsum.photos/seed/fixed_banner_${row.seq}/800/300`
   }
 }
 
