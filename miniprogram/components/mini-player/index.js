@@ -31,7 +31,8 @@ Component({
     showTotalTime: false, // 显示总时长还是剩余时长
     playMode: 'sequence', // sequence, loop, single
     isFavorite: false,
-    speedIndicatorPos: 70 // 倍速指示器位置百分比（默认2倍速对应70%）
+    speedIndicatorPos: 70, // 倍速指示器位置百分比（默认2倍速对应70%）
+    coverRotationAngle: 0 // 封面旋转角度
   },
 
   lifetimes: {
@@ -44,8 +45,18 @@ Component({
             this.updateProgressDisplay();
           }
         },
-        onPlay: () => this.data.visible && this.setData({ isPlaying: true }),
-        onPause: () => this.data.visible && this.setData({ isPlaying: false }),
+        onPlay: () => {
+          if (this.data.visible) {
+            this.setData({ isPlaying: true });
+            this.startCoverRotation();
+          }
+        },
+        onPause: () => {
+          if (this.data.visible) {
+            this.setData({ isPlaying: false });
+            this.stopCoverRotation();
+          }
+        },
         onTimeUpdate: (data) => {
           if (this.data.visible) {
             const currentTime = data.currentTime;
@@ -61,10 +72,21 @@ Component({
           }
         },
         onEnded: () => this.onAudioEnded(),
-        onError: () => this.data.visible && this.setData({ isPlaying: false }),
-        onStop: () => this.data.visible && this.setData({ isPlaying: false }),
+        onError: () => {
+          if (this.data.visible) {
+            this.setData({ isPlaying: false });
+            this.stopCoverRotation();
+          }
+        },
+        onStop: () => {
+          if (this.data.visible) {
+            this.setData({ isPlaying: false });
+            this.stopCoverRotation();
+          }
+        },
         onPlayFromList: (data) => this.playFromList(data),
         onClose: () => {
+            this.stopCoverRotation();
             const pages = getCurrentPages();
             const isForeground = this.currentPageRoute === pages[pages.length - 1]?.route;
             // 先播放淡出动画，动画结束后再清除数据
@@ -81,7 +103,8 @@ Component({
                 isPlaying: false,
                 currentTime: 0,
                 duration: 0,
-                progressPercent: 0
+                progressPercent: 0,
+                coverRotationAngle: 0
               });
             }, 300);
           }
@@ -142,6 +165,10 @@ Component({
       }
       // 更新倍速指示器位置
       this.updateSpeedIndicator();
+      // 如果正在播放，启动封面旋转
+      if (data.isPlaying) {
+        this.startCoverRotation();
+      }
     }
   },
 
@@ -874,6 +901,29 @@ Component({
       }
     },
 
+    // 开始封面旋转（根据排序方向）
+    startCoverRotation() {
+      if (this.rotationTimer) return; // 已在旋转
+      // 每50ms更新一次角度，12秒一圈 = 360/(12*1000/50) = 1.5度每次
+      const rotationSpeed = 1.5;
+      this.rotationTimer = setInterval(() => {
+        const { coverRotationAngle, playlistSortOrder } = this.data;
+        // 正序顺时针（角度增加），倒序逆时针（角度减少）
+        const newAngle = playlistSortOrder === 'asc'
+          ? (coverRotationAngle + rotationSpeed) % 360
+          : (coverRotationAngle - rotationSpeed + 360) % 360;
+        this.setData({ coverRotationAngle: newAngle });
+      }, 50);
+    },
+
+    // 停止封面旋转（保持当前角度）
+    stopCoverRotation() {
+      if (this.rotationTimer) {
+        clearInterval(this.rotationTimer);
+        this.rotationTimer = null;
+      }
+    },
+
     // 播放列表相关方法
     onPlaylistTap() {
       const playlistPanel = this.selectComponent('#playlistPanel');
@@ -886,6 +936,7 @@ Component({
 
     onPlaylistClear() {
       // 清空播放列表：停止播放，清空数据
+      this.stopCoverRotation();
       this.bgAudioManager.stop();
       app.globalData.miniPlayerActive = false;
       app.globalData.miniPlayerIndexFadedIn = false;
@@ -894,7 +945,7 @@ Component({
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
-      this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false });
+      this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false, coverRotationAngle: 0 });
     },
 
     onPlaylistSyncSort(e) {
