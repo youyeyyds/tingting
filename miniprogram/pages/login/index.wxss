@@ -25,14 +25,13 @@
 .nav-bar {
   display: flex;
   align-items: center;
-  padding-left: 30rpx;
   background: #fff;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
-  padding: 20rpx 30rpx;
+  padding: 20rpx;
 }
 
 .back-arrow {
