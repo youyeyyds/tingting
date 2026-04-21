@@ -203,6 +203,8 @@ Page({
     // 更新全局变量
     app.globalData.homePageMaskedAuthors = newMaskedAuthors;
     this.setData({ refresherTriggered: true, bannerLoadTime: newLoadTime, coverLoadTime: newLoadTime, maskedAuthors: newMaskedAuthors, headlines: [], courses: [] });
+    // 通知迷你播放器更新封面
+    app.notifyCallbacks('onCoverRefresh', { coverLoadTime: newLoadTime });
     Promise.all([
       this.loadHeadlinesAsync(),
       this.loadCoursesAsync()

@@ -109,7 +109,18 @@ Component({
                 coverRotationAngle: 0
               });
             }, 300);
+          },
+        onCoverRefresh: (data) => {
+          // 首页刷新时通知更新封面
+          if (this.data.visible && data.coverLoadTime) {
+            const courseCover = this.rebuildImageUrl(this.data.courseCover, data.coverLoadTime);
+            this.setData({
+              courseCover: courseCover,
+              coverLoadTime: data.coverLoadTime,
+              course: { ...this.data.course, cover: courseCover }
+            });
           }
+        }
       };
     },
     attached() {
