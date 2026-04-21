@@ -187,11 +187,11 @@ watch(() => form.seq, () => {
 })
 
 // 更新图片 URL
-// 随机开启：使用 random 参数，小程序下拉刷新后更新图片
-// 随机关闭：使用 seed 且包含 _fixed_，小程序下拉刷新后不更新
+// 随机开启：使用时间戳seed格式，小程序下拉刷新后更新图片
+// 随机关闭：使用固定seed格式（含 _fixed_），小程序下拉刷新后不变
 function updateImageUrl() {
   form.image = form.imageRandom
-    ? `https://picsum.photos/800/300?random=${form.seq}`
+    ? `https://picsum.photos/seed/${Date.now()}_banner_${form.seq}/800/300`
     : `https://picsum.photos/seed/headline_fixed_${form.seq}/800/300`
 }
 
@@ -393,7 +393,7 @@ async function handleDelete(row) {
 async function toggleRowImageRandom(row) {
   // 生成新的图片 URL
   const imageUrl = row.imageRandom
-    ? `https://picsum.photos/800/300?random=${row.seq}`
+    ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
     : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
 
   // 更新本地数据
@@ -415,14 +415,14 @@ async function toggleRowImageRandom(row) {
       // 恢复原状态
       row.imageRandom = !row.imageRandom
       row.image = row.imageRandom
-        ? `https://picsum.photos/800/300?random=${row.seq}`
+        ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
         : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
     }
   } catch (err) {
     ElMessage.error('保存失败')
     row.imageRandom = !row.imageRandom
     row.image = row.imageRandom
-      ? `https://picsum.photos/800/300?random=${row.seq}`
+      ? `https://picsum.photos/seed/${Date.now()}_banner_${row.seq}/800/300`
       : `https://picsum.photos/seed/headline_fixed_${row.seq}/800/300`
   }
 }
