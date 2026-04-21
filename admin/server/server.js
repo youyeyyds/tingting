@@ -1128,11 +1128,10 @@ app.get('/api/copyright-config', async (req, res) => {
     if (result.data.length > 0) {
       const value = result.data[0].value || {};
       res.json(success({
-        copyrightText: value.copyrightText || '',
-        icpNumber: value.icpNumber || ''
+        copyrightText: value.copyrightText || ''
       }));
     } else {
-      res.json(success({ copyrightText: '', icpNumber: '' }));
+      res.json(success({ copyrightText: '' }));
     }
   } catch (err) {
     res.json(error(err.message));
@@ -1146,14 +1145,13 @@ app.post('/api/copyright-config', async (req, res) => {
     if (!tcb) return res.json(error('未登录'));
 
     const db = tcb.database();
-    const { copyrightText, icpNumber } = req.body;
+    const { copyrightText } = req.body;
 
     // 查询是否已有配置
     const existing = await db.collection('config').where({ key: 'copyright' }).limit(1).get();
 
     const configValue = {
-      copyrightText: copyrightText || '',
-      icpNumber: icpNumber || ''
+      copyrightText: copyrightText || ''
     };
 
     if (existing.data.length > 0) {

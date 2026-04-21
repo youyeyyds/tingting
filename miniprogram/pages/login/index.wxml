@@ -31,8 +31,7 @@
 
       <!-- 版权内容 -->
       <view class="copyright-section">
-        <text class="copyright-text">{{copyrightText}}</text>
-        <text class="powered-text">Powered by Claude Code</text>
+        <text class="copyright-text" wx:for="{{copyrightLines}}" wx:key="index">{{item}}</text>
       </view>
     </view>
   </view>

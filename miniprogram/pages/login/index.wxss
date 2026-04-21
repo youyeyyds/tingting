@@ -108,10 +108,5 @@
 .copyright-text {
   font-size: 24rpx;
   color: #999;
-}
-
-.powered-text {
-  font-size: 22rpx;
-  color: #bbb;
-  margin-top: 10rpx;
+  line-height: 1.6;
 }

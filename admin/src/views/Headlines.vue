@@ -94,10 +94,12 @@
       </template>
       <el-form label-width="100px">
         <el-form-item label="版权信息">
-          <el-input v-model="copyrightText" placeholder="如：youyeyyds" />
-        </el-form-item>
-        <el-form-item label="备案号">
-          <el-input v-model="icpNumber" placeholder="如：粤ICP备2026041617号-1X" />
+          <el-input
+            v-model="copyrightText"
+            type="textarea"
+            :rows="3"
+            placeholder="第一行：youyeyyds&#10;第二行：Powered by Claude Code&#10;第三行：版本号：v0.1.0"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="saveCopyright">保存</el-button>
@@ -163,7 +165,6 @@ const headlines = ref([])
 const bannerSpeed = ref(3) // 轮播速度，默认3秒
 const homeProtect = ref(true) // 首页保护，默认开启
 const copyrightText = ref('') // 版权信息
-const icpNumber = ref('') // 备案号
 
 const form = reactive({
   seq: 1,
@@ -230,7 +231,6 @@ async function loadCopyright() {
     const res = await getCopyrightConfig()
     if (res.success && res.data) {
       copyrightText.value = res.data.copyrightText || ''
-      icpNumber.value = res.data.icpNumber || ''
     }
   } catch (err) {
     console.error('加载版权信息失败:', err)
@@ -241,11 +241,10 @@ async function loadCopyright() {
 async function saveCopyright() {
   try {
     const res = await saveCopyrightConfig({
-      copyrightText: copyrightText.value,
-      icpNumber: icpNumber.value
+      copyrightText: copyrightText.value
     })
     if (res.success) {
-      ElMessage.success('底部信息已保存')
+      ElMessage.success('版权信息已保存')
     } else {
       ElMessage.error('保存失败: ' + res.error)
     }

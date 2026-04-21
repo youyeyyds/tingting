@@ -8,6 +8,7 @@ Page({
     loading: false,
     headlines: [],
     copyrightText: '',
+    copyrightLines: [], // 版权信息按行分割
     loadTime: 0, // 横幅时间戳
     bannerSpeed: 5000 // 轮播速度
   },
@@ -59,9 +60,16 @@ Page({
       data: { type: 'getCopyright' }
     })
     .then(res => {
-      if (res.result.success && res.result.data) {
+      if (res.result.success) {
+        const copyrightText = res.result.data?.copyrightText || '';
+        // 如果后台没有设置，使用默认值
+        const defaultCopyright = 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
+        const finalText = copyrightText || defaultCopyright;
+        // 按换行符分割成数组
+        const copyrightLines = finalText.split('\n').filter(line => line.trim());
         this.setData({
-          copyrightText: res.result.data.copyrightText || ''
+          copyrightText: finalText,
+          copyrightLines: copyrightLines
         });
       }
     })
