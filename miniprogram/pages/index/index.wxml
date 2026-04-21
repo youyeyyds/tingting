@@ -15,7 +15,7 @@
 
   <!-- 课程列表 -->
   <scroll-view class="course-list" scroll-y="true" enhanced="true"
-    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;"
+    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px; padding-bottom: {{isLoggedIn ? '100rpx' : '0'}};"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <view class="course-list-inner">
       <!-- 头条轮播 BANNER（有头条时才显示） -->

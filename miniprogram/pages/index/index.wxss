@@ -52,7 +52,6 @@
 /* 课程列表 */
 .course-list {
   flex: 1;
-  padding-bottom: 100rpx;
   overflow-x: hidden;
 }
 
