@@ -98,8 +98,11 @@
         <text class="rewind-text">-15</text>
       </view>
       <view class="control-btn play-pause-btn" bindtap="togglePlayPause">
-        <text class="play-icon-text" wx:if="{{!isPlaying}}">▶</text>
-        <text class="pause-icon-text" wx:else>▮▮</text>
+        <view class="play-icon-cs" wx:if="{{!isPlaying}}"></view>
+        <view class="pause-icon-cs" wx:else>
+          <view class="pause-bar-cs"></view>
+          <view class="pause-bar-cs"></view>
+        </view>
       </view>
       <view class="control-btn forward-btn" bindtap="forward30">
         <text class="forward-text">+30</text>
@@ -152,7 +155,8 @@
 
     <!-- 下一条信息 -->
     <view class="next-info">
-      <text class="next-info-text">下一条：{{nextChapterInfo}}</text>
+      <text class="next-info-label">下一条：</text>
+      <text class="next-info-content">{{nextChapterInfo}}</text>
     </view>
   </view>
 </page-container>
