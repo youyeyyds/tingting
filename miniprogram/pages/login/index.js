@@ -14,7 +14,7 @@ Page({
     refresherTriggered: false,
     copyrightText: '',
     icpNumber: '',
-    loadTime: '', // 加载时间戳，用于图片URL
+    loadTime: 0, // 横幅时间戳（封面只在首页刷新才更新）
     bannerSpeed: 5000 // 轮播速度
   },
 
@@ -28,20 +28,26 @@ Page({
     const rpxToPx = windowInfo.windowWidth / 750;
     const bannerHeightPx = 280 * rpxToPx;
     const contentInnerHeight = windowInfo.windowHeight - headerHeight - bannerHeightPx;
-    // 使用全局 loadTime，保持图片稳定，只在首次或下拉刷新时更新
-    if (!app.globalData.loginPageLoadTime) {
-      app.globalData.loginPageLoadTime = Date.now();
+    // 使用全局时间戳和数据缓存，保持图片稳定
+    if (!app.globalData.bannerLoadTime) {
+      app.globalData.bannerLoadTime = Date.now();
     }
-    const loadTime = app.globalData.loginPageLoadTime;
+    const loadTime = app.globalData.bannerLoadTime;
+    // 检查是否有缓存的横幅数据
+    const cachedHeadlines = app.globalData.loginHeadlines || [];
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
       contentInnerHeight: contentInnerHeight,
-      loadTime: loadTime
+      loadTime: loadTime,
+      headlines: cachedHeadlines
     });
-    this.loadHeadlines();
-    this.loadCopyright();
+    // 只在首次加载（无缓存）时获取数据
+    if (cachedHeadlines.length === 0) {
+      this.loadHeadlines();
+      this.loadCopyright();
+    }
   },
 
   handleBack() {
@@ -49,9 +55,11 @@ Page({
   },
 
   onRefresh() {
+    // 更新全局横幅时间戳和清除本页缓存，刷新图片（封面不变）
     const newLoadTime = Date.now();
-    app.globalData.loginPageLoadTime = newLoadTime; // 更新全局时间戳
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime });
+    app.globalData.bannerLoadTime = newLoadTime;
+    app.globalData.loginHeadlines = [];
+    this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
     Promise.all([
       this.loadHeadlinesAsync(),
       this.loadCopyrightAsync()
@@ -69,8 +77,10 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.addTimestamp(h.image)
+          image: this.fixImageUrl(h.image, 'banner')
         }));
+        // 缓存到全局变量
+        app.globalData.loginHeadlines = headlines;
         this.setData({
           headlines: headlines,
           bannerSpeed: (res.result.speed || 5) * 1000
@@ -96,6 +106,44 @@ Page({
     .catch(err => console.error('获取版权信息失败', err));
   },
 
+  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+  // 横幅图片使用 bannerLoadTime
+  fixImageUrl(url, type = 'banner') {
+    if (!url) return url;
+    const loadTime = this.data.loadTime;
+
+    // 处理 picsum.photos URL
+    if (url.includes('picsum.photos')) {
+      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 格式: https://picsum.photos/seed/course1/400/400
+      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[1]; // 如 "course1"
+        const size = seedMatch[2]; // 如 "400/400" 或 "400"
+        const newSeed = `${loadTime}_${type}_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+
+      // 提取尺寸信息，支持两种格式：
+      // 格式1: https://picsum.photos/800/300?random=1
+      // 格式2: https://picsum.photos/400?random=1
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      const randomMatch = url.match(/random=(\d+)/);
+
+      if (sizeMatch) {
+        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
+        const originalRandom = randomMatch ? randomMatch[1] : '0';
+        // 组合时间戳+类型+原始random作为种子
+        const seed = `${loadTime}_${type}_${originalRandom}`;
+        return `https://picsum.photos/seed/${seed}/${size}`;
+      }
+    }
+
+    // 其他URL添加时间戳防缓存
+    return this.addTimestamp(url);
+  },
+
+  // 添加时间戳到URL
   addTimestamp(url) {
     if (!url) return url;
     const t = this.data.loadTime;

@@ -66,7 +66,8 @@ Page({
     activeTab: 0,
     refresherTriggered: false,
     maskedAuthors: {}, // 存储课程ID对应的随机作者
-    loadTime: '' // 加载时间戳
+    bannerLoadTime: 0, // 横幅时间戳
+    coverLoadTime: 0, // 封面时间戳（只有首页刷新才更新）
   },
 
   onLoad() {
@@ -79,28 +80,47 @@ Page({
     const tabBarHeight = 100 * rpxToPx;
     const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
 
-    // 使用全局 loadTime 和 maskedAuthors，保持图片稳定
-    if (!app.globalData.homePageLoadTime) {
-      app.globalData.homePageLoadTime = Date.now();
+    // 使用全局变量，只在首次加载时生成时间戳和数据
+    if (!app.globalData.bannerLoadTime) {
+      app.globalData.bannerLoadTime = Date.now();
     }
+    if (!app.globalData.coverLoadTime) {
+      app.globalData.coverLoadTime = Date.now();
+    }
+    // 使用全局 maskedAuthors，保持作者稳定
     if (!app.globalData.homePageMaskedAuthors) {
       app.globalData.homePageMaskedAuthors = {};
     }
-    const loadTime = app.globalData.homePageLoadTime;
+    const bannerLoadTime = app.globalData.bannerLoadTime;
+    const coverLoadTime = app.globalData.coverLoadTime;
     const maskedAuthors = app.globalData.homePageMaskedAuthors;
+    // 检查是否有缓存的数据
+    const cachedHeadlines = app.globalData.indexHeadlines || [];
+    const cachedCourses = app.globalData.indexCourses || [];
 
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
       scrollHeight: scrollHeight,
-      loadTime: loadTime,
-      maskedAuthors: maskedAuthors
+      bannerLoadTime: bannerLoadTime,
+      coverLoadTime: coverLoadTime,
+      maskedAuthors: maskedAuthors,
+      headlines: cachedHeadlines,
+      courses: cachedCourses
     });
 
     this.checkLoginStatus();
-    this.loadHeadlinesAsync();
-    this.loadCoursesAsync();
+    // 只在首次加载（无缓存）时获取数据
+    if (cachedHeadlines.length === 0) {
+      this.loadHeadlinesAsync();
+    } else {
+      // 有缓存时，直接处理课程显示
+      this.processCourses();
+    }
+    if (cachedCourses.length === 0) {
+      this.loadCoursesAsync();
+    }
   },
 
   onShow() {
@@ -117,22 +137,74 @@ Page({
   },
 
   onRefresh() {
+    // 更新全局时间戳和清除所有缓存，刷新图片
     const newLoadTime = Date.now();
+    app.globalData.bannerLoadTime = newLoadTime;
+    app.globalData.coverLoadTime = newLoadTime; // 首页刷新才更新封面时间戳
+    app.globalData.indexHeadlines = [];
+    app.globalData.indexCourses = [];
+    app.globalData.loginHeadlines = [];
+    app.globalData.favoriteHeadlines = [];
+    app.globalData.mineHeadlines = [];
     // 重新生成随机作者
     const newMaskedAuthors = {};
     this.data.courses.forEach(course => {
       newMaskedAuthors[course._id] = randomAuthors[Math.floor(Math.random() * randomAuthors.length)];
     });
     // 更新全局变量
-    app.globalData.homePageLoadTime = newLoadTime;
     app.globalData.homePageMaskedAuthors = newMaskedAuthors;
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime, maskedAuthors: newMaskedAuthors });
+    this.setData({ refresherTriggered: true, bannerLoadTime: newLoadTime, coverLoadTime: newLoadTime, maskedAuthors: newMaskedAuthors, headlines: [], courses: [] });
     Promise.all([
       this.loadHeadlinesAsync(),
       this.loadCoursesAsync()
     ]).then(() => {
       this.setData({ refresherTriggered: false });
     });
+  },
+
+  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+  // type: 'banner' 横幅图片, 'cover' 封面图片
+  fixImageUrl(url, type = 'img') {
+    if (!url) return url;
+    // 横幅用 bannerLoadTime，封面用 coverLoadTime
+    const loadTime = type === 'banner' ? this.data.bannerLoadTime : this.data.coverLoadTime;
+
+    // 处理 picsum.photos URL
+    if (url.includes('picsum.photos')) {
+      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 格式: https://picsum.photos/seed/course1/400/400
+      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[1]; // 如 "course1"
+        const size = seedMatch[2]; // 如 "400/400" 或 "400"
+        const newSeed = `${loadTime}_${type}_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+
+      // 提取尺寸信息，支持两种格式：
+      // 格式1: https://picsum.photos/800/300?random=1
+      // 格式2: https://picsum.photos/400?random=1
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      const randomMatch = url.match(/random=(\d+)/);
+
+      if (sizeMatch) {
+        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
+        const originalRandom = randomMatch ? randomMatch[1] : '0';
+        // 组合时间戳+类型+原始random作为种子
+        const seed = `${loadTime}_${type}_${originalRandom}`;
+        return `https://picsum.photos/seed/${seed}/${size}`;
+      }
+    }
+
+    // 其他URL添加时间戳防缓存
+    return this.addTimestamp(url, type);
+  },
+
+  // 添加时间戳到URL
+  addTimestamp(url, type = 'img') {
+    if (!url) return url;
+    const loadTime = type === 'banner' ? this.data.bannerLoadTime : this.data.coverLoadTime;
+    return url.includes('?') ? `${url}&t=${loadTime}` : `${url}?t=${loadTime}`;
   },
 
   loadHeadlinesAsync() {
@@ -144,8 +216,10 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.addTimestamp(h.image)
+          image: this.fixImageUrl(h.image, 'banner')
         }));
+        // 缓存到全局变量
+        app.globalData.indexHeadlines = headlines;
         this.setData({
           headlines: headlines,
           bannerSpeed: (res.result.speed || 5) * 1000,
@@ -171,8 +245,10 @@ Page({
       if (res.result.success) {
         const courses = res.result.data.map(c => ({
           ...c,
-          cover: this.addTimestamp(c.cover)
+          cover: this.fixImageUrl(c.cover, 'cover')
         }));
+        // 缓存到全局变量
+        app.globalData.indexCourses = courses;
         this.setData({
           courses: courses,
           loading: false
@@ -185,12 +261,6 @@ Page({
     .catch(err => {
       this.setData({ loading: false });
     });
-  },
-
-  addTimestamp(url) {
-    if (!url) return url;
-    const t = this.data.loadTime;
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   // 处理课程显示（根据首页保护和登录状态）

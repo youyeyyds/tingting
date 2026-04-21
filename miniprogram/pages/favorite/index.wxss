@@ -135,8 +135,8 @@
 
 /* 左边封面 */
 .chapter-cover-wrapper {
-  width: 140rpx;
-  height: 140rpx;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 12rpx;
   background: #eee;
   flex-shrink: 0;
@@ -146,8 +146,8 @@
 }
 
 .chapter-cover {
-  width: 140rpx;
-  height: 140rpx;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 12rpx;
 }
 

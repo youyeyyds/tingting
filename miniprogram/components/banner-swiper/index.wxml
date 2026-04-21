@@ -1,0 +1,8 @@
+<!--banner-swiper/index.wxml-->
+<swiper class="banner {{extClass}}" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+  <swiper-item wx:for="{{headlines}}" wx:key="_id">
+    <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+  </swiper-item>
+</swiper>
+<!-- 横幅占位 -->
+<view class="banner-placeholder {{extClass}}" wx:else></view>

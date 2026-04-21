@@ -17,7 +17,8 @@ Page({
     sortOrder: 'asc',
     loading: true,
     currentPlayingId: '',
-    // 用于追踪播放列表状态
+    loadTime: 0, // 横幅时间戳（封面只在首页刷新才更新）
+    coverLoadTime: 0, // 封面时间戳（只在首页刷新才更新）
     playlistState: {
       courseId: '',
       showUnfinishedOnly: false,
@@ -33,12 +34,24 @@ Page({
     // scroll-view 高度 = 屏幕高度 - header（迷你播放器是浮层，不占用空间）
     const scrollHeight = windowInfo.windowHeight - headerHeight;
 
+    // 使用全局时间戳，保持图片稳定
+    if (!app.globalData.bannerLoadTime) {
+      app.globalData.bannerLoadTime = Date.now();
+    }
+    if (!app.globalData.coverLoadTime) {
+      app.globalData.coverLoadTime = Date.now();
+    }
+    const loadTime = app.globalData.bannerLoadTime;
+    const coverLoadTime = app.globalData.coverLoadTime;
+
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
       scrollHeight: scrollHeight,
-      courseId: options.id || ''
+      courseId: options.id || '',
+      loadTime: loadTime,
+      coverLoadTime: coverLoadTime
     });
 
     // 注册播放器回调
@@ -141,6 +154,7 @@ Page({
   },
 
   onRefresh() {
+    // 章节页刷新不更新封面（封面只在首页刷新才更新）
     this.setData({ refresherTriggered: true });
     if (this.data.courseId) {
       this.loadCourseDataAsync().then(() => {
@@ -185,8 +199,11 @@ Page({
     })
     .then(res => {
       if (res.result.success) {
+        const course = res.result.course;
+        // 处理课程封面图片
+        course.cover = this.fixImageUrl(course.cover, 'cover');
         this.setData({
-          course: res.result.course,
+          course: course,
           chapters: res.result.chapters.map(ch => this.formatChapter(ch)),
           filteredChapters: res.result.chapters.map(ch => this.formatChapter(ch)),
           loading: false
@@ -201,6 +218,51 @@ Page({
       wx.showToast({ title: '加载失败', icon: 'none' });
       this.setData({ loading: false });
     });
+  },
+
+  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+  // 封面使用 coverLoadTime（只有首页刷新才更新）
+  fixImageUrl(url, type = 'cover') {
+    if (!url) return url;
+    // 章节页只有封面，用 coverLoadTime
+    const loadTime = this.data.coverLoadTime;
+
+    // 处理 picsum.photos URL
+    if (url.includes('picsum.photos')) {
+      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 格式: https://picsum.photos/seed/course1/400/400
+      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[1]; // 如 "course1"
+        const size = seedMatch[2]; // 如 "400/400" 或 "400"
+        const newSeed = `${loadTime}_${type}_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+
+      // 提取尺寸信息，支持两种格式：
+      // 格式1: https://picsum.photos/800/300?random=1
+      // 格式2: https://picsum.photos/400?random=1
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      const randomMatch = url.match(/random=(\d+)/);
+
+      if (sizeMatch) {
+        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
+        const originalRandom = randomMatch ? randomMatch[1] : '0';
+        // 组合时间戳+类型+原始random作为种子
+        const seed = `${loadTime}_${type}_${originalRandom}`;
+        return `https://picsum.photos/seed/${seed}/${size}`;
+      }
+    }
+
+    // 其他URL添加时间戳防缓存
+    return this.addTimestamp(url);
+  },
+
+  // 添加时间戳到URL
+  addTimestamp(url) {
+    if (!url) return url;
+    const t = this.data.coverLoadTime;
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   formatChapter(chapter) {

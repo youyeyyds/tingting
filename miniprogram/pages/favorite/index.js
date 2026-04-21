@@ -12,7 +12,8 @@ Page({
     favoriteChapters: [],
     headlines: [],
     refresherTriggered: false,
-    loadTime: '',
+    loadTime: 0, // 横幅时间戳
+    coverLoadTime: 0, // 封面时间戳（只在首页刷新才更新）
     bannerSpeed: 5000,
     loading: true
   },
@@ -26,17 +27,32 @@ Page({
     const rpxToPx = windowInfo.windowWidth / 750;
     const tabBarHeight = 100 * rpxToPx;
     const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
-    const loadTime = Date.now();
+    // 使用全局时间戳和数据缓存，保持图片稳定
+    if (!app.globalData.bannerLoadTime) {
+      app.globalData.bannerLoadTime = Date.now();
+    }
+    if (!app.globalData.coverLoadTime) {
+      app.globalData.coverLoadTime = Date.now();
+    }
+    const loadTime = app.globalData.bannerLoadTime;
+    const coverLoadTime = app.globalData.coverLoadTime;
+    // 检查是否有缓存的横幅数据
+    const cachedHeadlines = app.globalData.favoriteHeadlines || [];
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight,
       navBarHeight: navBarHeight,
       headerHeight: headerHeight,
       scrollHeight: scrollHeight,
-      loadTime: loadTime
+      loadTime: loadTime,
+      coverLoadTime: coverLoadTime,
+      headlines: cachedHeadlines
     });
     this.checkLoginStatus();
-    this.loadHeadlines();
-    if (this.data.isLoggedIn) {
+    // 只在首次加载（无缓存）时获取横幅数据
+    if (cachedHeadlines.length === 0) {
+      this.loadHeadlines();
+    }
+    if (this.data.isLoggedIn && this.data.favoriteChapters.length === 0) {
       this.loadFavorites();
     }
 
@@ -105,8 +121,11 @@ Page({
   },
 
   onRefresh() {
+    // 更新全局横幅时间戳和清除本页缓存，刷新图片（封面不变）
     const newLoadTime = Date.now();
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime });
+    app.globalData.bannerLoadTime = newLoadTime;
+    app.globalData.favoriteHeadlines = [];
+    this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
     this.checkLoginStatus();
     this.loadHeadlines();
     if (this.data.isLoggedIn && app.globalData.userId) {
@@ -153,8 +172,10 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.addTimestamp(h.image)
+          image: this.fixImageUrl(h.image, 'banner')
         }));
+        // 缓存到全局变量
+        app.globalData.favoriteHeadlines = headlines;
         this.setData({
           headlines: headlines,
           bannerSpeed: (res.result.speed || 5) * 1000
@@ -164,10 +185,49 @@ Page({
     .catch(err => console.error('获取头条失败', err));
   },
 
-  addTimestamp(url) {
+  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
+  // type: 'banner' 横幅图片, 'cover' 封面图片
+  fixImageUrl(url, type = 'banner') {
     if (!url) return url;
-    const t = this.data.loadTime;
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
+    // 横幅用 bannerLoadTime，封面用 coverLoadTime
+    const loadTime = type === 'banner' ? this.data.loadTime : this.data.coverLoadTime;
+
+    // 处理 picsum.photos URL
+    if (url.includes('picsum.photos')) {
+      // 如果已经是seed格式，替换seed为时间戳+类型+原seed组合
+      // 格式: https://picsum.photos/seed/course1/400/400
+      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+      if (seedMatch) {
+        const originalSeed = seedMatch[1]; // 如 "course1"
+        const size = seedMatch[2]; // 如 "400/400" 或 "400"
+        const newSeed = `${loadTime}_${type}_${originalSeed}`;
+        return `https://picsum.photos/seed/${newSeed}/${size}`;
+      }
+
+      // 提取尺寸信息，支持两种格式：
+      // 格式1: https://picsum.photos/800/300?random=1
+      // 格式2: https://picsum.photos/400?random=1
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      const randomMatch = url.match(/random=(\d+)/);
+
+      if (sizeMatch) {
+        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
+        const originalRandom = randomMatch ? randomMatch[1] : '0';
+        // 组合时间戳+类型+原始random作为种子
+        const seed = `${loadTime}_${type}_${originalRandom}`;
+        return `https://picsum.photos/seed/${seed}/${size}`;
+      }
+    }
+
+    // 其他URL添加时间戳防缓存
+    return this.addTimestamp(url, type);
+  },
+
+  // 添加时间戳到URL
+  addTimestamp(url, type = 'banner') {
+    if (!url) return url;
+    const loadTime = type === 'banner' ? this.data.loadTime : this.data.coverLoadTime;
+    return url.includes('?') ? `${url}&t=${loadTime}` : `${url}?t=${loadTime}`;
   },
 
   checkLoginStatus() {
@@ -233,6 +293,7 @@ Page({
 
     return {
       ...chapter,
+      courseCover: this.fixImageUrl(chapter.courseCover, 'cover'),
       // 用户进度信息（放到顶层，便于播放器使用）
       lastPlayTime,
       finished,
