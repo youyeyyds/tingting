@@ -51,6 +51,15 @@ Page({
       }
     };
     app.registerMiniPlayer(this.audioCallback);
+    this.coverCallback = {
+      onCoverRefresh: ({ coverLoadTime }) => {
+        if (coverLoadTime && coverLoadTime !== this.data.coverLoadTime) {
+          const course = { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) };
+          this.setData({ course, coverLoadTime });
+        }
+      }
+    };
+    app.registerMiniPlayer(this.coverCallback);
     this.loadCourseData();
   },
 
@@ -60,6 +69,7 @@ Page({
 
   onUnload() {
     app.unregisterMiniPlayer(this.audioCallback);
+    app.unregisterMiniPlayer(this.coverCallback);
   },
 
   resetPlayingState() {

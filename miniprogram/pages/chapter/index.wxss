@@ -3,7 +3,7 @@
 .page-container {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-bottom: 180rpx; /* 为迷你播放器留空间 */
+  padding-bottom: 120rpx; /* 为迷你播放器留空间 */
 }
 
 /* 课程信息区 */
