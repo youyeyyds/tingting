@@ -212,6 +212,30 @@ Component({
       return 8 + tabBarHeight + safeArea;
     },
 
+    // 保存播放状态到缓存
+    savePlayStateCache(course, chapter, index, sortOrder, playMode) {
+      wx.setStorageSync('playingCourse', JSON.stringify(course));
+      wx.setStorageSync('playingChapter', JSON.stringify(chapter));
+      wx.setStorageSync('playingIndex', index);
+      wx.setStorageSync('playlistSortOrder', sortOrder);
+      wx.setStorageSync('playMode', playMode);
+    },
+
+    // 清除播放状态缓存
+    clearPlayStateCache() {
+      wx.removeStorageSync('playingCourse');
+      wx.removeStorageSync('playingChapter');
+      wx.removeStorageSync('playingIndex');
+      wx.removeStorageSync('playlistSortOrder');
+      wx.removeStorageSync('playMode');
+    },
+
+    // 更新当前章节缓存（切换章节时使用）
+    updateChapterCache(chapter, index) {
+      wx.setStorageSync('playingChapter', JSON.stringify(chapter));
+      wx.setStorageSync('playingIndex', index);
+    },
+
     fadeIn(data) {
       this.setData({ visible: true, fadeInClass: 'fade-in', ...data });
       this.updateNextChapterInfo();
@@ -269,6 +293,9 @@ Component({
       app.globalData.miniPlayerActive = true;
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.isFavoriteList = true; // 标识这是收藏列表
+
+      // 保存播放状态到缓存
+      this.savePlayStateCache(course, chapter, index, 'asc', 'sequence');
 
       // 淡入显示
       this.fadeIn({
@@ -336,6 +363,9 @@ Component({
       app.globalData.miniPlayerActive = true;
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.isFavoriteList = false; // 课程播放列表
+
+      // 保存播放状态到缓存
+      this.savePlayStateCache(course, chapter, index, order, 'sequence');
 
       this.fadeIn({
         playerBottom: this.calcPosition(),
@@ -456,6 +486,7 @@ Component({
           if (firstChapter?.audioUrl) {
             app.globalData.playingChapter = firstChapter;
             app.globalData.playingIndex = 0;
+            this.updateChapterCache(firstChapter, 0);
             this.setData({ currentChapter: firstChapter, currentIndex: 0 });
             this.loadAudio(firstChapter);
             // 通知章节页更新播放状态
@@ -474,6 +505,7 @@ Component({
         const nextChapter = chapters[nextIndex];
         app.globalData.playingChapter = nextChapter;
         app.globalData.playingIndex = nextIndex;
+        this.updateChapterCache(nextChapter, nextIndex);
         this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
         this.loadAudio(nextChapter);
         // 通知章节页更新播放状态
@@ -494,6 +526,8 @@ Component({
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = []; // 清空播放列表数据
       app.globalData.isFavoriteList = false; // 清除收藏列表标识
+      // 清除播放状态缓存
+      this.clearPlayStateCache();
       app.notifyCallbacks('onClose', {});
     },
 
@@ -881,6 +915,7 @@ Component({
       // 更新全局
       app.globalData.playingChapter = chapter;
       app.globalData.playingIndex = index;
+      this.updateChapterCache(chapter, index);
 
       // 通知章节页更新播放状态
       app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
@@ -1087,6 +1122,8 @@ Component({
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
+      // 清除播放状态缓存
+      this.clearPlayStateCache();
       this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false, coverRotationAngle: 0, nextChapterSeq: '', nextChapterTitle: '' });
     },
 
@@ -1128,6 +1165,7 @@ Component({
       if (chapter?.audioUrl) {
         app.globalData.playingChapter = chapter;
         app.globalData.playingIndex = index;
+        this.updateChapterCache(chapter, index);
         this.setData({
           currentChapter: chapter,
           currentIndex: index,
@@ -1159,6 +1197,7 @@ Component({
           const nextChapter = chapters[nextIndex];
           app.globalData.playingChapter = nextChapter;
           app.globalData.playingIndex = nextIndex;
+          this.updateChapterCache(nextChapter, nextIndex);
           this.setData({
             currentChapter: nextChapter,
             currentIndex: nextIndex
@@ -1171,6 +1210,8 @@ Component({
           this.bgAudioManager.stop();
           app.globalData.miniPlayerActive = false;
           app.globalData.playlistChaptersData = [];
+          // 清除播放状态缓存
+          this.clearPlayStateCache();
           this.setData({ visible: false, isPlaying: false, nextChapterSeq: '', nextChapterTitle: '' });
           // 通知章节页清除播放状态
           app.notifyCallbacks('onStop', {});
