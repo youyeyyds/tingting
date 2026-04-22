@@ -23,16 +23,23 @@ Page({
     const loadTime = app.globalData.bannerLoadTime;
     // 检查是否有缓存的横幅数据
     const cachedHeadlines = app.globalData.loginHeadlines || [];
+    // 检查是否有缓存的版权信息
+    const cachedCopyright = app.globalData.loginCopyright || {};
     this.setData({
       loadTime: loadTime,
-      headlines: cachedHeadlines
+      headlines: cachedHeadlines,
+      copyrightText: cachedCopyright.copyrightText || '',
+      copyrightLines: cachedCopyright.copyrightLines || [],
+      icpNumber: cachedCopyright.icpNumber || ''
     });
     // 横幅只在首次加载时获取（保持图片稳定）
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
     }
-    // 版权信息和备案号每次都加载（支持后台实时更新）
-    this.loadCopyright();
+    // 版权信息只在首次加载时获取
+    if (!cachedCopyright.copyrightText) {
+      this.loadCopyright();
+    }
   },
 
   loadHeadlinesAsync() {
@@ -63,20 +70,22 @@ Page({
       data: { type: 'getCopyright' }
     })
     .then(res => {
-      console.log('=== 云函数返回数据 ===', res.result);
       if (res.result.success) {
         const copyrightText = res.result.data?.copyrightText || '';
         const icpNumber = res.result.data?.icpNumber || '';
-        console.log('copyrightText:', copyrightText);
-        console.log('icpNumber:', icpNumber);
         // 如果后台没有设置，使用默认值
         const defaultCopyright = 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
         const defaultIcp = '粤ICP备2026041617号-1X';
         const finalText = copyrightText || defaultCopyright;
         const finalIcp = icpNumber || defaultIcp;
-        console.log('finalIcp:', finalIcp);
         // 按换行符分割成数组
         const copyrightLines = finalText.split('\n').filter(line => line.trim());
+        // 缓存到全局变量
+        app.globalData.loginCopyright = {
+          copyrightText: finalText,
+          copyrightLines: copyrightLines,
+          icpNumber: finalIcp
+        };
         this.setData({
           copyrightText: finalText,
           copyrightLines: copyrightLines,
