@@ -115,17 +115,17 @@
 
 .copyright-line {
   font-size: 22rpx;
-  color: #bbb;
+  color: #999;
   line-height: 1.6;
 }
 
 .copyright-line-1 {
   font-size: 24rpx;
-  color: #999;
+  color: #888;
 }
 
 .copyright-line-2 {
-  margin-top: 4rpx;
+  margin-top: 2rpx;
 }
 
 .copyright-line-3 {
@@ -143,5 +143,5 @@
 
 .icp-text {
   font-size: 22rpx;
-  color: #bbb;
+  color: #999;
 }
