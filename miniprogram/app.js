@@ -15,10 +15,13 @@ App({
     this.miniPlayerCallbacks = [];
     this.setupAudioEvents();
 
-    // 初始化图片加载时间戳
-    const loadTime = Date.now();
-    this.globalData.bannerLoadTime = loadTime;
-    this.globalData.coverLoadTime = loadTime;
+    // 初始化图片加载时间戳（从缓存读取，保持稳定）
+    const cachedBannerTime = wx.getStorageSync('bannerLoadTime');
+    const cachedCoverTime = wx.getStorageSync('coverLoadTime');
+    this.globalData.bannerLoadTime = cachedBannerTime || Date.now();
+    this.globalData.coverLoadTime = cachedCoverTime || Date.now();
+    if (!cachedBannerTime) wx.setStorageSync('bannerLoadTime', this.globalData.bannerLoadTime);
+    if (!cachedCoverTime) wx.setStorageSync('coverLoadTime', this.globalData.coverLoadTime);
 
     // 尝试恢复登录状态
     this.restoreLoginState();
