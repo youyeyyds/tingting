@@ -7,218 +7,124 @@ Page({
     password: '',
     loading: false,
     headlines: [],
-    copyrightText: '',
-    copyrightLines: [], // 版权信息按行分割
-    icpNumber: '', // 备案号
-    loadTime: 0, // 横幅时间戳
-    bannerSpeed: 5000, // 轮播速度
-    bannerHidden: false // 键盘唤起时隐藏横幅
+    copyrightLines: [],
+    icpNumber: '',
+    bannerSpeed: 5000,
+    bannerHidden: false
   },
 
   onLoad() {
-    // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
-    const loadTime = app.globalData.bannerLoadTime;
-    // 检查是否有缓存的横幅数据
     const cachedHeadlines = app.globalData.loginHeadlines || [];
-    // 检查是否有缓存的版权信息
     const cachedCopyright = app.globalData.loginCopyright || {};
+
     this.setData({
-      loadTime: loadTime,
       headlines: cachedHeadlines,
-      copyrightText: cachedCopyright.copyrightText || '',
       copyrightLines: cachedCopyright.copyrightLines || [],
       icpNumber: cachedCopyright.icpNumber || ''
     });
-    // 横幅只在首次加载时获取（保持图片稳定）
-    if (cachedHeadlines.length === 0) {
-      this.loadHeadlines();
-    }
-    // 版权信息只在首次加载时获取
-    if (!cachedCopyright.copyrightText) {
-      this.loadCopyright();
-    }
-  },
 
-  loadHeadlinesAsync() {
-    return wx.cloud.callFunction({
-      name: 'courseFunctions',
-      data: { type: 'getHeadlines', page: 'login' }
-    })
-    .then(res => {
-      if (res.result.success) {
-        const headlines = res.result.data.map(h => ({
-          ...h,
-          image: this.fixImageUrl(h.image, 'banner')
-        }));
-        // 缓存到全局变量
-        app.globalData.loginHeadlines = headlines;
-        this.setData({
-          headlines: headlines,
-          bannerSpeed: (res.result.speed || 5) * 1000
-        });
-      }
-    })
-    .catch(err => console.error('获取头条失败', err));
-  },
-
-  loadCopyrightAsync() {
-    return wx.cloud.callFunction({
-      name: 'courseFunctions',
-      data: { type: 'getCopyright' }
-    })
-    .then(res => {
-      if (res.result.success) {
-        const copyrightText = res.result.data?.copyrightText || '';
-        const icpNumber = res.result.data?.icpNumber || '';
-        // 如果后台没有设置，使用默认值
-        const defaultCopyright = 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
-        const defaultIcp = '粤ICP备2026041617号-1X';
-        const finalText = copyrightText || defaultCopyright;
-        const finalIcp = icpNumber || defaultIcp;
-        // 按换行符分割成数组
-        const copyrightLines = finalText.split('\n').filter(line => line.trim());
-        // 缓存到全局变量
-        app.globalData.loginCopyright = {
-          copyrightText: finalText,
-          copyrightLines: copyrightLines,
-          icpNumber: finalIcp
-        };
-        this.setData({
-          copyrightText: finalText,
-          copyrightLines: copyrightLines,
-          icpNumber: finalIcp
-        });
-      }
-    })
-    .catch(err => console.error('获取版权信息失败', err));
-  },
-
-  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
-  // 横幅图片使用 bannerLoadTime
-  fixImageUrl(url, type = 'banner') {
-    if (!url) return url;
-
-    // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
-    if (url.match(/picsum\.photos\/seed\/fixed_/)) {
-      return url; // 固定图片，直接返回
-    }
-
-    const loadTime = this.data.loadTime;
-
-    // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx），说明已处理过
-    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_banner_/)) {
-      // 已处理过，但时间戳可能变化，需要替换新的时间戳
-      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_banner_([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const oldTime = seedMatch[1];
-        const originalSeed = seedMatch[2];
-        const size = seedMatch[3];
-        // 时间戳变化时才替换
-        if (oldTime != loadTime) {
-          const newSeed = `${loadTime}_banner_${originalSeed}`;
-          return `https://picsum.photos/seed/${newSeed}/${size}`;
-        }
-        return url;
-      }
-    }
-
-    // 处理 picsum.photos URL
-    if (url.includes('picsum.photos')) {
-      // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
-      // 格式: https://picsum.photos/seed/course1/400/400
-      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const originalSeed = seedMatch[1]; // 如 "course1"
-        const size = seedMatch[2]; // 如 "400/400" 或 "400"
-        const newSeed = `${loadTime}_${type}_${originalSeed}`;
-        return `https://picsum.photos/seed/${newSeed}/${size}`;
-      }
-
-      // 提取尺寸信息，支持两种格式：
-      // 格式1: https://picsum.photos/800/300?random=1
-      // 格式2: https://picsum.photos/400?random=1
-      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-      const randomMatch = url.match(/random=(\d+)/);
-
-      if (sizeMatch) {
-        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
-        const originalRandom = randomMatch ? randomMatch[1] : '0';
-        // 组合时间戳+类型+原始random作为种子
-        const seed = `${loadTime}_${type}_${originalRandom}`;
-        return `https://picsum.photos/seed/${seed}/${size}`;
-      }
-    }
-
-    // 其他URL添加时间戳防缓存
-    return this.addTimestamp(url);
-  },
-
-  // 添加时间戳到URL
-  addTimestamp(url) {
-    if (!url) return url;
-    const t = this.data.loadTime;
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
+    if (cachedHeadlines.length === 0) this.loadHeadlines();
+    if (!cachedCopyright.copyrightLines) this.loadCopyright();
   },
 
   loadHeadlines() {
-    this.loadHeadlinesAsync();
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getHeadlines', page: 'login' }
+    }).then(res => {
+      if (res.result.success) {
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.fixImageUrl(h.image)
+        }));
+        app.globalData.loginHeadlines = headlines;
+        this.setData({
+          headlines,
+          bannerSpeed: (res.result.speed || 5) * 1000
+        });
+      }
+    }).catch(err => console.error('获取头条失败', err));
   },
 
   loadCopyright() {
-    this.loadCopyrightAsync();
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getCopyright' }
+    }).then(res => {
+      if (res.result.success) {
+        const data = res.result.data || {};
+        const copyrightText = data.copyrightText || 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
+        const icpNumber = data.icpNumber || '粤ICP备2026041617号-1X';
+        const copyrightLines = copyrightText.split('\n').filter(line => line.trim());
+
+        app.globalData.loginCopyright = { copyrightLines, icpNumber };
+        this.setData({ copyrightLines, icpNumber });
+      }
+    }).catch(err => console.error('获取版权信息失败', err));
   },
 
-  onPhoneInput(e) {
-    this.setData({ phone: e.detail.value });
+  fixImageUrl(url) {
+    if (!url) return url;
+    const loadTime = app.globalData.bannerLoadTime;
+
+    // 固定图片不处理
+    if (url.includes('seed/fixed_')) return url;
+
+    // 已处理的时间戳格式，更新时间戳
+    const timeMatch = url.match(/seed\/(\d+)_banner_(.+\/\d+\/\d+)$/);
+    if (timeMatch && timeMatch[1] != loadTime) {
+      return url.replace(/seed\/\d+_banner_/, `seed/${loadTime}_banner_`);
+    }
+
+    // seed 格式（非时间戳），添加时间戳
+    const seedMatch = url.match(/seed\/([^\/]+)\/(\d+\/\d+)$/);
+    if (seedMatch) {
+      return `https://picsum.photos/seed/${loadTime}_banner_${seedMatch[1]}/${seedMatch[2]}`;
+    }
+
+    // 无 seed 格式，转换为 seed
+    const sizeMatch = url.match(/picsum\.photos\/(\d+\/\d+)/);
+    if (sizeMatch) {
+      const random = url.match(/random=(\d+)/)?.[1] || '0';
+      return `https://picsum.photos/seed/${loadTime}_banner_${random}/${sizeMatch[1]}`;
+    }
+
+    // 其他 URL 添加时间戳
+    return url.includes('?') ? `${url}&t=${loadTime}` : `${url}?t=${loadTime}`;
   },
 
-  onPasswordInput(e) {
-    this.setData({ password: e.detail.value });
-  },
+  onPhoneInput(e) { this.setData({ phone: e.detail.value }); },
+  onPasswordInput(e) { this.setData({ password: e.detail.value }); },
 
-  // 键盘高度变化时控制横幅显示
   onKeyboardHeightChange(e) {
     const { height } = e.detail;
-
     if (height > 0) {
-      // 键盘弹出时立即隐藏横幅
       if (this.data.headlines.length > 0 && !this.data.bannerHidden) {
         this.setData({ bannerHidden: true });
       }
-      // 清除之前的恢复定时器
       if (this._bannerTimer) {
         clearTimeout(this._bannerTimer);
         this._bannerTimer = null;
       }
-    } else {
-      // 键盘收起时延迟恢复横幅，避免切换输入框时闪烁
-      if (this.data.bannerHidden && !this._bannerTimer) {
-        this._bannerTimer = setTimeout(() => {
-          this.setData({ bannerHidden: false });
-          this._bannerTimer = null;
-        }, 100);
-      }
+    } else if (this.data.bannerHidden && !this._bannerTimer) {
+      this._bannerTimer = setTimeout(() => {
+        this.setData({ bannerHidden: false });
+        this._bannerTimer = null;
+      }, 100);
     }
   },
 
   async handleLogin() {
     if (this.data.loading) return;
-
     const { phone, password } = this.data;
 
-    if (!phone) {
-      wx.showToast({ title: '请输入手机号', icon: 'none' });
+    if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+      wx.showToast({ title: !phone ? '请输入手机号' : '请输入正确的手机号', icon: 'none' });
       return;
     }
-
-    if (!/^1[3-9]\d{9}$/.test(phone)) {
-      wx.showToast({ title: '请输入正确的手机号', icon: 'none' });
-      return;
-    }
-
     if (!password) {
       wx.showToast({ title: '请输入密码', icon: 'none' });
       return;
@@ -229,38 +135,24 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'userFunctions',
-        data: {
-          type: 'login',
-          phone: phone,
-          password: password
-        }
+        data: { type: 'login', phone, password }
       });
 
       if (res.result.success) {
         const user = res.result.data;
-
-        // 保存用户信息到全局
         app.globalData.isLoggedIn = true;
         app.globalData.userInfo = user;
         app.globalData.userId = user.userId;
-
-        // 保存到本地存储
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
-
-        // 保持登录中状态，直接跳转到个人页面
         wx.redirectTo({ url: '/pages/mine/index' });
-        return; // 成功时不执行 finally 中的 loading: false
-      } else {
-        // 统一提示：手机号或密码错误
-        wx.showToast({ title: '手机号或密码错误', icon: 'none' });
+        return;
       }
+      wx.showToast({ title: '手机号或密码错误', icon: 'none' });
     } catch (err) {
       console.error('登录失败:', err);
       wx.showToast({ title: '手机号或密码错误', icon: 'none' });
     }
-
-    // 只有失败时才恢复按钮状态
     this.setData({ loading: false });
   }
 });
