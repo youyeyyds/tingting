@@ -172,6 +172,8 @@ Page({
     const t = Date.now();
     app.globalData.bannerLoadTime = t;
     app.globalData.coverLoadTime = t;
+    wx.setStorageSync('bannerLoadTime', t);
+    wx.setStorageSync('coverLoadTime', t);
     app.globalData.indexHeadlines = [];
     app.globalData.indexCourses = [];
     app.globalData.loginHeadlines = [];
