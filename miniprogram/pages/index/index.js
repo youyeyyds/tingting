@@ -31,7 +31,8 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
-    scrollH: 0,
+    scrollHeightNoTab: 0,
+    scrollHeightWithTab: 0,
     isLoggedIn: false,
     courses: [],
     headlines: [],
@@ -57,13 +58,14 @@ Page({
     const menu = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
+    const tabH = 100 * windowWidth / 750; // 100rpx 转 px
 
     this.setData({
       statusBarHeight,
       navBarHeight,
       headerHeight,
-      scrollH: windowHeight - headerHeight
+      scrollHeightNoTab: windowHeight - headerHeight,
+      scrollHeightWithTab: windowHeight - headerHeight - tabH
     });
   },
 
@@ -226,7 +228,14 @@ Page({
 
   maskCourses() {
     const { homeProtect, isLoggedIn, courses, maskedAuthors } = this.data;
-    if (!homeProtect || isLoggedIn) return;
+    if (!homeProtect || isLoggedIn) {
+      // 已登录或首页保护关闭，恢复真实课程数据
+      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+      if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
+        this.setData({ courses: realCourses });
+      }
+      return;
+    }
 
     const newAuthors = { ...maskedAuthors };
     const masked = courses.map(c => {
