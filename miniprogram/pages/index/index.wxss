@@ -135,7 +135,7 @@
 }
 
 .list-bottom {
-  height: 20rpx;
+  height: 10rpx;
 }
 
 /* 空状态提示 */
