@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "",
+  "disableScroll": false,
   "usingComponents": {
     "mini-player": "/components/mini-player/index"
   }
