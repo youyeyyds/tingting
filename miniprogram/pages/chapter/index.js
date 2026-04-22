@@ -16,8 +16,7 @@ Page({
 
   onLoad(options) {
     this.setData({
-      courseId: options.id || '',
-      coverLoadTime: app.globalData.coverLoadTime || Date.now()
+      courseId: options.id || ''
     });
 
     this.audioCallback = {
@@ -54,8 +53,10 @@ Page({
     this.coverCallback = {
       onCoverRefresh: ({ coverLoadTime }) => {
         if (coverLoadTime && coverLoadTime !== this.data.coverLoadTime) {
-          const course = { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) };
-          this.setData({ course, coverLoadTime });
+          this.setData({ coverLoadTime });
+          if (this.data.course.cover) {
+            this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
+          }
         }
       }
     };
@@ -107,6 +108,7 @@ Page({
   processImageUrl(url) {
     if (!url || url.includes('seed/fixed_')) return url;
     const t = app.globalData.coverLoadTime || this.data.coverLoadTime;
+    if (!t) return url; // 时间戳未初始化时不处理
     const m1 = url.match(/seed\/(\d+)_cover_/);
     if (m1) return m1[1] != t ? url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`) : url;
     const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);

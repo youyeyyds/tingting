@@ -15,6 +15,11 @@ App({
     this.miniPlayerCallbacks = [];
     this.setupAudioEvents();
 
+    // 初始化图片加载时间戳
+    const loadTime = Date.now();
+    this.globalData.bannerLoadTime = loadTime;
+    this.globalData.coverLoadTime = loadTime;
+
     // 尝试恢复登录状态
     this.restoreLoginState();
   },
@@ -33,7 +38,9 @@ App({
     playlistSortOrder: 'asc', // 'asc' | 'desc'
     loginPageLoadTime: null, // 登录页图片加载时间戳，保持稳定
     homePageLoadTime: null, // 首页图片加载时间戳，保持稳定
-    homePageMaskedAuthors: null // 首页随机作者映射，保持稳定
+    homePageMaskedAuthors: null, // 首页随机作者映射，保持稳定
+    bannerLoadTime: null, // 横幅加载时间戳，保持稳定
+    coverLoadTime: null // 封面加载时间戳，保持稳定
   },
 
   restoreLoginState() {
