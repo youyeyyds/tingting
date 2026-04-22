@@ -510,11 +510,14 @@ const getCopyright = async () => {
   try {
     const configRes = await db.collection("config").where({ key: 'copyright' }).limit(1).get();
     if (configRes.data.length > 0) {
+      const value = configRes.data[0].value || {};
+      // 兼容 icpNumber 和 icpText 两种字段名
+      const icpNumber = value.icpNumber || value.icpText || '';
       return {
         success: true,
         data: {
-          copyrightText: configRes.data[0].value?.copyrightText || '',
-          icpNumber: configRes.data[0].value?.icpNumber || ''
+          copyrightText: value.copyrightText || '',
+          icpNumber: icpNumber
         }
       };
     }

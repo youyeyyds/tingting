@@ -9,8 +9,10 @@ Page({
     headlines: [],
     copyrightText: '',
     copyrightLines: [], // 版权信息按行分割
+    icpNumber: '', // 备案号
     loadTime: 0, // 横幅时间戳
-    bannerSpeed: 5000 // 轮播速度
+    bannerSpeed: 5000, // 轮播速度
+    bannerHidden: false // 键盘唤起时隐藏横幅
   },
 
   onLoad() {
@@ -25,11 +27,12 @@ Page({
       loadTime: loadTime,
       headlines: cachedHeadlines
     });
-    // 只在首次加载（无缓存）时获取数据
+    // 横幅只在首次加载时获取（保持图片稳定）
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
-      this.loadCopyright();
     }
+    // 版权信息和备案号每次都加载（支持后台实时更新）
+    this.loadCopyright();
   },
 
   loadHeadlinesAsync() {
@@ -60,16 +63,24 @@ Page({
       data: { type: 'getCopyright' }
     })
     .then(res => {
+      console.log('=== 云函数返回数据 ===', res.result);
       if (res.result.success) {
         const copyrightText = res.result.data?.copyrightText || '';
+        const icpNumber = res.result.data?.icpNumber || '';
+        console.log('copyrightText:', copyrightText);
+        console.log('icpNumber:', icpNumber);
         // 如果后台没有设置，使用默认值
         const defaultCopyright = 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
+        const defaultIcp = '粤ICP备2026041617号-1X';
         const finalText = copyrightText || defaultCopyright;
+        const finalIcp = icpNumber || defaultIcp;
+        console.log('finalIcp:', finalIcp);
         // 按换行符分割成数组
         const copyrightLines = finalText.split('\n').filter(line => line.trim());
         this.setData({
           copyrightText: finalText,
-          copyrightLines: copyrightLines
+          copyrightLines: copyrightLines,
+          icpNumber: finalIcp
         });
       }
     })
@@ -157,6 +168,31 @@ Page({
 
   onPasswordInput(e) {
     this.setData({ password: e.detail.value });
+  },
+
+  // 键盘高度变化时控制横幅显示
+  onKeyboardHeightChange(e) {
+    const { height } = e.detail;
+
+    if (height > 0) {
+      // 键盘弹出时立即隐藏横幅
+      if (this.data.headlines.length > 0 && !this.data.bannerHidden) {
+        this.setData({ bannerHidden: true });
+      }
+      // 清除之前的恢复定时器
+      if (this._bannerTimer) {
+        clearTimeout(this._bannerTimer);
+        this._bannerTimer = null;
+      }
+    } else {
+      // 键盘收起时延迟恢复横幅，避免切换输入框时闪烁
+      if (this.data.bannerHidden && !this._bannerTimer) {
+        this._bannerTimer = setTimeout(() => {
+          this.setData({ bannerHidden: false });
+          this._bannerTimer = null;
+        }, 100);
+      }
+    }
   },
 
   async handleLogin() {

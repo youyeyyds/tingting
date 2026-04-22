@@ -2,7 +2,7 @@
 <scroll-view class="page-container" scroll-y="true" enhanced="true" bounces="{{true}}">
   <view class="scroll-content">
     <!-- 横幅轮播 -->
-    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0 && !bannerHidden}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
@@ -19,11 +19,11 @@
       <!-- 登录表单 -->
       <view class="login-form">
         <view class="form-item">
-          <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" value="{{phone}}" />
+          <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{phone}}" />
         </view>
 
         <view class="form-item">
-          <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+          <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{password}}" />
         </view>
 
         <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
@@ -41,7 +41,7 @@
 
     <!-- 备案号（在内容底部） -->
     <view class="icp-footer">
-      <text class="icp-text">粤ICP备2026041617号-1X</text>
+      <text class="icp-text">{{icpNumber}}</text>
     </view>
   </view>
 </scroll-view>
