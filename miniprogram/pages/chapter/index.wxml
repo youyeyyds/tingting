@@ -1,19 +1,8 @@
 <!--chapter.wxml-->
 <view class="page-container">
-  <!-- 顶部导航栏 -->
-  <view class="header-fixed">
-    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-    <view class="nav-bar" style="height: {{navBarHeight}}px;">
-      <view class="back-btn" bindtap="handleBack">
-        <view class="back-arrow"></view>
-        <text class="back-text">返回</text>
-      </view>
-    </view>
-  </view>
-
   <!-- 内容区域 -->
   <scroll-view class="content-scroll" scroll-y="true" enhanced="true"
-    style="margin-top: {{headerHeight}}px; height: {{scrollHeight}}px;"
+    style="height: {{scrollHeight}}px;"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <view class="content-inner">
       <!-- 课程信息区 -->
