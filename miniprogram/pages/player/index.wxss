@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 40rpx;
-  padding-top: env(safe-area-inset-top);
+  padding-top: calc(env(safe-area-inset-top) + 40rpx);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -46,28 +46,28 @@
   }
 }
 
-/* 收起按钮 */
-.header-area {
+/* 下滑提示 */
+.swipe-hint {
   display: flex;
   justify-content: center;
-  padding: 30rpx 0;
+  padding: 20rpx 0;
 }
 
-.collapse-icon {
+.swipe-icon {
   width: 40rpx;
   height: 20rpx;
-  border-left: 4rpx solid #fff;
-  border-right: 4rpx solid #fff;
-  border-bottom: 4rpx solid #fff;
+  border-left: 4rpx solid rgba(255,255,255,0.3);
+  border-right: 4rpx solid rgba(255,255,255,0.3);
+  border-bottom: 4rpx solid rgba(255,255,255,0.3);
   border-radius: 0 0 10rpx 10rpx;
 }
 
 /* 课程信息 */
 .course-info {
+.course-info {
   display: flex;
   align-items: center;
-  padding: 40rpx 0;
-  margin-top: 20rpx;
+  padding: 60rpx 0;
 }
 
 .course-cover {
@@ -86,21 +86,13 @@
 }
 
 @keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes rotateReverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
 }
 
 .course-details {

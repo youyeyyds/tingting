@@ -1,8 +1,11 @@
 <!--player/index.wxml-->
-<view class="player-container {{showAnimation}}">
-  <!-- 收起按钮 -->
-  <view class="header-area" bindtap="handleClose">
-    <view class="collapse-icon"></view>
+<view class="player-container {{showAnimation}}" style="transform: translateY({{translateY}}px);"
+  bindtouchstart="onTouchStart"
+  bindtouchmove="onTouchMove"
+  bindtouchend="onTouchEnd">
+  <!-- 下滑提示 -->
+  <view class="swipe-hint">
+    <view class="swipe-icon"></view>
   </view>
 
   <!-- 课程信息 -->

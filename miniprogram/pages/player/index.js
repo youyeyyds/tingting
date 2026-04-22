@@ -17,13 +17,15 @@ Page({
     progressPercent: 0,
     currentTimeText: '0:00',
     remainingTimeText: '-0:00',
-    showTotalTime: false, // 显示总时长还是剩余时长
+    showTotalTime: false,
     playbackRate: 2,
-    playMode: 'sequence', // sequence, loop, single
+    playMode: 'sequence',
     sortOrder: 'asc',
     isFavorite: false,
-    speedIndicatorPos: 50, // 倍速指示器位置百分比
-    coverLoadTime: 0 // 封面时间戳
+    speedIndicatorPos: 50,
+    coverLoadTime: 0,
+    startY: 0,
+    translateY: 0
   },
 
   bgAudioManager: null,
@@ -32,20 +34,12 @@ Page({
     this.bgAudioManager = app.bgAudioManager;
     this.setupAudioEvents();
 
-    // 获取封面时间戳
-    if (!app.globalData.coverLoadTime) {
-      app.globalData.coverLoadTime = Date.now();
-    }
-    const coverLoadTime = app.globalData.coverLoadTime;
-
-    // 从全局获取播放数据
+    const coverLoadTime = app.globalData.coverLoadTime || Date.now();
     const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
-
-    // 处理封面图片
-    const courseCover = this.fixImageUrl(playingCourse?.cover || '', coverLoadTime);
+    const courseCover = this.processImageUrl(playingCourse?.cover || '', coverLoadTime);
 
     this.setData({
-      courseCover: courseCover,
+      courseCover,
       courseTitle: playingCourse?.title || '',
       courseAuthor: playingCourse?.author || '',
       chapterCount: playingCourse?.chapterCount || playlistChaptersData?.length || 0,
@@ -58,7 +52,7 @@ Page({
       currentTime: this.bgAudioManager.currentTime || 0,
       duration: this.bgAudioManager.duration || 0,
       playbackRate: this.bgAudioManager.playbackRate || 2,
-      coverLoadTime: coverLoadTime
+      coverLoadTime
     });
 
     this.updateProgress();
@@ -66,46 +60,53 @@ Page({
     this.checkFavoriteStatus();
   },
 
-  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
-  fixImageUrl(url, coverLoadTime) {
-    if (!url) return url;
+  // 下滑关闭相关
+  onTouchStart(e) {
+    this.setData({ startY: e.touches[0].clientY, translateY: 0 });
+  },
 
-    // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
-    if (url.match(/picsum\.photos\/seed\/fixed_/)) {
-      return url; // 固定图片，直接返回
+  onTouchMove(e) {
+    const deltaY = e.touches[0].clientY - this.data.startY;
+    if (deltaY > 0) {
+      this.setData({ translateY: deltaY });
+    }
+  },
+
+  onTouchEnd() {
+    const { translateY } = this.data;
+    if (translateY > 100) {
+      this.closePage();
+    } else {
+      this.setData({ translateY: 0 });
+    }
+  },
+
+  closePage() {
+    this.setData({ showAnimation: 'slide-down' });
+    setTimeout(() => wx.navigateBack(), 300);
+  },
+
+  processImageUrl(url, coverLoadTime) {
+    if (!url || url.includes('seed/fixed_')) return url;
+    const t = coverLoadTime || app.globalData.coverLoadTime || Date.now();
+
+    const m1 = url.match(/seed\/(\d+)_cover_/);
+    if (m1 && m1[1] != t) return url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`);
+    if (m1) return url;
+
+    const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+    if (m2) return `https://picsum.photos/seed/${t}_cover_${m2[1]}/${m2[2]}`;
+
+    const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+    if (m3) {
+      const r = url.match(/random=(\d+)/)?.[1] || '0';
+      return `https://picsum.photos/seed/${t}_cover_${r}/${m3[1]}`;
     }
 
-    const loadTime = coverLoadTime || app.globalData.coverLoadTime || Date.now();
-
-    // 处理 picsum.photos URL
-    if (url.includes('picsum.photos')) {
-      // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
-      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const originalSeed = seedMatch[1];
-        const size = seedMatch[2];
-        const newSeed = `${loadTime}_cover_${originalSeed}`;
-        return `https://picsum.photos/seed/${newSeed}/${size}`;
-      }
-
-      // 提取尺寸信息
-      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-      const randomMatch = url.match(/random=(\d+)/);
-
-      if (sizeMatch) {
-        const size = sizeMatch[1];
-        const originalRandom = randomMatch ? randomMatch[1] : '0';
-        const seed = `${loadTime}_cover_${originalRandom}`;
-        return `https://picsum.photos/seed/${seed}/${size}`;
-      }
-    }
-
-    // 其他URL直接返回
     return url;
   },
 
   onUnload() {
-    // 页面卸载时移除事件监听
     this.bgAudioManager.offTimeUpdate(this.onTimeUpdate);
     this.bgAudioManager.offPlay(this.onPlay);
     this.bgAudioManager.offPause(this.onPause);
@@ -122,28 +123,16 @@ Page({
   onTimeUpdate() {
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
-    const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-
     this.setData({
       currentTime,
-      progressPercent
+      progressPercent: duration > 0 ? (currentTime / duration) * 100 : 0
     });
-
     this.updateProgress();
   },
 
-  onPlay() {
-    this.setData({ isPlaying: true });
-  },
-
-  onPause() {
-    this.setData({ isPlaying: false });
-  },
-
-  onEnded() {
-    // 自动播放下一首
-    this.playNext();
-  },
+  onPlay() { this.setData({ isPlaying: true }); },
+  onPause() { this.setData({ isPlaying: false }); },
+  onEnded() { this.playNext(); },
 
   updateProgress() {
     const { currentTime, duration, showTotalTime } = this.data;
@@ -161,254 +150,145 @@ Page({
   },
 
   updateSpeedIndicator() {
-    const { playbackRate } = this.data;
-    // 速度范围 1-3，映射到 0-100%
     const speeds = [1, 1.5, 2, 2.5, 3];
-    const index = speeds.indexOf(playbackRate);
-    const pos = index >= 0 ? (index / (speeds.length - 1)) * 100 : 50;
-    this.setData({ speedIndicatorPos: pos });
+    const index = speeds.indexOf(this.data.playbackRate);
+    this.setData({ speedIndicatorPos: index >= 0 ? (index / (speeds.length - 1)) * 100 : 50 });
   },
 
   checkFavoriteStatus() {
     const chapterId = this.data.currentChapter._id;
     if (!chapterId || !app.globalData.userId) return;
-
     wx.cloud.callFunction({
       name: 'courseFunctions',
-      data: {
-        type: 'checkFavorite',
-        chapterId: chapterId,
-        userId: app.globalData.userId
-      }
+      data: { type: 'checkFavorite', chapterId, userId: app.globalData.userId }
     }).then(res => {
-      if (res.result.success) {
-        this.setData({ isFavorite: res.result.data.isFavorite });
-      }
+      if (res.result.success) this.setData({ isFavorite: res.result.data.isFavorite });
     }).catch(err => console.error('检查收藏状态失败:', err));
   },
 
-  // 收起页面
-  handleClose() {
-    this.setData({ showAnimation: 'slide-down' });
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 300);
-  },
-
-  // 切换时间显示
   toggleTimeDisplay() {
     this.setData({ showTotalTime: !this.data.showTotalTime });
     this.updateProgress();
   },
 
-  // 进度条拖动
   onSliderChanging(e) {
-    const value = e.detail.value;
     const duration = this.bgAudioManager.duration;
-    const currentTime = (value / 100) * duration;
-    this.setData({
-      currentTime,
-      progressPercent: value
-    });
+    this.setData({ currentTime: (e.detail.value / 100) * duration });
     this.updateProgress();
   },
 
-  // 进度条变化完成
   onSliderChange(e) {
-    const value = e.detail.value;
     const duration = this.bgAudioManager.duration;
-    const currentTime = (value / 100) * duration;
-    this.bgAudioManager.seek(currentTime);
-    this.setData({
-      currentTime,
-      progressPercent: value
-    });
-    this.updateProgress();
+    this.bgAudioManager.seek((e.detail.value / 100) * duration);
   },
 
-  // 播放/暂停
   togglePlayPause() {
-    if (this.bgAudioManager.paused) {
-      this.bgAudioManager.play();
-    } else {
-      this.bgAudioManager.pause();
-    }
+    if (this.bgAudioManager.paused) this.bgAudioManager.play();
+    else this.bgAudioManager.pause();
   },
 
-  // 快退15秒
   rewind15() {
-    const currentTime = this.bgAudioManager.currentTime;
-    const newTime = Math.max(0, currentTime - 15);
-    this.bgAudioManager.seek(newTime);
+    this.bgAudioManager.seek(Math.max(0, this.bgAudioManager.currentTime - 15));
   },
 
-  // 快进30秒
   forward30() {
-    const currentTime = this.bgAudioManager.currentTime;
-    const duration = this.bgAudioManager.duration;
-    const newTime = Math.min(duration, currentTime + 30);
-    this.bgAudioManager.seek(newTime);
+    this.bgAudioManager.seek(Math.min(this.bgAudioManager.duration, this.bgAudioManager.currentTime + 30));
   },
 
-  // 上一条
   playPrev() {
     const { currentIndex, chapters, playMode } = this.data;
-    let newIndex;
-
     if (playMode === 'single') {
-      // 单曲循环，重新播放当前
       this.bgAudioManager.seek(0);
       this.bgAudioManager.play();
       return;
     }
-
-    if (currentIndex > 0) {
-      newIndex = currentIndex - 1;
-    } else if (playMode === 'loop') {
-      newIndex = chapters.length - 1;
-    } else {
-      wx.showToast({ title: '已经是第一条', icon: 'none' });
-      return;
-    }
-
-    this.playChapter(newIndex);
+    if (currentIndex > 0) this.playChapter(currentIndex - 1);
+    else if (playMode === 'loop') this.playChapter(chapters.length - 1);
+    else wx.showToast({ title: '已经是第一条', icon: 'none' });
   },
 
-  // 下一条
   playNext() {
     const { currentIndex, chapters, playMode } = this.data;
-    let newIndex;
-
     if (playMode === 'single') {
-      // 单曲循环，重新播放当前
       this.bgAudioManager.seek(0);
       this.bgAudioManager.play();
       return;
     }
-
-    if (currentIndex < chapters.length - 1) {
-      newIndex = currentIndex + 1;
-    } else if (playMode === 'loop') {
-      newIndex = 0;
-    } else {
-      // 顺序播放结束，停止
+    if (currentIndex < chapters.length - 1) this.playChapter(currentIndex + 1);
+    else if (playMode === 'loop') this.playChapter(0);
+    else {
       this.bgAudioManager.stop();
       this.setData({ isPlaying: false });
-      return;
     }
-
-    this.playChapter(newIndex);
   },
 
-  // 播放指定章节
   playChapter(index) {
     const { chapters } = this.data;
     if (index < 0 || index >= chapters.length) return;
-
     const chapter = chapters[index];
     if (!chapter.audioUrl) {
       wx.showToast({ title: '暂无音频', icon: 'none' });
       return;
     }
 
-    // 保存当前进度
     this.saveProgress();
-
-    // 播放新章节
     this.bgAudioManager.title = chapter.title;
     this.bgAudioManager.src = chapter.audioUrl;
     this.bgAudioManager.coverUrl = this.data.courseCover;
     this.bgAudioManager.episode = `${chapter.seq || index + 1}/${chapters.length}`;
 
-    this.setData({
-      currentChapter: chapter,
-      currentIndex: index
-    });
-
-    // 更新全局
+    this.setData({ currentChapter: chapter, currentIndex: index });
     app.globalData.playingChapter = chapter;
     app.globalData.playingIndex = index;
-
-    // 检查收藏状态
     this.checkFavoriteStatus();
   },
 
-  // 保存播放进度
   saveProgress() {
     const chapterId = this.data.currentChapter._id;
-    const currentTime = this.bgAudioManager.currentTime;
-    const duration = this.bgAudioManager.duration;
-
-    if (!chapterId || !currentTime) return;
-
+    if (!chapterId || !this.bgAudioManager.currentTime) return;
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'updateChapterProgress',
-        chapterId: chapterId,
+        chapterId,
         courseId: this.data.currentChapter.course,
-        lastPlayTime: currentTime,
-        finished: currentTime >= duration - 10,
+        lastPlayTime: this.bgAudioManager.currentTime,
+        finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
         userId: app.globalData.userId
       }
     }).catch(err => console.error('保存进度失败:', err));
   },
 
-  // 切换播放模式
   togglePlayMode() {
     const modes = ['sequence', 'loop', 'single'];
-    const currentIdx = modes.indexOf(this.data.playMode);
-    const nextIdx = (currentIdx + 1) % modes.length;
-    const newMode = modes[nextIdx];
-
+    const newMode = modes[(modes.indexOf(this.data.playMode) + 1) % modes.length];
     this.setData({ playMode: newMode });
     app.globalData.playMode = newMode;
-
-    wx.showToast({
-      title: newMode === 'sequence' ? '顺序播放' : newMode === 'loop' ? '列表循环' : '单曲循环',
-      icon: 'none'
-    });
+    wx.showToast({ title: newMode === 'sequence' ? '顺序播放' : newMode === 'loop' ? '列表循环' : '单曲循环', icon: 'none' });
   },
 
-  // 显示播放列表
   showPlaylist() {
     wx.showToast({ title: '播放列表功能开发中', icon: 'none' });
   },
 
-  // 切换排序
   toggleSort() {
     const newOrder = this.data.sortOrder === 'asc' ? 'desc' : 'asc';
     const newChapters = [...this.data.chapters].reverse();
-
-    this.setData({
-      sortOrder: newOrder,
-      chapters: newChapters,
-      currentIndex: newChapters.length - 1 - this.data.currentIndex
-    });
-
+    this.setData({ sortOrder: newOrder, chapters: newChapters, currentIndex: newChapters.length - 1 - this.data.currentIndex });
     app.globalData.playlistSortOrder = newOrder;
     app.globalData.playlistChaptersData = newChapters;
   },
 
-  // 切换收藏
   toggleFavorite() {
     const chapterId = this.data.currentChapter._id;
     if (!chapterId) return;
-
     wx.cloud.callFunction({
       name: 'courseFunctions',
-      data: {
-        type: 'toggleFavorite',
-        chapterId: chapterId,
-        userId: app.globalData.userId
-      }
+      data: { type: 'toggleFavorite', chapterId, userId: app.globalData.userId }
     }).then(res => {
       if (res.result.success) {
         this.setData({ isFavorite: res.result.data.isFavorite });
-        wx.showToast({
-          title: res.result.data.isFavorite ? '已收藏' : '已取消收藏',
-          icon: 'success'
-        });
+        wx.showToast({ title: res.result.data.isFavorite ? '已收藏' : '已取消收藏', icon: 'success' });
       }
     }).catch(err => {
       console.error('切换收藏失败:', err);
@@ -416,7 +296,6 @@ Page({
     });
   },
 
-  // 设置倍速
   setSpeed(e) {
     const rate = e.currentTarget.dataset.rate;
     this.bgAudioManager.playbackRate = rate;

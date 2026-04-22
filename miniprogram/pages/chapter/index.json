@@ -1,7 +1,5 @@
 {
   "navigationBarTitleText": "",
-  "enablePullDownRefresh": true,
-  "backgroundTextStyle": "dark",
   "usingComponents": {
     "mini-player": "/components/mini-player/index"
   }

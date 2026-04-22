@@ -4,7 +4,6 @@ const app = getApp();
 Page({
   data: {
     scrollHeight: 0,
-    refresherTriggered: false,
     listMinHeight: 0,
     courseId: '',
     course: {},
@@ -103,15 +102,6 @@ Page({
     if (this.data.courseId) this.loadCourseData();
   },
 
-  onRefresh() {
-    this.setData({ refresherTriggered: true });
-    if (this.data.courseId) {
-      this.loadCourseDataAsync().then(() => this.setData({ refresherTriggered: false }));
-    } else {
-      this.setData({ refresherTriggered: false });
-    }
-  },
-
   onUnload() {
     app.unregisterMiniPlayer(this.audioCallback);
   },
@@ -162,23 +152,30 @@ Page({
   },
 
   processImageUrl(url) {
-    if (!url || url.includes('seed/fixed_')) return url;
-    const t = this.data.coverLoadTime;
+    if (!url) return url;
+    if (url.includes('seed/fixed_')) return url;
 
-    const m1 = url.match(/seed\/(\d+)_cover_(.+\/\d+\/\d+)$/);
-    if (m1 && m1[1] != t) return url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`);
-    if (m1) return url;
+    const t = app.globalData.coverLoadTime || this.data.coverLoadTime;
 
-    const m2 = url.match(/seed\/([^\/]+)\/(\d+\/\d+)$/);
+    // 已有时间戳格式，检查是否需要更新
+    const m1 = url.match(/seed\/(\d+)_cover_/);
+    if (m1) {
+      if (m1[1] != t) return url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`);
+      return url;
+    }
+
+    // seed格式（非时间戳），添加时间戳
+    const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
     if (m2) return `https://picsum.photos/seed/${t}_cover_${m2[1]}/${m2[2]}`;
 
-    const m3 = url.match(/picsum\.photos\/(\d+\/\d+)/);
+    // 无seed格式
+    const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
     if (m3) {
       const r = url.match(/random=(\d+)/)?.[1] || '0';
       return `https://picsum.photos/seed/${t}_cover_${r}/${m3[1]}`;
     }
 
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
+    return url;
   },
 
   formatChapter(chapter) {
