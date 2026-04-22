@@ -64,7 +64,6 @@
 
 /* 课程信息 */
 .course-info {
-.course-info {
   display: flex;
   align-items: center;
   padding: 60rpx 0;
