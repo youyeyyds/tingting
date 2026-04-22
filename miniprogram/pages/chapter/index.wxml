@@ -63,10 +63,12 @@
     <view class="empty-tip" wx:if="{{!loading && filteredChapters.length === 0}}">
       <text class="empty-text">暂无章节数据</text>
     </view>
-  </view>
 
-  <!-- 底部安全区 -->
-  <view class="safe-bottom"></view>
+    <!-- 底部文案 -->
+    <view class="list-footer" wx:if="{{filteredChapters.length > 0}}">
+      <text class="footer-text">随时随地，学习成长</text>
+    </view>
+  </view>
 </view>
 
 <!-- 迷你播放器 -->

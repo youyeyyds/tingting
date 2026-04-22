@@ -124,7 +124,7 @@
   border-radius: 16rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
   margin: 0 30rpx;
-  padding-bottom: 100%;
+  padding-bottom: 300rpx;
 }
 
 .chapter-card {
@@ -272,7 +272,14 @@
   color: #999;
 }
 
-/* 底部安全区 */
-.safe-bottom {
-  height: env(safe-area-inset-bottom);
+/* 列表底部 */
+.list-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 30rpx;
+}
+
+.footer-text {
+  font-size: 24rpx;
+  color: #999;
 }
