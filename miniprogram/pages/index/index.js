@@ -108,7 +108,7 @@ Page({
   onShow() {
     this.checkLogin();
     this.syncTimes();
-    this.showLogoutToast();
+    this.showStatusToast();
   },
 
   syncTimes() {
@@ -131,8 +131,11 @@ Page({
     }
   },
 
-  showLogoutToast() {
-    if (app.globalData.logoutFlag) {
+  showStatusToast() {
+    if (app.globalData.loginFlag) {
+      app.globalData.loginFlag = false;
+      setTimeout(() => wx.showToast({ title: '已登录', icon: 'success' }), 500);
+    } else if (app.globalData.logoutFlag) {
       app.globalData.logoutFlag = false;
       setTimeout(() => wx.showToast({ title: '已退出登录', icon: 'success' }), 500);
     }
