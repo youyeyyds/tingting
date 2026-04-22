@@ -38,7 +38,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.fixImageUrl(h.image)
+          image: this.processImageUrl(h.image)
         }));
         app.globalData.loginHeadlines = headlines;
         this.setData({
@@ -66,7 +66,7 @@ Page({
     }).catch(err => console.error('获取版权信息失败', err));
   },
 
-  fixImageUrl(url) {
+  processImageUrl(url) {
     if (!url) return url;
     const loadTime = app.globalData.bannerLoadTime;
 

@@ -102,14 +102,14 @@ Page({
 
     if (bt !== this.data.bannerTime) {
       const headlines = this.data.headlines.map(h => ({
-        ...h, image: this.fixUrl(h.image, bt, 'banner')
+        ...h, image: this.processUrl(h.image, bt, 'banner')
       }));
       this.setData({ bannerTime: bt, headlines });
     }
 
     if (ct !== this.data.coverTime) {
       const courses = this.data.courses.map(c => ({
-        ...c, cover: this.fixUrl(c.cover, ct, 'cover')
+        ...c, cover: this.processUrl(c.cover, ct, 'cover')
       }));
       this.setData({ coverTime: ct, courses });
       this.maskCourses();
@@ -123,7 +123,7 @@ Page({
     }
   },
 
-  fixUrl(url, time, type) {
+  processUrl(url, time, type) {
     if (!url || url.includes('seed/fixed_')) return url;
     const t = time || this.data[type === 'banner' ? 'bannerTime' : 'coverTime'];
 
@@ -176,7 +176,7 @@ Page({
       data: { type: 'getHeadlines', page: 'index' }
     }).then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({ ...h, image: this.fixUrl(h.image, null, 'banner') }));
+        const headlines = res.result.data.map(h => ({ ...h, image: this.processUrl(h.image, null, 'banner') }));
         app.globalData.indexHeadlines = headlines;
         this.setData({
           headlines,
@@ -194,7 +194,7 @@ Page({
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
     }).then(res => {
       if (res.result.success) {
-        const courses = res.result.data.map(c => ({ ...c, cover: this.fixUrl(c.cover, null, 'cover') }));
+        const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
         app.globalData.indexCourses = courses;
         this.setData({ courses, loading: false });
         this.maskCourses();
