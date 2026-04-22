@@ -1,7 +1,7 @@
 <!--chapter.wxml-->
 <view class="page-container">
   <!-- 内容区域 -->
-  <scroll-view class="content-scroll" scroll-y="true" enhanced="true" style="height: {{scrollHeight}}px;">
+  <scroll-view class="content-scroll" scroll-y="true" enhanced="true" bounces="{{true}}" style="height: {{scrollHeight}}px;">
     <view class="content-inner">
       <!-- 课程信息区 -->
       <view class="course-info-section">
