@@ -24,7 +24,17 @@
         </swiper-item>
       </swiper>
 
-      <view class="course-card {{index === 0 && headlines.length === 0 ? 'first-card' : ''}}" wx:for="{{courses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onCourseTap">
+      <!-- 骨架屏加载状态 -->
+      <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this" wx:if="{{loading}}">
+        <view class="skeleton-image"></view>
+        <view class="skeleton-info">
+          <view class="skeleton-title"></view>
+          <view class="skeleton-author"></view>
+          <view class="skeleton-meta"></view>
+        </view>
+      </view>
+
+      <view class="course-card {{index === 0 && headlines.length === 0 ? 'first-card' : ''}}" wx:for="{{courses}}" wx:key="_id" data-id="{{item._id}}" bindtap="onCourseTap" wx:if="{{!loading}}">
         <image class="course-image" src="{{item.cover}}" mode="aspectFill" />
         <view class="course-info">
           <view class="course-title">{{item.title}}</view>

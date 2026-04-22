@@ -80,9 +80,24 @@ Page({
   },
 
   initCache() {
-    const headlines = app.globalData.indexHeadlines || [];
-    const courses = app.globalData.indexCourses || [];
-    this.setData({ headlines, courses });
+    // 优先从本地存储读取缓存，避免空白页
+    let headlines = app.globalData.indexHeadlines;
+    let courses = app.globalData.indexCourses;
+
+    if (!headlines?.length) {
+      headlines = wx.getStorageSync('indexHeadlines') || [];
+      app.globalData.indexHeadlines = headlines;
+    }
+    if (!courses?.length) {
+      courses = wx.getStorageSync('indexCourses') || [];
+      app.globalData.indexCourses = courses;
+    }
+
+    this.setData({
+      headlines,
+      courses,
+      loading: !courses.length // 有缓存则不显示loading
+    });
 
     if (!headlines.length) this.loadHeadlines();
     else this.maskCourses();
@@ -178,6 +193,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({ ...h, image: this.processUrl(h.image, null, 'banner') }));
         app.globalData.indexHeadlines = headlines;
+        wx.setStorageSync('indexHeadlines', headlines);
         this.setData({
           headlines,
           bannerSpeed: (res.result.speed || 5) * 1000,
@@ -196,6 +212,7 @@ Page({
       if (res.result.success) {
         const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
         app.globalData.indexCourses = courses;
+        wx.setStorageSync('indexCourses', courses);
         this.setData({ courses, loading: false });
         this.maskCourses();
       } else {
