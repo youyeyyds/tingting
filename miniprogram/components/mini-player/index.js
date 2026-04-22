@@ -142,6 +142,18 @@ Component({
         return;
       }
 
+      // 延迟一小段时间确保 bgAudioManager 状态准备好
+      setTimeout(() => this.showMiniPlayer(isTabBarPage), 100);
+    },
+  },
+
+  methods: {
+    showMiniPlayer(isTabBarPage) {
+      if (!app.globalData.miniPlayerActive) {
+        this.setData({ visible: false, fadeInClass: '', showPlayerPanel: false });
+        return;
+      }
+
       // 获取封面时间戳
       if (!app.globalData.coverLoadTime) {
         app.globalData.coverLoadTime = Date.now();
@@ -195,10 +207,8 @@ Component({
       if (data.isPlaying) {
         this.startCoverRotation();
       }
-    }
-  },
+    },
 
-  methods: {
     calcPosition() {
       const pages = getCurrentPages();
       const route = pages[pages.length - 1]?.route || '';

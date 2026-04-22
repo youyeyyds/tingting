@@ -31,26 +31,23 @@ App({
   },
 
   restorePlayState() {
-    // 检查背景音频是否正在播放
-    if (this.bgAudioManager && !this.bgAudioManager.paused && this.bgAudioManager.src) {
-      // 从缓存恢复播放状态
-      const playingCourseStr = wx.getStorageSync('playingCourse');
-      const playingChapterStr = wx.getStorageSync('playingChapter');
-      const playingIndex = wx.getStorageSync('playingIndex');
-      const playlistSortOrder = wx.getStorageSync('playlistSortOrder');
-      const playMode = wx.getStorageSync('playMode');
+    // 从缓存恢复播放状态（只要有缓存数据就恢复）
+    const playingCourseStr = wx.getStorageSync('playingCourse');
+    const playingChapterStr = wx.getStorageSync('playingChapter');
+    const playingIndex = wx.getStorageSync('playingIndex');
+    const playlistSortOrder = wx.getStorageSync('playlistSortOrder');
+    const playMode = wx.getStorageSync('playMode');
 
-      if (playingCourseStr && playingChapterStr) {
-        try {
-          this.globalData.playingCourse = JSON.parse(playingCourseStr);
-          this.globalData.playingChapter = JSON.parse(playingChapterStr);
-          this.globalData.playingIndex = playingIndex || 0;
-          this.globalData.playlistSortOrder = playlistSortOrder || 'asc';
-          this.globalData.playMode = playMode || 'sequence';
-          this.globalData.miniPlayerActive = true;
-        } catch (e) {
-          console.error('恢复播放状态失败:', e);
-        }
+    if (playingCourseStr && playingChapterStr) {
+      try {
+        this.globalData.playingCourse = JSON.parse(playingCourseStr);
+        this.globalData.playingChapter = JSON.parse(playingChapterStr);
+        this.globalData.playingIndex = playingIndex || 0;
+        this.globalData.playlistSortOrder = playlistSortOrder || 'asc';
+        this.globalData.playMode = playMode || 'sequence';
+        this.globalData.miniPlayerActive = true;
+      } catch (e) {
+        console.error('恢复播放状态失败:', e);
       }
     }
   },
