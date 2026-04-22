@@ -66,7 +66,7 @@
 
     <!-- 底部文案 -->
     <view class="list-footer" wx:if="{{filteredChapters.length > 0}}">
-      <text class="footer-text">随时随地，学习成长</text>
+      <text class="footer-text">— 随时随地，学习成长 —</text>
     </view>
   </view>
 </view>
