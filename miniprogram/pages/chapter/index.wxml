@@ -56,7 +56,7 @@
         </block>
         <image class="action-icon" src="{{item.isFavorite ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" data-id="{{item._id}}" catchtap="onFavoriteTap" />
       </view>
-      <view class="chapter-divider" wx:if="{{index < filteredChapters.length - 1}}"></view>
+      <view class="chapter-divider" wx:if="{{index < filteredChapters.length}}"></view>
     </view>
 
     <!-- 空状态 -->
