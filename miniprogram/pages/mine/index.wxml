@@ -1,8 +1,12 @@
 <!--mine/index.wxml-->
 <view class="page-container {{pageAnimating ? 'page-exit' : ''}}">
-  <scroll-view class="content" scroll-y="true" enhanced="true"
-    style="height: calc(100vh - 30px);"
-    refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
+  <!-- 自定义导航栏标题 -->
+  <view class="nav-header">
+    <text class="nav-title">我的</text>
+  </view>
+
+  <!-- 内容区域，使用原生页面滚动 -->
+  <view class="content">
     <!-- 头条轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">
@@ -14,7 +18,7 @@
 
     <!-- 用户信息 -->
     <view class="user-card">
-      <image class="avatar" src="{{userInfo.avatarUrl || 'https://picsum.photos/seed/avatar/200/200'}}" mode="aspectFill" />
+      <image class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
       <text class="nickname">{{userInfo.nickName || '用户'}}</text>
       <text class="phone">{{maskedPhone}}</text>
       <view class="edit-btn" bindtap="handleEdit">
@@ -86,7 +90,7 @@
     <view class="logout-section">
       <button class="logout-btn" bindtap="handleLogout">退出登录</button>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 底部导航栏 -->
   <view class="tab-bar">

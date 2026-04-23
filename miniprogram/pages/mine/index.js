@@ -11,7 +11,6 @@ Page({
     stats: {
       learnedCourses: 0,
       graduatedCourses: 0,
-      finishedCount: 0,
       favoriteCount: 0,
       totalPlayCount: 0,
       totalStudyMinutes: 0,
@@ -20,7 +19,6 @@ Page({
     studyTime: { days: 0, hours: 0, mins: 0 }, // 学习时长拆分
     joinedTime: { days: 0, hours: 0, mins: 0 }, // 加入听听拆分
     loading: false,
-    refresherTriggered: false,
     loadTime: 0, // 横幅时间戳
     bannerSpeed: 5000 // 轮播速度
   },
@@ -32,13 +30,6 @@ Page({
     const hours = Math.floor((minutes % (24 * 60)) / 60);
     const mins = minutes % 60;
     return { days, hours, mins };
-  },
-
-  // 刷新头像URL（添加时间戳避免缓存过期）
-  refreshAvatarUrl(avatar) {
-    if (!avatar) return '/icons/svg/avatar.svg';
-    const t = this.data.loadTime;
-    return avatar.includes('?') ? `${avatar}&t=${t}` : `${avatar}?t=${t}`;
   },
 
   // 计算隐藏手机号中间5位
@@ -124,55 +115,8 @@ Page({
     }
   },
 
-  onRefresh() {
-    // 更新全局横幅时间戳和清除所有横幅缓存，刷新图片（封面不变）
-    const newLoadTime = Date.now();
-    app.globalData.bannerLoadTime = newLoadTime;
-    app.globalData.indexHeadlines = [];
-    app.globalData.loginHeadlines = [];
-    app.globalData.favoriteHeadlines = [];
-    app.globalData.mineHeadlines = [];
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
-    this.checkLoginStatus();
-    this.loadHeadlines();
-    if (this.data.isLoggedIn && app.globalData.userId) {
-      this.loadUserStatsAsync().then(() => {
-        this.setData({ refresherTriggered: false });
-      });
-    } else {
-      this.setData({ refresherTriggered: false });
-    }
-  },
-
-  loadUserStatsAsync() {
-    if (!app.globalData.userId) {
-      return Promise.resolve();
-    }
-
-    return wx.cloud.callFunction({
-      name: 'userFunctions',
-      data: {
-        type: 'getUserStats',
-        userId: app.globalData.userId
-      }
-    })
-    .then(res => {
-      if (res.result.success) {
-        const stats = res.result.data;
-        const studyTime = this.formatMinutesToObj(stats.totalStudyMinutes || 0);
-        const joinedTime = this.formatMinutesToObj(stats.joinedMinutes || 0);
-        this.setData({
-          stats: stats,
-          studyTime: studyTime,
-          joinedTime: joinedTime
-        });
-      }
-    })
-    .catch(err => {
-      console.error('获取用户统计失败:', err);
-    });
-  },
-
+  
+  
   loadHeadlines() {
     wx.cloud.callFunction({
       name: 'courseFunctions',
@@ -319,10 +263,6 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
-  },
-
-  handleLogin() {
-    wx.navigateTo({ url: '/pages/login/index' });
   },
 
   handleEdit() {

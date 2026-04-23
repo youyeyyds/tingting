@@ -6,7 +6,6 @@ Page({
     isLoggedIn: false,
     favoriteChapters: [],
     headlines: [],
-    refresherTriggered: false,
     loadTime: 0, // 横幅时间戳
     coverLoadTime: 0, // 封面时间戳（只在首页刷新才更新）
     bannerSpeed: 5000,
@@ -103,52 +102,8 @@ Page({
     }
   },
 
-  onRefresh() {
-    // 更新全局横幅时间戳和清除所有横幅缓存，刷新图片（封面不变）
-    const newLoadTime = Date.now();
-    app.globalData.bannerLoadTime = newLoadTime;
-    app.globalData.indexHeadlines = [];
-    app.globalData.loginHeadlines = [];
-    app.globalData.favoriteHeadlines = [];
-    app.globalData.mineHeadlines = [];
-    this.setData({ refresherTriggered: true, loadTime: newLoadTime, headlines: [] });
-    this.checkLoginStatus();
-    this.loadHeadlines();
-    if (this.data.isLoggedIn && app.globalData.userId) {
-      this.loadFavoritesAsync().then(() => {
-        this.setData({ refresherTriggered: false });
-      });
-    } else {
-      this.setData({ refresherTriggered: false });
-    }
-  },
-
-  loadFavoritesAsync() {
-    if (!app.globalData.userId) {
-      this.setData({ favoriteChapters: [] });
-      return Promise.resolve();
-    }
-
-    return wx.cloud.callFunction({
-      name: 'userFunctions',
-      data: {
-        type: 'getUserStats',
-        userId: app.globalData.userId
-      }
-    })
-    .then(res => {
-      if (res.result.success) {
-        const favorites = res.result.data.favoriteChapters || [];
-        this.setData({
-          favoriteChapters: favorites.map(ch => this.formatChapter(ch))
-        });
-      }
-    })
-    .catch(err => {
-      console.error('获取收藏失败:', err);
-    });
-  },
-
+  
+  
   loadHeadlines() {
     wx.cloud.callFunction({
       name: 'courseFunctions',
@@ -332,22 +287,8 @@ Page({
     }
   },
 
-  // 点击卡片播放
+  // 点击卡片或播放按钮
   onChapterTap(e) {
-    const index = e.currentTarget.dataset.index;
-    const chapter = this.data.favoriteChapters[index];
-
-    // 如果点击的是正在播放的章节，切换播放/暂停
-    if (chapter.isPlaying) {
-      const miniPlayer = this.selectComponent('#miniPlayer');
-      if (miniPlayer) miniPlayer.togglePlayPause();
-    } else {
-      this.playFavoriteList(index);
-    }
-  },
-
-  // 点击播放按钮
-  onPlayTap(e) {
     const index = e.currentTarget.dataset.index;
     const chapter = this.data.favoriteChapters[index];
 
