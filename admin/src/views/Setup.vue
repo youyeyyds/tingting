@@ -114,35 +114,6 @@ async function handleTest() {
     return
   }
 
-  // 清除之前的计时器
-  if (testClickTimer.value) {
-    clearTimeout(testClickTimer.value)
-  }
-
-  // 记录点击次数（先计数，再验证）
-  testClickCount.value++
-
-  // 10秒内点击超过5次
-  if (testClickCount.value > 5) {
-    connectionStatus.value = { type: 'warning', text: '都TM连接正常了，还按！' }
-    testCooldown.value = true
-    testing.value = true  // 让按钮显示 loading 状态
-    testClickCount.value = 0
-
-    // 10秒后恢复
-    setTimeout(() => {
-      testCooldown.value = false
-      testing.value = false
-      connectionStatus.value = null
-    }, 10000)
-    return
-  }
-
-  // 10秒内没有继续点击，重置计数
-  testClickTimer.value = setTimeout(() => {
-    testClickCount.value = 0
-  }, 10000)
-
   try {
     await formRef.value.validate()
   } catch {
@@ -161,11 +132,43 @@ async function handleTest() {
     })
     if (result.success) {
       connectionStatus.value = { type: 'success', text: '连接成功' }
+
+      // 成功连通后才开始计算点击次数
+      // 清除之前的计时器
+      if (testClickTimer.value) {
+        clearTimeout(testClickTimer.value)
+      }
+
+      // 记录点击次数
+      testClickCount.value++
+
+      // 10秒内点击超过5次（含首次成功）
+      if (testClickCount.value >= 5) {
+        connectionStatus.value = { type: 'warning', text: '都TM连接正常了，还按！' }
+        testCooldown.value = true
+        testing.value = true  // 让按钮显示 loading 状态
+        testClickCount.value = 0
+
+        // 10秒后恢复
+        setTimeout(() => {
+          testCooldown.value = false
+          testing.value = false
+          connectionStatus.value = { type: 'success', text: '连接成功' }
+        }, 10000)
+        return
+      }
+
+      // 10秒内没有继续点击，重置计数
+      testClickTimer.value = setTimeout(() => {
+        testClickCount.value = 0
+      }, 10000)
     } else {
       connectionStatus.value = { type: 'danger', text: '连接失败' }
+      testClickCount.value = 0 // 失败时重置计数
     }
   } catch (err) {
     connectionStatus.value = { type: 'danger', text: '连接失败' }
+    testClickCount.value = 0 // 失败时重置计数
   } finally {
     testing.value = false
   }

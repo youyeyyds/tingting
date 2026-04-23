@@ -256,13 +256,14 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-.playlist-icon {
+/* 播放控制面板播放列表图标，gap为8rpx */
+.player-container .playlist-icon {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
 }
 
-.list-bar {
+.player-container .list-bar {
   width: 40rpx;
   height: 5rpx;
   background: rgba(255, 255, 255, 0.7);

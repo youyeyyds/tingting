@@ -102,7 +102,7 @@
           />
         </el-form-item>
         <el-form-item label="备案号">
-          <el-input v-model="icpNumber" placeholder="如：粤ICP备2026041617号-1X" />
+          <el-input v-model="icpNumber" placeholder="" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="saveCopyright">保存</el-button>

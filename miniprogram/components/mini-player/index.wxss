@@ -91,14 +91,15 @@
   flex-shrink: 0;
 }
 
-.playlist-icon {
+/* 迷你播放器播放列表图标，gap为5rpx */
+.mini-player .playlist-icon {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5rpx;
 }
 
-.playlist-line {
+.mini-player .playlist-line {
   width: 22rpx;
   height: 5rpx;
   background: #999;
