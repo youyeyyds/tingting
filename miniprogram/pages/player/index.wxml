@@ -3,6 +3,12 @@
 <custom-navbar />
 
 <view class="player-container">
+  <!-- 背景图（封面图模糊） -->
+  <image class="bg-cover" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+
+  <!-- 深色毛玻璃遮罩 -->
+  <view class="bg-overlay"></view>
+
   <!-- 封面图 -->
   <view class="cover-section">
     <image class="cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{coverRotationAngle}}deg);" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
