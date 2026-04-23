@@ -234,3 +234,63 @@
   background: #f0f0f0;
   border-radius: 4rpx;
 }
+
+/* 退出登录确认弹窗 */
+.confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-content {
+  position: relative;
+  width: 480rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 56rpx 32rpx 48rpx;
+  text-align: center;
+}
+
+.confirm-text {
+  font-size: 32rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 56rpx;
+}
+
+.confirm-btn {
+  padding: 20rpx 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+.confirm-btn.cancel {
+  background: #f5f5f5;
+  color: #FF6B00;
+}
+
+.confirm-btn.confirm {
+  background: #FF6B00;
+  color: #fff;
+}

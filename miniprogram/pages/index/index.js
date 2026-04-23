@@ -43,7 +43,8 @@ Page({
     refreshing: false,
     maskedAuthors: {},
     bannerTime: 0,
-    coverTime: 0
+    coverTime: 0,
+    logoutConfirmVisible: false // 退出登录确认弹窗
   },
 
   onLoad() {
@@ -259,8 +260,53 @@ Page({
   },
 
   handleLogin() {
-    const url = this.data.isLoggedIn ? '/pages/mine/index' : '/pages/login/index';
-    wx.navigateTo({ url });
+    if (this.data.isLoggedIn) {
+      // 已登录，显示退出确认弹窗
+      this.setData({ logoutConfirmVisible: true });
+    } else {
+      // 未登录，跳转到登录页
+      wx.navigateTo({ url: '/pages/login/index' });
+    }
+  },
+
+  // 取消退出登录
+  onLogoutCancel() {
+    this.setData({ logoutConfirmVisible: false });
+  },
+
+  // 确认退出登录
+  onLogoutConfirm() {
+    this.setData({ logoutConfirmVisible: false });
+
+    // 标记退出登录，用于首页显示提示
+    app.globalData.logoutFlag = true;
+
+    // 停止播放器并清空播放状态
+    app.bgAudioManager.stop();
+    app.globalData.miniPlayerActive = false;
+    app.globalData.miniPlayerIndexFadedIn = false;
+    app.globalData.playingCourse = null;
+    app.globalData.playingChapter = null;
+    app.globalData.playingIndex = 0;
+    app.globalData.playlistChaptersData = [];
+    app.globalData.favoriteChapters = [];
+    app.globalData.playMode = 'sequence';
+    app.globalData.playlistSortOrder = 'asc';
+    app.notifyCallbacks?.('onClose', {});
+
+    // 清除登录状态
+    app.globalData.isLoggedIn = false;
+    app.globalData.userInfo = null;
+    app.globalData.userId = null;
+    wx.removeStorageSync('userId');
+    wx.removeStorageSync('userInfo');
+
+    // 刷新当前页面状态
+    this.setData({ isLoggedIn: false });
+    this.maskCourses();
+
+    // 显示退出提示
+    setTimeout(() => wx.showToast({ title: '已登出', icon: 'success' }), 300);
   },
 
   onCourseTap(e) {

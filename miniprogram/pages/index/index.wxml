@@ -73,3 +73,15 @@
   <!-- 迷你播放器 -->
   <mini-player id="miniPlayer" />
 </view>
+
+<!-- 退出登录确认弹窗 -->
+<view wx:if="{{logoutConfirmVisible}}" class="confirm-modal">
+  <view class="confirm-mask" catchtap="onLogoutCancel"></view>
+  <view class="confirm-content">
+    <text class="confirm-text">确定要退出登录吗？</text>
+    <view class="confirm-buttons">
+      <view class="confirm-btn cancel" catchtap="onLogoutCancel">取消</view>
+      <view class="confirm-btn confirm" catchtap="onLogoutConfirm">确定</view>
+    </view>
+  </view>
+</view>
