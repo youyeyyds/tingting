@@ -1,4 +1,7 @@
 {
   "navigationStyle": "custom",
-  "usingComponents": {}
+  "navigationBarTextStyle": "white",
+  "usingComponents": {
+    "custom-navbar": "/components/custom-navbar/index"
+  }
 }
