@@ -2,12 +2,19 @@
 <!-- 自定义导航栏 -->
 <custom-navbar />
 
-<view class="player-container">
-  <!-- 背景图（竖屏比例封面，毛玻璃效果） -->
-  <image class="bg-cover" src="{{bgCover || courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+<!-- 背景图层（独立容器，z-index最低） -->
+<view class="bg-layer">
+  <!-- 先显示已有封面图作为背景 -->
+  <image class="bg-cover {{bgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" bindload="onBgCoverLoad" />
 
-  <!-- 轻量遮罩，保持原图色彩 -->
+  <!-- 竖屏比例背景图（加载完成后覆盖） -->
+  <image class="bg-cover-portrait {{bgPortraitLoaded ? 'loaded' : ''}}" src="{{bgCover}}" mode="aspectFill" bindload="onBgPortraitLoad" wx:if="{{bgCover}}" />
+
+  <!-- 遮罩层 -->
   <view class="bg-overlay"></view>
+</view>
+
+<view class="player-container">
 
   <!-- 封面图 -->
   <view class="cover-section">

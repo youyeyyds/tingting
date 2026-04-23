@@ -5,6 +5,8 @@ Page({
   data: {
     courseCover: '',
     bgCover: '', // 竖屏比例背景图
+    bgCoverLoaded: false, // 封面背景加载状态
+    bgPortraitLoaded: false, // 竖屏背景加载状态
     courseTitle: '',
     courseAuthor: '',
     chapterCount: 0,
@@ -154,6 +156,15 @@ Page({
     this.stopCoverRotation();
   },
   onEnded() { this.playNext(); },
+
+  // 背景图加载回调
+  onBgCoverLoad() {
+    this.setData({ bgCoverLoaded: true });
+  },
+
+  onBgPortraitLoad() {
+    this.setData({ bgPortraitLoaded: true });
+  },
 
   updateProgress() {
     const { currentTime, duration, showTotalTime } = this.data;
