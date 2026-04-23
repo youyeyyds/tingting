@@ -315,11 +315,11 @@ Page({
       return;
     }
     if (index == 0) {
-      // 点击首页，返回上一页（首页）
+      // 点击首页，返回到首页
       wx.navigateBack();
     } else {
-      // 点击收藏，替换当前页
-      wx.redirectTo({ url: '/pages/favorite/index' });
+      // 点击收藏，导航到收藏页
+      wx.navigateTo({ url: '/pages/favorite/index' });
     }
   }
 });

@@ -412,8 +412,8 @@ Page({
       // 点击首页，返回上一页（首页）
       wx.navigateBack();
     } else {
-      // 点击我的，替换当前页
-      wx.redirectTo({ url: '/pages/mine/index' });
+      // 点击我的，导航到我的页
+      wx.navigateTo({ url: '/pages/mine/index' });
     }
   }
 });
