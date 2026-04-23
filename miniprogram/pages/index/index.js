@@ -278,9 +278,6 @@ Page({
   onLogoutConfirm() {
     this.setData({ logoutConfirmVisible: false });
 
-    // 标记退出登录，用于首页显示提示
-    app.globalData.logoutFlag = true;
-
     // 停止播放器并清空播放状态
     app.bgAudioManager.stop();
     app.globalData.miniPlayerActive = false;
@@ -305,8 +302,8 @@ Page({
     this.setData({ isLoggedIn: false });
     this.maskCourses();
 
-    // 显示退出提示
-    setTimeout(() => wx.showToast({ title: '已登出', icon: 'success' }), 300);
+    // 显示退出提示（不设置 logoutFlag，避免切回首页时重复显示）
+    setTimeout(() => wx.showToast({ title: '已退出登录', icon: 'success' }), 300);
   },
 
   onCourseTap(e) {

@@ -20,7 +20,8 @@ Page({
     joinedTime: { days: 0, hours: 0, mins: 0 }, // 加入听听拆分
     loading: false,
     loadTime: 0, // 横幅时间戳
-    bannerSpeed: 5000 // 轮播速度
+    bannerSpeed: 5000, // 轮播速度
+    activeTab: 2 // 我的页为 tab 2
   },
 
   // 格式化分钟数，返回拆分后的对象

@@ -9,7 +9,8 @@ Page({
     loadTime: 0, // 横幅时间戳
     coverLoadTime: 0, // 封面时间戳（只在首页刷新才更新）
     bannerSpeed: 5000,
-    loading: true
+    loading: true,
+    activeTab: 1 // 收藏页为 tab 1
   },
 
   onLoad() {
