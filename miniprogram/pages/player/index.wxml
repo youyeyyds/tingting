@@ -3,10 +3,10 @@
 <custom-navbar />
 
 <view class="player-container">
-  <!-- 背景图（封面图模糊） -->
-  <image class="bg-cover" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+  <!-- 背景图（竖屏比例封面，毛玻璃效果） -->
+  <image class="bg-cover" src="{{bgCover || courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
 
-  <!-- 深色毛玻璃遮罩 -->
+  <!-- 轻量遮罩，保持原图色彩 -->
   <view class="bg-overlay"></view>
 
   <!-- 封面图 -->

@@ -4,6 +4,7 @@ const app = getApp();
 Page({
   data: {
     courseCover: '',
+    bgCover: '', // 竖屏比例背景图
     courseTitle: '',
     courseAuthor: '',
     chapterCount: 0,
@@ -39,9 +40,11 @@ Page({
     const coverLoadTime = app.globalData.coverLoadTime || Date.now();
     const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
     const courseCover = this.processImageUrl(playingCourse?.cover || '', coverLoadTime);
+    const bgCover = this.generateBgCoverUrl(playingCourse?.cover || '', coverLoadTime);
 
     this.setData({
       courseCover,
+      bgCover,
       courseTitle: playingCourse?.title || '',
       courseAuthor: playingCourse?.author || '',
       chapterCount: playingCourse?.chapterCount || playlistChaptersData?.length || 0,
@@ -84,6 +87,34 @@ Page({
     if (m3) {
       const r = url.match(/random=(\d+)/)?.[1] || '0';
       return `https://picsum.photos/seed/${t}_cover_${r}/${m3[1]}`;
+    }
+
+    return url;
+  },
+
+  // 生成竖屏比例背景图URL（用于毛玻璃背景）
+  generateBgCoverUrl(url, coverLoadTime) {
+    if (!url) return url;
+    const t = coverLoadTime || app.globalData.coverLoadTime || Date.now();
+
+    // 如果是固定图片，直接返回
+    if (url.includes('seed/fixed_')) return url;
+
+    // picsum.photos 竖屏比例：750x1200 (约 9:16 竖屏比例)
+    if (url.includes('picsum.photos')) {
+      // 提取 seed 信息
+      const seedMatch = url.match(/seed\/([^\/]+)/);
+      let seed = '';
+      if (seedMatch) {
+        // 如果已经有时间戳格式，提取原始seed
+        const timeSeedMatch = seedMatch[1].match(/\d+_cover_(.+)/);
+        seed = timeSeedMatch ? timeSeedMatch[1] : seedMatch[1];
+      } else {
+        // 尝试从 random 参数提取
+        const randomMatch = url.match(/random=(\d+)/);
+        seed = randomMatch ? randomMatch[1] : '0';
+      }
+      return `https://picsum.photos/seed/${t}_bg_${seed}/750/1200`;
     }
 
     return url;
