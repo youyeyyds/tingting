@@ -1,10 +1,5 @@
 <!--favorite/index.wxml-->
 <view class="page-container">
-  <!-- 自定义导航栏标题 -->
-  <view class="nav-header">
-    <text class="nav-title">收藏</text>
-  </view>
-
   <!-- 内容区域，使用原生页面滚动 -->
   <view class="content">
     <!-- 头条轮播 -->

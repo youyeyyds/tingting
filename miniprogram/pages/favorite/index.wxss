@@ -7,31 +7,9 @@
   flex-direction: column;
 }
 
-/* 自定义导航栏 */
-.nav-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  padding-top: env(safe-area-inset-top, 0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  z-index: 100;
-}
-
-.nav-title {
-  font-size: 17px;
-  color: #333;
-  font-weight: 500;
-}
-
 /* 内容区域 */
 .content {
   flex: 1;
-  padding-top: calc(44px + env(safe-area-inset-top, 0));
   padding-bottom: calc(100rpx + env(safe-area-inset-bottom, 0));
 }
 
