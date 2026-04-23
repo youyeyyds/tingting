@@ -86,7 +86,12 @@ App({
     homePageMaskedAuthors: null, // 首页随机作者映射，保持稳定
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
-    defaultCoverUrl: null // 默认封面URL
+    defaultCoverUrl: null, // 默认封面URL
+    indexHeadlines: [], // 首页横幅缓存
+    loginHeadlines: [], // 登录页横幅缓存
+    favoriteHeadlines: [], // 收藏页横幅缓存
+    mineHeadlines: [], // 我的页横幅缓存
+    favoriteChapters: [] // 收藏章节缓存
   },
 
   restoreLoginState() {

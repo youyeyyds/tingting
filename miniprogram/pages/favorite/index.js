@@ -22,19 +22,22 @@ Page({
     }
     const loadTime = app.globalData.bannerLoadTime;
     const coverLoadTime = app.globalData.coverLoadTime;
-    // 检查是否有缓存的横幅数据
+    // 检查是否有缓存的横幅数据和收藏数据
     const cachedHeadlines = app.globalData.favoriteHeadlines || [];
+    const cachedFavorites = app.globalData.favoriteChapters || [];
     this.setData({
       loadTime: loadTime,
       coverLoadTime: coverLoadTime,
-      headlines: cachedHeadlines
+      headlines: cachedHeadlines,
+      favoriteChapters: cachedFavorites,
+      loading: cachedFavorites.length > 0 ? false : true
     });
     this.checkLoginStatus();
-    // 只在首次加载（无缓存）时获取横幅数据
+    // 只在首次加载（无缓存）时获取数据
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
     }
-    if (this.data.isLoggedIn && this.data.favoriteChapters.length === 0) {
+    if (this.data.isLoggedIn && cachedFavorites.length === 0) {
       this.loadFavorites();
     }
 
@@ -42,12 +45,12 @@ Page({
     this.audioCallback = {
       onChapterChange: (data) => {
         const { chapterId } = data;
-        this.setData({
-          favoriteChapters: this.data.favoriteChapters.map(ch => ({
-            ...ch,
-            isPlaying: ch._id === chapterId
-          }))
-        });
+        const favoriteChapters = this.data.favoriteChapters.map(ch => ({
+          ...ch,
+          isPlaying: ch._id === chapterId
+        }));
+        this.setData({ favoriteChapters });
+        app.globalData.favoriteChapters = favoriteChapters;
       },
       onProgressUpdate: (data) => {
         const { chapterId, lastPlayTime, finished } = data;
@@ -72,16 +75,17 @@ Page({
           return ch;
         });
         this.setData({ favoriteChapters });
+        app.globalData.favoriteChapters = favoriteChapters;
       },
       onClose: () => {
-        this.setData({
-          favoriteChapters: this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }))
-        });
+        const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }));
+        this.setData({ favoriteChapters });
+        app.globalData.favoriteChapters = favoriteChapters;
       },
       onStop: () => {
-        this.setData({
-          favoriteChapters: this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }))
-        });
+        const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }));
+        this.setData({ favoriteChapters });
+        app.globalData.favoriteChapters = favoriteChapters;
       }
     };
     app.registerMiniPlayer(this.audioCallback);
@@ -95,10 +99,8 @@ Page({
   onShow() {
     this.checkLoginStatus();
     // 切换页面时不重新加载，保持原有数据
-    if (this.data.isLoggedIn && app.globalData.userId) {
-      if (this.data.favoriteChapters.length === 0) {
-        this.loadFavorites();
-      }
+    if (this.data.isLoggedIn && app.globalData.userId && this.data.favoriteChapters.length === 0) {
+      this.loadFavorites();
     }
   },
 
@@ -213,6 +215,7 @@ Page({
   async loadFavorites() {
     if (!app.globalData.userId) {
       this.setData({ favoriteChapters: [], loading: false });
+      app.globalData.favoriteChapters = [];
       return;
     }
 
@@ -227,10 +230,13 @@ Page({
 
       if (res.result.success) {
         const favorites = res.result.data.favoriteChapters || [];
+        const formattedFavorites = favorites.map(ch => this.formatChapter(ch));
         this.setData({
-          favoriteChapters: favorites.map(ch => this.formatChapter(ch)),
+          favoriteChapters: formattedFavorites,
           loading: false
         });
+        // 缓存到全局变量
+        app.globalData.favoriteChapters = formattedFavorites;
       }
     } catch (err) {
       console.error('获取收藏失败:', err);
@@ -382,10 +388,11 @@ Page({
       });
 
       if (res.result.success) {
-        // 从本地列表中移除
+        // 从本地列表和全局缓存中移除
         const favoriteChapters = this.data.favoriteChapters;
         favoriteChapters.splice(index, 1);
         this.setData({ favoriteChapters });
+        app.globalData.favoriteChapters = favoriteChapters;
 
         wx.showToast({ title: '已取消收藏', icon: 'success' });
       } else {
