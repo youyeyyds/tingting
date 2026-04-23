@@ -28,6 +28,23 @@ App({
 
     // 尝试恢复播放状态
     this.restorePlayState();
+
+    // 加载默认封面
+    this.loadDefaultCover();
+  },
+
+  // 加载默认封面
+  loadDefaultCover() {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getDefaultCover' }
+    }).then(res => {
+      if (res.result.success && res.result.data.coverUrl) {
+        this.globalData.defaultCoverUrl = res.result.data.coverUrl;
+      }
+    }).catch(err => {
+      console.error('加载默认封面失败:', err);
+    });
   },
 
   restorePlayState() {
@@ -68,7 +85,8 @@ App({
     homePageLoadTime: null, // 首页图片加载时间戳，保持稳定
     homePageMaskedAuthors: null, // 首页随机作者映射，保持稳定
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
-    coverLoadTime: null // 封面加载时间戳，保持稳定
+    coverLoadTime: null, // 封面加载时间戳，保持稳定
+    defaultCoverUrl: null // 默认封面URL
   },
 
   restoreLoginState() {

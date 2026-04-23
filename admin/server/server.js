@@ -26,6 +26,7 @@ const CLOUD_PATH_PREFIX = 'audio/';
 // 本地头像存储路径
 const AVATAR_LOCAL_PATH = path.join(__dirname, 'uploads', 'avatars');
 const UPLOADS_PATH = path.join(__dirname, 'uploads');
+const COVER_LOCAL_PATH = path.join(__dirname, 'uploads', 'covers');
 
 // ========== 初始化 ==========
 
@@ -37,6 +38,9 @@ if (!fs.existsSync(UPLOADS_PATH)) {
 }
 if (!fs.existsSync(AVATAR_LOCAL_PATH)) {
   fs.mkdirSync(AVATAR_LOCAL_PATH, { recursive: true });
+}
+if (!fs.existsSync(COVER_LOCAL_PATH)) {
+  fs.mkdirSync(COVER_LOCAL_PATH, { recursive: true });
 }
 
 // 配置 multer 正确处理中文文件名（使用绝对路径）
@@ -80,6 +84,35 @@ const avatarUpload = multer({
       cb(null, true);
     } else {
       cb(new Error('只支持 JPG/PNG/WebP 格式的图片'));
+    }
+  }
+});
+
+// 默认封面上传专用配置
+const coverStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(COVER_LOCAL_PATH)) {
+      fs.mkdirSync(COVER_LOCAL_PATH, { recursive: true });
+    }
+    cb(null, COVER_LOCAL_PATH);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(Buffer.from(file.originalname, 'latin1').toString('utf8'));
+    cb(null, `default_cover_${Date.now()}${ext}`);
+  }
+});
+
+const coverUpload = multer({
+  storage: coverStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024  // 限制5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('只支持 JPG/PNG/WebP/GIF 格式的图片'));
     }
   }
 });
@@ -177,6 +210,40 @@ app.use('/avatars', async (req, res, next) => {
 
 // 静态文件服务：头像目录
 app.use('/avatars', express.static(AVATAR_LOCAL_PATH));
+
+// 封面文件服务中间件
+app.use('/covers', async (req, res, next) => {
+  const filename = req.path.replace('/', '');
+  const localPath = path.join(COVER_LOCAL_PATH, filename);
+
+  if (fs.existsSync(localPath)) {
+    return next();
+  }
+
+  // 本地文件不存在，尝试从云端下载
+  console.log('本地封面不存在，从云端下载:', filename);
+  try {
+    const tcb = getGlobalTcb();
+    if (tcb) {
+      const result = await tcb.database().collection('config').where({ key: 'defaultCover' }).limit(1).get();
+      if (result.data.length > 0 && result.data[0].value && result.data[0].value.fileID) {
+        const downloadResult = await tcb.downloadFile({ fileID: result.data[0].value.fileID });
+        if (downloadResult.fileContent) {
+          fs.writeFileSync(localPath, downloadResult.fileContent);
+          console.log('封面从云端下载成功:', filename);
+          return next();
+        }
+      }
+    }
+  } catch (e) {
+    console.error('从云端下载封面失败:', e.message);
+  }
+
+  res.status(404).send('封面不存在');
+});
+
+// 静态文件服务：封面目录
+app.use('/covers', express.static(COVER_LOCAL_PATH));
 
 // 从请求头获取用户身份并初始化云开发（统一使用环境变量凭证）
 function getTcbFromRequest(req) {
@@ -1953,6 +2020,181 @@ SERVER_PORT=3002
       saved: true,
       message: '配置已保存，重启后端服务后生效'
     }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// ========== 默认封面配置 API ==========
+
+// 获取默认封面配置
+app.get('/api/default-cover', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    try {
+      const result = await db.collection('config').where({ key: 'defaultCover' }).limit(1).get();
+      if (result.data.length > 0) {
+        const config = result.data[0].value;
+        res.json(success({
+          coverUrl: config.localUrl || null,
+          fileID: config.fileID || null
+        }));
+      } else {
+        res.json(success({ coverUrl: null, fileID: null }));
+      }
+    } catch (e) {
+      if (e.message && e.message.includes('not exist')) {
+        res.json(success({ coverUrl: null, fileID: null }));
+      } else {
+        throw e;
+      }
+    }
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 上传默认封面
+app.post('/api/default-cover/upload', async (req, res, next) => {
+  console.log('=== 收到默认封面上传请求 ===');
+  next();
+}, coverUpload.single('cover'), async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const file = req.file;
+    if (!file) return res.json(error('请选择图片文件'));
+
+    if (!fs.existsSync(file.path)) {
+      console.error('文件不存在:', file.path);
+      return res.json(error('文件保存失败'));
+    }
+
+    // 上传到云存储
+    const cloudPath = `covers/${file.filename}`;
+    const fileContent = fs.readFileSync(file.path);
+
+    console.log('开始上传云端:', cloudPath);
+    const uploadResult = await tcb.uploadFile({
+      cloudPath: cloudPath,
+      fileContent: fileContent
+    });
+
+    if (!uploadResult.fileID) {
+      fs.unlinkSync(file.path);
+      return res.json(error('云存储上传失败'));
+    }
+
+    // 删除旧封面（云端 + 本地）
+    const db = tcb.database();
+    try {
+      const oldResult = await db.collection('config').where({ key: 'defaultCover' }).limit(1).get();
+      if (oldResult.data.length > 0 && oldResult.data[0].value && oldResult.data[0].value.fileID) {
+        // 删除云端旧文件
+        try {
+          await tcb.deleteFile({ fileList: [oldResult.data[0].value.fileID] });
+        } catch (e) {
+          console.error('删除云端旧封面失败:', e.message);
+        }
+        // 删除本地旧文件
+        const oldFilename = oldResult.data[0].value.localUrl?.replace('/covers/', '');
+        if (oldFilename) {
+          const oldLocalPath = path.join(COVER_LOCAL_PATH, oldFilename);
+          if (fs.existsSync(oldLocalPath)) {
+            fs.unlinkSync(oldLocalPath);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('查询旧封面失败:', e.message);
+    }
+
+    // 保存配置到数据库
+    const localUrl = `/covers/${file.filename}`;
+    const configValue = {
+      localUrl: localUrl,
+      fileID: uploadResult.fileID,
+      updateTime: new Date()
+    };
+
+    // 查询是否已有配置
+    let existing = null;
+    try {
+      const result = await db.collection('config').where({ key: 'defaultCover' }).limit(1).get();
+      existing = result.data.length > 0 ? result.data[0] : null;
+    } catch (e) {
+      if (e.message && e.message.includes('not exist')) {
+        try {
+          await db.createCollection('config');
+        } catch (createErr) {
+          console.log('创建集合失败:', createErr.message);
+        }
+      }
+    }
+
+    if (existing) {
+      await db.collection('config').doc(existing._id).update({
+        value: configValue,
+        updateTime: new Date()
+      });
+    } else {
+      await db.collection('config').add({
+        key: 'defaultCover',
+        value: configValue,
+        createTime: new Date()
+      });
+    }
+
+    console.log('上传成功，返回:', localUrl);
+    res.json(success({
+      localUrl: localUrl,
+      fileID: uploadResult.fileID
+    }));
+  } catch (err) {
+    console.error('上传默认封面出错:', err.message);
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.json(error(err.message));
+  }
+});
+
+// 删除默认封面
+app.delete('/api/default-cover', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const result = await db.collection('config').where({ key: 'defaultCover' }).limit(1).get();
+
+    if (result.data.length > 0) {
+      const config = result.data[0].value;
+      // 删除云端文件
+      if (config.fileID) {
+        try {
+          await tcb.deleteFile({ fileList: [config.fileID] });
+        } catch (e) {
+          console.error('删除云端封面失败:', e.message);
+        }
+      }
+      // 删除本地文件
+      if (config.localUrl) {
+        const filename = config.localUrl.replace('/covers/', '');
+        const localPath = path.join(COVER_LOCAL_PATH, filename);
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
+      }
+      // 删除数据库配置
+      await db.collection('config').doc(result.data[0]._id).remove();
+    }
+
+    res.json(success({ deleted: true }));
   } catch (err) {
     res.json(error(err.message));
   }

@@ -87,7 +87,7 @@ Component({
       if (pages.length > 1) {
         wx.navigateBack();
       } else {
-        wx.switchTab({
+        wx.reLaunch({
           url: '/pages/index/index'
         });
       }
@@ -95,7 +95,7 @@ Component({
     },
 
     onHome() {
-      wx.switchTab({
+      wx.reLaunch({
         url: '/pages/index/index'
       });
       this.triggerEvent('home');

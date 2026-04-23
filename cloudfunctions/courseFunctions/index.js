@@ -536,6 +536,42 @@ const getCopyright = async () => {
   }
 };
 
+// 获取默认封面
+const getDefaultCover = async () => {
+  try {
+    const res = await db.collection("config").where({ key: "defaultCover" }).limit(1).get();
+    if (res.data.length > 0 && res.data[0].value && res.data[0].value.fileID) {
+      // 获取云存储文件的临时链接
+      const tempUrlResult = await cloud.getTempFileURL({
+        fileList: [res.data[0].value.fileID]
+      });
+      const tempUrl = tempUrlResult.fileList?.[0]?.tempFileURL || null;
+      return {
+        success: true,
+        data: {
+          coverUrl: tempUrl
+        }
+      };
+    }
+    return {
+      success: true,
+      data: { coverUrl: null }
+    };
+  } catch (e) {
+    // 集合不存在时返回空
+    if (e.message && e.message.includes("not exist")) {
+      return {
+        success: true,
+        data: { coverUrl: null }
+      };
+    }
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   switch (event.type) {
@@ -562,6 +598,8 @@ exports.main = async (event, context) => {
       return await checkFavorite(event);
     case "getCopyright":
       return await getCopyright();
+    case "getDefaultCover":
+      return await getDefaultCover();
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }

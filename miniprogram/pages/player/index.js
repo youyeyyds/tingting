@@ -34,6 +34,7 @@ Page({
 
   bgAudioManager: null,
   speedOptions: [0.75, 1, 1.25, 1.5, 2],
+  audioCallbacks: null, // 保存音频事件回调引用
 
   onLoad() {
     this.bgAudioManager = app.bgAudioManager;
@@ -41,8 +42,16 @@ Page({
 
     const coverLoadTime = app.globalData.coverLoadTime || Date.now();
     const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
-    const courseCover = this.processImageUrl(playingCourse?.cover || '', coverLoadTime);
-    const bgCover = this.generateBgCoverUrl(playingCourse?.cover || '', coverLoadTime);
+
+    // 处理封面URL，如果没有封面则使用默认封面
+    let courseCover = this.processImageUrl(playingCourse?.cover || '', coverLoadTime);
+    let bgCover = this.generateBgCoverUrl(playingCourse?.cover || '', coverLoadTime);
+
+    // 如果没有封面，使用默认封面
+    if (!courseCover && app.globalData.defaultCoverUrl) {
+      courseCover = app.globalData.defaultCoverUrl;
+      bgCover = app.globalData.defaultCoverUrl;
+    }
 
     this.setData({
       courseCover,
@@ -125,18 +134,36 @@ Page({
   },
 
   onUnload() {
-    this.bgAudioManager.offTimeUpdate(this.onTimeUpdate);
-    this.bgAudioManager.offPlay(this.onPlay);
-    this.bgAudioManager.offPause(this.onPause);
-    this.bgAudioManager.offEnded(this.onEnded);
+    // 检查方法存在再取消监听（兼容低版本基础库）
+    if (this.audioCallbacks) {
+      if (this.bgAudioManager.offTimeUpdate) {
+        this.bgAudioManager.offTimeUpdate(this.audioCallbacks.onTimeUpdate);
+      }
+      if (this.bgAudioManager.offPlay) {
+        this.bgAudioManager.offPlay(this.audioCallbacks.onPlay);
+      }
+      if (this.bgAudioManager.offPause) {
+        this.bgAudioManager.offPause(this.audioCallbacks.onPause);
+      }
+      if (this.bgAudioManager.offEnded) {
+        this.bgAudioManager.offEnded(this.audioCallbacks.onEnded);
+      }
+    }
     this.stopCoverRotation();
   },
 
   setupAudioEvents() {
-    this.bgAudioManager.onTimeUpdate(() => this.onTimeUpdate());
-    this.bgAudioManager.onPlay(() => this.onPlay());
-    this.bgAudioManager.onPause(() => this.onPause());
-    this.bgAudioManager.onEnded(() => this.onEnded());
+    // 保存回调引用以便正确取消监听
+    this.audioCallbacks = {
+      onTimeUpdate: () => this.onTimeUpdate(),
+      onPlay: () => this.onPlay(),
+      onPause: () => this.onPause(),
+      onEnded: () => this.onEnded()
+    };
+    this.bgAudioManager.onTimeUpdate(this.audioCallbacks.onTimeUpdate);
+    this.bgAudioManager.onPlay(this.audioCallbacks.onPlay);
+    this.bgAudioManager.onPause(this.audioCallbacks.onPause);
+    this.bgAudioManager.onEnded(this.audioCallbacks.onEnded);
   },
 
   onTimeUpdate() {

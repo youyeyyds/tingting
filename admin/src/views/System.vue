@@ -1,5 +1,53 @@
 <template>
   <div class="system-page">
+    <!-- 默认封面配置 -->
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>默认封面</span>
+          <el-button @click="loadDefaultCover" :loading="loadingCover">
+            刷新
+          </el-button>
+        </div>
+      </template>
+
+      <div class="cover-config">
+        <div class="cover-preview">
+          <img v-if="defaultCoverUrl" :src="defaultCoverUrl" class="cover-image" />
+          <div v-else class="cover-placeholder">
+            <el-icon size="40"><Picture /></el-icon>
+            <span>暂无默认封面</span>
+          </div>
+        </div>
+
+        <div class="cover-right">
+          <div class="cover-actions">
+            <el-upload
+              :show-file-list="false"
+              :before-upload="beforeCoverUpload"
+              :http-request="handleCoverUpload"
+              accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
+            >
+              <el-button type="primary" :loading="uploadingCover">
+                上传封面
+              </el-button>
+            </el-upload>
+            <el-button
+              v-if="defaultCoverUrl"
+              type="danger"
+              :loading="deletingCover"
+              @click="handleDeleteCover"
+            >
+              删除
+            </el-button>
+          </div>
+          <div class="cover-tip">
+            建议尺寸：400x400 像素，支持 JPG/PNG/WebP/GIF 格式，最大 5MB
+          </div>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 菜单排序 -->
     <el-card>
       <template #header>
@@ -166,7 +214,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { testConnection, getAccountInfo, getMenuConfig, saveMenuConfig, getEnvConfig, saveEnvConfig } from '@/api/cloud'
+import { Picture } from '@element-plus/icons-vue'
+import { testConnection, getAccountInfo, getMenuConfig, saveMenuConfig, getEnvConfig, saveEnvConfig, getDefaultCover, uploadDefaultCover, deleteDefaultCover } from '@/api/cloud'
 import Sortable from 'sortablejs'
 
 const formRef = ref(null)
@@ -177,6 +226,10 @@ const saveResult = ref(null)
 const loadingAccount = ref(false)
 const accountInfo = ref(null)
 const menuListRef = ref(null)
+const defaultCoverUrl = ref(null)
+const loadingCover = ref(false)
+const uploadingCover = ref(false)
+const deletingCover = ref(false)
 
 // 菜单配置
 const menuLabels = {
@@ -208,6 +261,7 @@ onMounted(async () => {
   loadEnvConfig()
   loadAccountInfo()
   loadMenuConfig()
+  loadDefaultCover()
 })
 
 // 加载环境配置
@@ -252,6 +306,73 @@ async function loadAccountInfo() {
     accountInfo.value = null
   } finally {
     loadingAccount.value = false
+  }
+}
+
+// 加载默认封面
+async function loadDefaultCover() {
+  loadingCover.value = true
+  try {
+    const result = await getDefaultCover()
+    if (result.success) {
+      defaultCoverUrl.value = result.data.coverUrl || null
+    } else {
+      defaultCoverUrl.value = null
+    }
+  } catch (err) {
+    defaultCoverUrl.value = null
+  } finally {
+    loadingCover.value = false
+  }
+}
+
+// 封面上传前校验
+function beforeCoverUpload(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('只支持 JPG/PNG/WebP/GIF 格式的图片')
+    return false
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+// 上传封面
+async function handleCoverUpload({ file }) {
+  uploadingCover.value = true
+  try {
+    const result = await uploadDefaultCover(file)
+    if (result.success) {
+      defaultCoverUrl.value = result.data.localUrl
+      ElMessage.success('默认封面已更新')
+    } else {
+      ElMessage.error('上传失败: ' + result.error)
+    }
+  } catch (err) {
+    ElMessage.error('上传失败: ' + (err.message || '未知错误'))
+  } finally {
+    uploadingCover.value = false
+  }
+}
+
+// 删除封面
+async function handleDeleteCover() {
+  deletingCover.value = true
+  try {
+    const result = await deleteDefaultCover()
+    if (result.success) {
+      defaultCoverUrl.value = null
+      ElMessage.success('默认封面已删除')
+    } else {
+      ElMessage.error('删除失败: ' + result.error)
+    }
+  } catch (err) {
+    ElMessage.error('删除失败: ' + (err.message || '未知错误'))
+  } finally {
+    deletingCover.value = false
   }
 }
 
@@ -458,5 +579,49 @@ async function handleReset() {
 .sortable-ghost {
   opacity: 0.5;
   background: #FF6B00;
+}
+
+.cover-config {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.cover-preview {
+  width: 200px;
+  height: 200px;
+  border: 1px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cover-preview .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #999;
+}
+
+.cover-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.cover-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
 }
 </style>

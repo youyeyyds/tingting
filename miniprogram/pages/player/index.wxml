@@ -4,21 +4,22 @@
 
 <!-- 背景图层（独立容器，z-index最低） -->
 <view class="bg-layer">
-  <!-- 先显示已有封面图作为背景 -->
-  <image class="bg-cover {{bgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" bindload="onBgCoverLoad" />
+  <!-- 封面背景图（有封面时才渲染） -->
+  <image class="bg-cover {{bgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover}}" mode="aspectFill" bindload="onBgCoverLoad" wx:if="{{courseCover}}" />
 
-  <!-- 竖屏比例背景图（加载完成后覆盖） -->
-  <image class="bg-cover-portrait {{bgPortraitLoaded ? 'loaded' : ''}}" src="{{bgCover}}" mode="aspectFill" bindload="onBgPortraitLoad" wx:if="{{bgCover}}" />
+  <!-- 竖屏比例背景图（有封面时才渲染，加载完成后覆盖） -->
+  <image class="bg-cover-portrait {{bgPortraitLoaded ? 'loaded' : ''}}" src="{{bgCover}}" mode="aspectFill" bindload="onBgPortraitLoad" wx:if="{{courseCover}}" />
 
-  <!-- 遮罩层 -->
-  <view class="bg-overlay"></view>
+  <!-- 遮罩层（有封面时才渲染） -->
+  <view class="bg-overlay" wx:if="{{courseCover}}"></view>
 </view>
 
 <view class="player-container">
 
   <!-- 封面图 -->
   <view class="cover-section">
-    <image class="cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{coverRotationAngle}}deg);" src="{{courseCover || '/icons/svg/course.svg'}}" mode="aspectFill" />
+    <image class="cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{coverRotationAngle}}deg);" src="{{courseCover}}" mode="aspectFill" wx:if="{{courseCover}}" />
+    <image class="cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{coverRotationAngle}}deg); background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);" src="/icons/svg/headphones.svg" mode="aspectFit" wx:else />
   </view>
 
   <!-- 课程信息 -->

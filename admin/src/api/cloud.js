@@ -480,4 +480,39 @@ export async function getCurrentUserInfo() {
   return response.data
 }
 
+// ========== 默认封面 API ==========
+
+/**
+ * 获取默认封面配置
+ * @returns {Promise<object>}
+ */
+export async function getDefaultCover() {
+  const response = await api.get('/default-cover')
+  return response.data
+}
+
+/**
+ * 上传默认封面
+ * @param {File} file 图片文件
+ * @returns {Promise<object>}
+ */
+export async function uploadDefaultCover(file) {
+  const formData = new FormData()
+  formData.append('cover', file)
+
+  const response = await api.post('/default-cover/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response.data
+}
+
+/**
+ * 删除默认封面
+ * @returns {Promise<object>}
+ */
+export async function deleteDefaultCover() {
+  const response = await api.delete('/default-cover')
+  return response.data
+}
+
 export default api

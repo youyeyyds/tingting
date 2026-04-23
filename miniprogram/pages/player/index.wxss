@@ -8,6 +8,8 @@
   width: 100%;
   height: 100%;
   z-index: 0;
+  /* 默认渐变背景（无封面时显示） */
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 /* 背景图（先显示封面，再加载竖屏图） */

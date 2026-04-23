@@ -20,6 +20,10 @@ export default defineConfig({
       '/avatars': {
         target: 'http://localhost:3002',
         changeOrigin: true
+      },
+      '/covers': {
+        target: 'http://localhost:3002',
+        changeOrigin: true
       }
     },
     watch: {
