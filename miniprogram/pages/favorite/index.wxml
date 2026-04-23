@@ -1,13 +1,7 @@
 <!--favorite/index.wxml-->
 <view class="page-container">
-  <!-- 状态栏占位 -->
-  <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-  <view class="header" style="height: {{navBarHeight}}px;">
-    <text class="header-title">收藏</text>
-  </view>
-
   <scroll-view class="content" scroll-y="true" enhanced="true"
-    style="height: {{scrollHeight}}px;"
+    style="height: calc(100vh - 30px);"
     refresher-enabled="{{true}}" refresher-triggered="{{refresherTriggered}}" refresher-threshold="{{80}}" bindrefresherrefresh="onRefresh">
     <!-- 头条轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">

@@ -23,47 +23,6 @@
   }
 }
 
-/* 状态栏占位 */
-.status-bar {
-  background: #fff;
-}
-
-/* 标题栏 */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  position: relative;
-}
-
-.back-btn {
-  position: absolute;
-  left: 30rpx;
-  display: flex;
-  align-items: center;
-}
-
-.back-arrow {
-  width: 16rpx;
-  height: 16rpx;
-  border-left: 3rpx solid #333;
-  border-bottom: 3rpx solid #333;
-  transform: rotate(45deg);
-  margin-right: 8rpx;
-}
-
-.back-text {
-  font-size: 30rpx;
-  color: #333;
-}
-
-.header-title {
-  font-size: 34rpx;
-  font-weight: 500;
-  color: #333;
-}
-
 .content {
   flex: 1;
   padding-bottom: 100rpx;

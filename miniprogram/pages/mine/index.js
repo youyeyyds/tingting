@@ -3,11 +3,6 @@ const app = getApp();
 
 Page({
   data: {
-    statusBarHeight: 0,
-    navBarHeight: 0,
-    headerHeight: 0,
-    scrollHeight: 0, // scroll-view 高度
-    activeTab: 2,
     isLoggedIn: false,
     userInfo: null,
     avatarUrl: '', // 头像URL（带时间戳刷新）
@@ -27,7 +22,6 @@ Page({
     loading: false,
     refresherTriggered: false,
     loadTime: 0, // 横幅时间戳
-    canGoBack: true, // 是否可以返回上一页
     bannerSpeed: 5000 // 轮播速度
   },
 
@@ -54,14 +48,6 @@ Page({
   },
 
   onLoad() {
-    const windowInfo = wx.getWindowInfo();
-    const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
-    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
-    // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
-    const rpxToPx = windowInfo.windowWidth / 750;
-    const tabBarHeight = 100 * rpxToPx;
-    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
@@ -69,16 +55,8 @@ Page({
     const loadTime = app.globalData.bannerLoadTime;
     // 检查是否有缓存的横幅数据
     const cachedHeadlines = app.globalData.mineHeadlines || [];
-    // 检查是否有上一页可以返回
-    const pages = getCurrentPages();
-    const canGoBack = pages.length > 1;
     this.setData({
-      statusBarHeight: windowInfo.statusBarHeight,
-      navBarHeight: navBarHeight,
-      headerHeight: headerHeight,
-      scrollHeight: scrollHeight,
       loadTime: loadTime,
-      canGoBack: canGoBack,
       headlines: cachedHeadlines
     });
     this.checkLoginStatus();
@@ -90,9 +68,9 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
-    // 未登录时跳转到登录页
+    // 未登录时跳转到首页
     if (!this.data.isLoggedIn) {
-      wx.redirectTo({ url: '/pages/login/index' });
+      wx.reLaunch({ url: '/pages/index/index' });
       return;
     }
     // 重新获取用户信息（刷新头像临时URL）
@@ -163,14 +141,6 @@ Page({
       });
     } else {
       this.setData({ refresherTriggered: false });
-    }
-  },
-
-  handleBack() {
-    if (this.data.canGoBack) {
-      wx.navigateBack();
-    } else {
-      wx.redirectTo({ url: '/pages/index/index' });
     }
   },
 
@@ -382,8 +352,8 @@ Page({
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
 
-    // 跳转到首页
-    wx.redirectTo({ url: '/pages/index/index' });
+    // 跳转到首页（清空页面栈）
+    wx.reLaunch({ url: '/pages/index/index' });
   },
 
   formatDuration(seconds) {
@@ -398,12 +368,17 @@ Page({
 
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
-    if (index == 2) return;
-    // 未登录时跳转登录页
+    if (index == 2) return; // 当前页，不做处理
     if (!app.globalData.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
-    wx.redirectTo({ url: `/pages/${['index', 'favorite', ''][index]}/index` });
+    if (index == 0) {
+      // 点击首页，返回上一页（首页）
+      wx.navigateBack();
+    } else {
+      // 点击收藏，替换当前页
+      wx.redirectTo({ url: '/pages/favorite/index' });
+    }
   }
 });

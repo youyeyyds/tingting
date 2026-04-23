@@ -3,11 +3,6 @@ const app = getApp();
 
 Page({
   data: {
-    statusBarHeight: 0,
-    navBarHeight: 0,
-    headerHeight: 0,
-    scrollHeight: 0, // scroll-view 高度
-    activeTab: 1,
     isLoggedIn: false,
     favoriteChapters: [],
     headlines: [],
@@ -19,14 +14,6 @@ Page({
   },
 
   onLoad() {
-    const windowInfo = wx.getWindowInfo();
-    const menuButton = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menuButton.top - windowInfo.statusBarHeight) * 2 + menuButton.height;
-    const headerHeight = windowInfo.statusBarHeight + navBarHeight;
-    // scroll-view 高度 = 屏幕高度 - header - tabBar(100rpx转px)
-    const rpxToPx = windowInfo.windowWidth / 750;
-    const tabBarHeight = 100 * rpxToPx;
-    const scrollHeight = windowInfo.windowHeight - headerHeight - tabBarHeight;
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
@@ -39,10 +26,6 @@ Page({
     // 检查是否有缓存的横幅数据
     const cachedHeadlines = app.globalData.favoriteHeadlines || [];
     this.setData({
-      statusBarHeight: windowInfo.statusBarHeight,
-      navBarHeight: navBarHeight,
-      headerHeight: headerHeight,
-      scrollHeight: scrollHeight,
       loadTime: loadTime,
       coverLoadTime: coverLoadTime,
       headlines: cachedHeadlines
@@ -475,8 +458,13 @@ Page({
 
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
-    if (index == 1) return;
-    // 点击首页或个人，正常跳转
-    wx.redirectTo({ url: `/pages/${['index', '', 'mine'][index]}/index` });
+    if (index == 1) return; // 当前页，不做处理
+    if (index == 0) {
+      // 点击首页，返回上一页（首页）
+      wx.navigateBack();
+    } else {
+      // 点击我的，替换当前页
+      wx.redirectTo({ url: '/pages/mine/index' });
+    }
   }
 });

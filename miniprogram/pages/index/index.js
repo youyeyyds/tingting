@@ -278,6 +278,6 @@ Page({
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
-    wx.redirectTo({ url: `/pages/${['', 'favorite', 'mine'][idx]}/index` });
+    wx.navigateTo({ url: `/pages/${['', 'favorite', 'mine'][idx]}/index` });
   }
 });

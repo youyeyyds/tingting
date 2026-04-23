@@ -7,25 +7,6 @@
   flex-direction: column;
 }
 
-/* 状态栏占位 */
-.status-bar {
-  background: #fff;
-}
-
-/* 标题栏 */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-}
-
-.header-title {
-  font-size: 34rpx;
-  font-weight: 500;
-  color: #333;
-}
-
 .content {
   flex: 1;
   display: flex;
