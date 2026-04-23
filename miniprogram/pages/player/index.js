@@ -94,7 +94,7 @@ Page({
     return url;
   },
 
-  // 生成竖屏比例背景图URL（用于毛玻璃背景）
+  // 生成竖屏比例背景图URL（与封面图使用相同seed，只改变尺寸）
   generateBgCoverUrl(url, coverLoadTime) {
     if (!url) return url;
     const t = coverLoadTime || app.globalData.coverLoadTime || Date.now();
@@ -102,21 +102,23 @@ Page({
     // 如果是固定图片，直接返回
     if (url.includes('seed/fixed_')) return url;
 
-    // picsum.photos 竖屏比例：750x1200 (约 9:16 竖屏比例)
+    // picsum.photos：使用相同seed，只改变尺寸为竖屏比例
     if (url.includes('picsum.photos')) {
-      // 提取 seed 信息
-      const seedMatch = url.match(/seed\/([^\/]+)/);
-      let seed = '';
+      // 提取原始seed信息
+      const seedMatch = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
       if (seedMatch) {
-        // 如果已经有时间戳格式，提取原始seed
-        const timeSeedMatch = seedMatch[1].match(/\d+_cover_(.+)/);
-        seed = timeSeedMatch ? timeSeedMatch[1] : seedMatch[1];
-      } else {
-        // 尝试从 random 参数提取
-        const randomMatch = url.match(/random=(\d+)/);
-        seed = randomMatch ? randomMatch[1] : '0';
+        // 保留原有seed，只改变尺寸为 750x1200（竖屏比例）
+        return `https://picsum.photos/seed/${seedMatch[1]}/750/1200`;
       }
-      return `https://picsum.photos/seed/${t}_bg_${seed}/750/1200`;
+
+      // 尝试从 random 参数提取
+      const randomMatch = url.match(/random=(\d+)/);
+      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+      if (sizeMatch) {
+        const r = randomMatch ? randomMatch[1] : '0';
+        // 使用和封面图相同的时间戳+random组合作为seed
+        return `https://picsum.photos/seed/${t}_cover_${r}/750/1200`;
+      }
     }
 
     return url;
