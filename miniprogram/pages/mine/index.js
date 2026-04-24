@@ -52,7 +52,7 @@ Page({
     if (cachedHeadlines.length > 0) {
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner')
+        image: this.fixImageUrl(h.image, 'banner', loadTime)
       }));
     }
 
@@ -96,7 +96,7 @@ Page({
       console.log('[Mine] refreshing banners, old:', localLoadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner')
+        image: this.fixImageUrl(h.image, 'banner', bt)
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
@@ -182,7 +182,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.fixImageUrl(h.image, 'banner')
+          image: this.fixImageUrl(h.image, 'banner', this.data.loadTime)
         }));
         // 缓存到全局变量
         app.globalData.mineHeadlines = headlines;
@@ -197,7 +197,8 @@ Page({
 
   // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
   // 横幅图片使用 bannerLoadTime
-  fixImageUrl(url, type = 'banner') {
+  // loadTime 可选，默认从 this.data 获取
+  fixImageUrl(url, type = 'banner', loadTime) {
     if (!url) return url;
 
     // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
@@ -205,7 +206,10 @@ Page({
       return url; // 固定图片，直接返回
     }
 
-    const loadTime = this.data.loadTime;
+    // 如果没有传入 loadTime，则从 this.data 获取
+    if (loadTime === undefined) {
+      loadTime = this.data.loadTime;
+    }
 
     // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx），说明已处理过
     if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_banner_/)) {
