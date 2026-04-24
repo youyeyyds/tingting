@@ -132,10 +132,11 @@ Page({
         ...h,
         image: this.fixImageUrl(h.image, 'banner')
       }));
+      console.log('[Favorite] banner[0] old URL:', this.data.headlines[0]?.image, 'new URL:', headlines[0]?.image);
       this.setData({ loadTime: bt, headlines });
       app.globalData.favoriteHeadlines = headlines;
     } else {
-      console.log('[Favorite] no banner refresh needed');
+      console.log('[Favorite] no banner refresh needed, URL stays:', this.data.headlines[0]?.image);
     }
 
     // 同步封面时间戳
