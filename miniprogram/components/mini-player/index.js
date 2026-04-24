@@ -565,7 +565,10 @@ Component({
 
     // 封面图片加载失败时使用默认封面
     onCoverError() {
-      const defaultCover = app.globalData.defaultCoverUrl || '/icons/svg/course.svg';
+      // 优先使用本地缓存的默认封面，其次使用云端配置的，最后使用耳机图标
+      const localCover = app.globalData.defaultCoverLocalPath;
+      const cloudCover = app.globalData.defaultCoverUrl;
+      const defaultCover = localCover || cloudCover || '/icons/svg/headphones.svg';
       if (this.data.courseCover !== defaultCover) {
         this.setData({ courseCover: defaultCover });
       }

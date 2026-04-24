@@ -35,15 +35,41 @@ App({
 
   // 加载默认封面
   loadDefaultCover() {
+    // 优先从本地缓存读取
+    const cachedCover = wx.getStorageSync('defaultCoverLocalPath');
+    if (cachedCover) {
+      this.globalData.defaultCoverLocalPath = cachedCover;
+    }
+
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getDefaultCover' }
     }).then(res => {
       if (res.result.success && res.result.data.coverUrl) {
-        this.globalData.defaultCoverUrl = res.result.data.coverUrl;
+        const coverUrl = res.result.data.coverUrl;
+        this.globalData.defaultCoverUrl = coverUrl;
+        // 下载到本地作为缓存
+        this.downloadDefaultCover(coverUrl);
       }
     }).catch(err => {
       console.error('加载默认封面失败:', err);
+    });
+  },
+
+  // 下载默认封面到本地
+  downloadDefaultCover(url) {
+    if (!url) return;
+    wx.downloadFile({
+      url: url,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          this.globalData.defaultCoverLocalPath = res.tempFilePath;
+          wx.setStorageSync('defaultCoverLocalPath', res.tempFilePath);
+        }
+      },
+      fail: (err) => {
+        console.error('下载默认封面失败:', err);
+      }
     });
   },
 
