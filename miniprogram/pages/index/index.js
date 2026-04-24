@@ -96,6 +96,15 @@ Page({
       app.globalData.indexCourses = courses;
     }
 
+    // 如果有缓存，需要用当前时间戳重建 URL
+    const bannerTime = app.globalData.bannerLoadTime;
+    if (headlines.length > 0) {
+      headlines = headlines.map(h => ({
+        ...h,
+        image: this.processUrl(h.image, bannerTime, 'banner')
+      }));
+    }
+
     this.setData({
       headlines,
       courses,

@@ -46,7 +46,16 @@ Page({
     }
     const loadTime = app.globalData.bannerLoadTime;
     // 检查是否有缓存的横幅数据
-    const cachedHeadlines = app.globalData.mineHeadlines || [];
+    let cachedHeadlines = app.globalData.mineHeadlines || [];
+
+    // 如果有缓存，需要用当前时间戳重建 URL
+    if (cachedHeadlines.length > 0) {
+      cachedHeadlines = cachedHeadlines.map(h => ({
+        ...h,
+        image: this.fixImageUrl(h.image, 'banner')
+      }));
+    }
+
     this.setData({
       loadTime: loadTime,
       headlines: cachedHeadlines

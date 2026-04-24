@@ -19,8 +19,16 @@ Page({
       app.globalData.bannerLoadTime = Date.now();
     }
     const loadTime = app.globalData.bannerLoadTime;
-    const cachedHeadlines = app.globalData.loginHeadlines || [];
+    let cachedHeadlines = app.globalData.loginHeadlines || [];
     const cachedCopyright = app.globalData.loginCopyright || {};
+
+    // 如果有缓存，需要用当前时间戳重建 URL
+    if (cachedHeadlines.length > 0) {
+      cachedHeadlines = cachedHeadlines.map(h => ({
+        ...h,
+        image: this.processImageUrl(h.image)
+      }));
+    }
 
     this.setData({
       loadTime,

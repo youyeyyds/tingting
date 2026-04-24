@@ -25,8 +25,17 @@ Page({
     const loadTime = app.globalData.bannerLoadTime;
     const coverLoadTime = app.globalData.coverLoadTime;
     // 检查是否有缓存的横幅数据和收藏数据
-    const cachedHeadlines = app.globalData.favoriteHeadlines || [];
+    let cachedHeadlines = app.globalData.favoriteHeadlines || [];
     const cachedFavorites = app.globalData.favoriteChapters || [];
+
+    // 如果有缓存，需要用当前时间戳重建 URL
+    if (cachedHeadlines.length > 0) {
+      cachedHeadlines = cachedHeadlines.map(h => ({
+        ...h,
+        image: this.fixImageUrl(h.image, 'banner')
+      }));
+    }
+
     this.setData({
       loadTime: loadTime,
       coverLoadTime: coverLoadTime,
