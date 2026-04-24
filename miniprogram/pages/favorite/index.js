@@ -409,11 +409,33 @@ Page({
     const { index } = e.currentTarget.dataset;
     if (index == 1) return; // 当前页，不做处理
     if (index == 0) {
-      // 点击首页，返回上一页（首页）
-      wx.navigateBack();
+      // 点击首页，返回到已存在的首页
+      const pages = getCurrentPages();
+      const targetPage = pages.find(p => p.route === 'pages/index/index');
+      if (targetPage) {
+        const delta = pages.length - pages.indexOf(targetPage) - 1;
+        if (delta > 0) {
+          wx.navigateBack({ delta });
+        } else {
+          wx.reLaunch({ url: '/pages/index/index' });
+        }
+      } else {
+        wx.reLaunch({ url: '/pages/index/index' });
+      }
     } else {
-      // 点击我的，导航到我的页
-      wx.navigateTo({ url: '/pages/mine/index' });
+      // 点击我的，检查是否已存在
+      const pages = getCurrentPages();
+      const targetPage = pages.find(p => p.route === 'pages/mine/index');
+      if (targetPage) {
+        const delta = pages.length - pages.indexOf(targetPage) - 1;
+        if (delta > 0) {
+          wx.navigateBack({ delta });
+        } else {
+          wx.navigateTo({ url: '/pages/mine/index' });
+        }
+      } else {
+        wx.navigateTo({ url: '/pages/mine/index' });
+      }
     }
   }
 });

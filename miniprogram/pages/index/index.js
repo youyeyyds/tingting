@@ -321,6 +321,18 @@ Page({
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
-    wx.navigateTo({ url: `/pages/${['', 'favorite', 'mine'][idx]}/index` });
+    const targetUrl = `/pages/${['', 'favorite', 'mine'][idx]}/index`;
+    const pages = getCurrentPages();
+    const targetPage = pages.find(p => p.route === `pages/${['', 'favorite', 'mine'][idx]}/index`);
+    if (targetPage) {
+      const delta = pages.length - pages.indexOf(targetPage) - 1;
+      if (delta > 0) {
+        wx.navigateBack({ delta });
+      } else {
+        wx.navigateTo({ url: targetUrl });
+      }
+    } else {
+      wx.navigateTo({ url: targetUrl });
+    }
   }
 });

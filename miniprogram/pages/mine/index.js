@@ -315,11 +315,33 @@ Page({
       return;
     }
     if (index == 0) {
-      // 点击首页，返回到首页
-      wx.navigateBack();
+      // 点击首页，检查是否已存在
+      const pages = getCurrentPages();
+      const targetPage = pages.find(p => p.route === 'pages/index/index');
+      if (targetPage) {
+        const delta = pages.length - pages.indexOf(targetPage) - 1;
+        if (delta > 0) {
+          wx.navigateBack({ delta });
+        } else {
+          wx.reLaunch({ url: '/pages/index/index' });
+        }
+      } else {
+        wx.reLaunch({ url: '/pages/index/index' });
+      }
     } else {
-      // 点击收藏，导航到收藏页
-      wx.navigateTo({ url: '/pages/favorite/index' });
+      // 点击收藏，检查是否已存在
+      const pages = getCurrentPages();
+      const targetPage = pages.find(p => p.route === 'pages/favorite/index');
+      if (targetPage) {
+        const delta = pages.length - pages.indexOf(targetPage) - 1;
+        if (delta > 0) {
+          wx.navigateBack({ delta });
+        } else {
+          wx.navigateTo({ url: '/pages/favorite/index' });
+        }
+      } else {
+        wx.navigateTo({ url: '/pages/favorite/index' });
+      }
     }
   }
 });
