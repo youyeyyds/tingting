@@ -121,9 +121,11 @@ Page({
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
     const ct = app.globalData.coverLoadTime;
+    console.log('[Favorite] syncImageTimes:', { bt, loadTime: this.data.loadTime, ct, coverLoadTime: this.data.coverLoadTime });
 
     // 同步横幅时间戳
     if (bt !== this.data.loadTime) {
+      console.log('[Favorite] refreshing banners, old:', this.data.loadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner')
@@ -134,6 +136,7 @@ Page({
 
     // 同步封面时间戳
     if (ct !== this.data.coverLoadTime) {
+      console.log('[Favorite] refreshing covers, old:', this.data.coverLoadTime, 'new:', ct);
       const favoriteChapters = this.data.favoriteChapters.map(ch => ({
         ...ch,
         courseCover: this.fixImageUrl(ch.courseCover, 'cover')

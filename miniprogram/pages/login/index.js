@@ -10,17 +10,20 @@ Page({
     copyrightLines: [],
     icpNumber: '',
     bannerSpeed: 5000,
-    bannerHidden: false
+    bannerHidden: false,
+    loadTime: 0 // 横幅时间戳
   },
 
   onLoad() {
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
+    const loadTime = app.globalData.bannerLoadTime;
     const cachedHeadlines = app.globalData.loginHeadlines || [];
     const cachedCopyright = app.globalData.loginCopyright || {};
 
     this.setData({
+      loadTime,
       headlines: cachedHeadlines,
       copyrightLines: cachedCopyright.copyrightLines || [],
       icpNumber: cachedCopyright.icpNumber || ''
@@ -28,6 +31,24 @@ Page({
 
     if (cachedHeadlines.length === 0) this.loadHeadlines();
     if (!cachedCopyright.copyrightLines) this.loadCopyright();
+  },
+
+  onShow() {
+    // 同步图片时间戳变化
+    this.syncImageTimes();
+  },
+
+  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
+  syncImageTimes() {
+    const bt = app.globalData.bannerLoadTime;
+    if (bt !== this.data.loadTime) {
+      const headlines = this.data.headlines.map(h => ({
+        ...h,
+        image: this.processImageUrl(h.image)
+      }));
+      this.setData({ loadTime: bt, headlines });
+      app.globalData.loginHeadlines = headlines;
+    }
   },
 
   loadHeadlines() {
