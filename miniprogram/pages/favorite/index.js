@@ -28,12 +28,14 @@ Page({
     let cachedHeadlines = app.globalData.favoriteHeadlines || [];
     const cachedFavorites = app.globalData.favoriteChapters || [];
 
-    // 如果有缓存，需要用当前时间戳重建 URL
+    console.log('[Favorite] onLoad before rebuild, loadTime:', loadTime, 'cachedHeadlines length:', cachedHeadlines.length);
     if (cachedHeadlines.length > 0) {
+      const oldUrl = cachedHeadlines[0].image;
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner')
+        image: this.fixImageUrl(h.image, 'banner', loadTime)
       }));
+      console.log('[Favorite] onLoad rebuilt banner, old URL:', oldUrl, 'new URL:', cachedHeadlines[0].image);
     }
 
     this.setData({
@@ -102,7 +104,7 @@ Page({
         if (data.coverLoadTime) {
           const favoriteChapters = this.data.favoriteChapters.map(ch => ({
             ...ch,
-            courseCover: this.fixImageUrl(ch.courseCover, 'cover')
+            courseCover: this.fixImageUrl(ch.courseCover, 'cover', data.coverLoadTime)
           }));
           this.setData({ favoriteChapters });
           app.globalData.favoriteChapters = favoriteChapters;
@@ -139,7 +141,7 @@ Page({
       console.log('[Favorite] refreshing banners, old:', this.data.loadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner')
+        image: this.fixImageUrl(h.image, 'banner', bt)
       }));
       console.log('[Favorite] banner[0] old URL:', this.data.headlines[0]?.image, 'new URL:', headlines[0]?.image);
       this.setData({ loadTime: bt, headlines });
@@ -153,7 +155,7 @@ Page({
       console.log('[Favorite] refreshing covers, old:', this.data.coverLoadTime, 'new:', ct);
       const favoriteChapters = this.data.favoriteChapters.map(ch => ({
         ...ch,
-        courseCover: this.fixImageUrl(ch.courseCover, 'cover')
+        courseCover: this.fixImageUrl(ch.courseCover, 'cover', ct)
       }));
       this.setData({ coverLoadTime: ct, favoriteChapters });
       app.globalData.favoriteChapters = favoriteChapters;
@@ -186,7 +188,8 @@ Page({
 
   // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
   // type: 'banner' 横幅图片, 'cover' 封面图片
-  fixImageUrl(url, type = 'banner') {
+  // loadTime 可选，默认从 this.data 获取
+  fixImageUrl(url, type = 'banner', loadTime) {
     if (!url) return url;
 
     // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
@@ -194,8 +197,10 @@ Page({
       return url; // 固定图片，直接返回
     }
 
-    // 横幅用 bannerLoadTime，封面用 coverLoadTime
-    const loadTime = type === 'banner' ? this.data.loadTime : this.data.coverLoadTime;
+    // 如果没有传入 loadTime，则从 this.data 获取
+    if (loadTime === undefined) {
+      loadTime = type === 'banner' ? this.data.loadTime : this.data.coverLoadTime;
+    }
 
     // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx 或 123456_cover_xxx），说明已处理过
     if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_(banner|cover)_/)) {
