@@ -103,46 +103,33 @@
 }
 
 .chapter-card {
-  display: flex;
-  align-items: center;
   background: #fff;
   border-radius: 16rpx;
   margin-bottom: 20rpx;
   padding: 28rpx;
-  position: relative;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
-/* 左边封面 */
-.chapter-cover-wrapper {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 12rpx;
-  background: #eee;
-  flex-shrink: 0;
+/* 第一行：圆形封面 + 标题 + 分隔线 */
+.chapter-header {
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 .chapter-cover {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 12rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
+  background: #eee;
+  flex-shrink: 0;
 }
 
-/* 右边信息 */
-.chapter-info {
+.chapter-title-row {
   flex: 1;
-  margin-left: 24rpx;
-  min-width: 0;
-}
-
-/* 第一行：作者 · 课程名称 */
-.chapter-top-line {
   display: flex;
   align-items: center;
-  padding: 4rpx 0;
+  margin-left: 20rpx;
+  min-width: 0;
 }
 
 .chapter-author {
@@ -180,7 +167,7 @@
 .info-divider {
   height: 1rpx;
   background: #eee;
-  margin: 16rpx 0;
+  margin: 20rpx 0;
 }
 
 /* 第二行：序号 | 章节名称 */
@@ -217,11 +204,17 @@
   flex: 1;
 }
 
-/* 第三行：时长 | 进度 */
-.chapter-meta-line {
+/* 第三行：时长 | 进度 + 操作按钮 */
+.chapter-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-top: 14rpx;
+}
+
+.chapter-meta {
+  display: flex;
+  align-items: center;
 }
 
 .chapter-duration {
@@ -240,11 +233,8 @@
   color: #999;
 }
 
-/* 右下角操作按钮 */
+/* 操作按钮 */
 .chapter-actions {
-  position: absolute;
-  right: 24rpx;
-  bottom: 24rpx;
   display: flex;
   align-items: center;
   gap: 16rpx;
