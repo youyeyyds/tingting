@@ -11,7 +11,8 @@ Page({
     icpNumber: '',
     bannerSpeed: 5000,
     bannerHidden: false,
-    loadTime: 0 // 横幅时间戳
+    loadTime: 0, // 横幅时间戳
+    _wasHidden: false // 页面是否曾被隐藏（用于判断是否需要同步）
   },
 
   onLoad() {
@@ -34,7 +35,8 @@ Page({
       loadTime,
       headlines: cachedHeadlines,
       copyrightLines: cachedCopyright.copyrightLines || [],
-      icpNumber: cachedCopyright.icpNumber || ''
+      icpNumber: cachedCopyright.icpNumber || '',
+      _wasHidden: false
     });
 
     if (cachedHeadlines.length === 0) this.loadHeadlines();
@@ -42,8 +44,15 @@ Page({
   },
 
   onShow() {
-    // 同步图片时间戳变化
-    this.syncImageTimes();
+    // 只有页面曾被隐藏（从其他页面返回）时才同步，避免每次onShow都刷新
+    if (this.data._wasHidden) {
+      this.syncImageTimes();
+    }
+    this.setData({ _wasHidden: false });
+  },
+
+  onHide() {
+    this.setData({ _wasHidden: true });
   },
 
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
