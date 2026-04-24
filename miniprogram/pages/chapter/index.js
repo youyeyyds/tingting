@@ -66,6 +66,19 @@ Page({
 
   onShow() {
     if (this.data.courseId) this.loadCourseData();
+    // 同步图片时间戳变化
+    this.syncImageTimes();
+  },
+
+  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
+  syncImageTimes() {
+    const ct = app.globalData.coverLoadTime;
+    if (ct && ct !== this.data.coverLoadTime) {
+      this.setData({ coverLoadTime: ct });
+      if (this.data.course.cover) {
+        this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
+      }
+    }
   },
 
   onUnload() {
