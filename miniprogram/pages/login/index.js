@@ -39,7 +39,9 @@ Page({
       _prevBannerTime: loadTime // 记录进入时的banner时间戳
     });
 
-    if (cachedHeadlines.length === 0) this.loadHeadlines();
+    if (cachedHeadlines.length === 0) {
+      this.loadHeadlines();
+    }
     if (!cachedCopyright.copyrightLines) this.loadCopyright();
   },
 

@@ -186,9 +186,9 @@ Page({
     wx.setStorageSync('coverLoadTime', t);
     app.globalData.indexHeadlines = [];
     app.globalData.indexCourses = [];
-    app.globalData.loginHeadlines = [];
-    app.globalData.favoriteHeadlines = [];
-    app.globalData.mineHeadlines = [];
+    console.log('[Index] onRefresh, bannerLoadTime:', t);
+    // 不再清空其他页面的缓存（loginHeadlines, favoriteHeadlines, mineHeadlines）
+    // 各页面通过 onShow 检测 bannerLoadTime 变化来同步图片
 
     const newAuthors = {};
     this.data.courses.forEach(c => newAuthors[c._id] = AUTHORS[Math.floor(Math.random() * AUTHORS.length)]);
