@@ -16,6 +16,7 @@ Page({
   },
 
   onLoad() {
+    console.log('[Login] onLoad called');
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
@@ -54,7 +55,7 @@ Page({
   },
 
   onHide() {
-    console.log('[Login] onHide');
+    console.log('[Login] onHide, _wasHidden set to true');
     this.setData({ _wasHidden: true });
   },
 
