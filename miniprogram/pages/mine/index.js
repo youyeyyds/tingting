@@ -88,6 +88,7 @@ Page({
       this.loadUserStats()
     ]).then(() => {
       wx.stopPullDownRefresh();
+      app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
     }).catch(() => {
       wx.stopPullDownRefresh();
     });

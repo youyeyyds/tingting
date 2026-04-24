@@ -87,6 +87,16 @@ Page({
         const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }));
         this.setData({ favoriteChapters });
         app.globalData.favoriteChapters = favoriteChapters;
+      },
+      onCoverRefresh: (data) => {
+        if (data.coverLoadTime) {
+          const favoriteChapters = this.data.favoriteChapters.map(ch => ({
+            ...ch,
+            courseCover: this.fixImageUrl(ch.courseCover, 'cover')
+          }));
+          this.setData({ favoriteChapters });
+          app.globalData.favoriteChapters = favoriteChapters;
+        }
       }
     };
     app.registerMiniPlayer(this.audioCallback);
