@@ -81,27 +81,21 @@ Page({
       this.loadUserStats();
     }
     // 同步图片时间戳变化
-    console.log('[Mine] onShow calling syncImageTimes');
     this.syncImageTimes();
   },
 
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
-    const localLoadTime = this.data.loadTime;
-    console.log('[Mine] syncImageTimes, global bt:', bt, 'local loadTime:', localLoadTime);
 
     // 同步横幅时间戳
-    if (bt !== localLoadTime) {
-      console.log('[Mine] refreshing banners, old:', localLoadTime, 'new:', bt);
+    if (bt !== this.data.loadTime) {
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner', bt)
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
-    } else {
-      console.log('[Mine] no banner refresh needed');
     }
   },
 
@@ -112,7 +106,6 @@ Page({
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
 
-    console.log('[Mine] onPullDownRefresh, set bannerLoadTime:', t);
     this.setData({ loadTime: t });
 
     Promise.all([
@@ -122,7 +115,6 @@ Page({
     ]).then(() => {
       wx.stopPullDownRefresh();
       app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
-      console.log('[Mine] onPullDownRefresh done, notify callbacks');
     }).catch(() => {
       wx.stopPullDownRefresh();
     });
@@ -379,7 +371,6 @@ Page({
       const targetPage = pages.find(p => p.route === 'pages/index/index');
       if (targetPage) {
         const delta = pages.length - pages.indexOf(targetPage) - 1;
-        console.log('[Mine] tabChange to index, delta:', delta, 'pages length:', pages.length);
         if (delta > 0) {
           wx.navigateBack({ delta });
         } else {
@@ -390,7 +381,6 @@ Page({
       }
     } else {
       // 点击收藏，始终用 navigateTo（避免 navigateBack 导致的页面销毁重建问题）
-      console.log('[Mine] tabChange to favorite, using navigateTo');
       wx.navigateTo({ url: '/pages/favorite/index' });
     }
   }

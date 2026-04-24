@@ -14,7 +14,6 @@ Page({
   },
 
   onLoad() {
-    console.log('[Favorite] onLoad called');
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
@@ -28,24 +27,20 @@ Page({
     let cachedHeadlines = app.globalData.favoriteHeadlines || [];
     let cachedFavorites = app.globalData.favoriteChapters || [];
 
-    console.log('[Favorite] onLoad before rebuild, loadTime:', loadTime, 'coverLoadTime:', coverLoadTime, 'cachedHeadlines:', cachedHeadlines.length, 'cachedFavorites:', cachedFavorites.length);
+    // 如果有缓存，需要用当前时间戳重建 URL
     if (cachedHeadlines.length > 0) {
-      const oldUrl = cachedHeadlines[0].image;
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner', loadTime)
       }));
-      console.log('[Favorite] onLoad rebuilt banner, old URL:', oldUrl, 'new URL:', cachedHeadlines[0].image);
     }
 
     // 重建收藏数据的封面URL
     if (cachedFavorites.length > 0) {
-      const oldCover = cachedFavorites[0].courseCover;
       cachedFavorites = cachedFavorites.map(ch => ({
         ...ch,
         courseCover: this.fixImageUrl(ch.courseCover, 'cover', coverLoadTime)
       }));
-      console.log('[Favorite] onLoad rebuilt covers, old cover:', oldCover, 'new cover:', cachedFavorites[0].courseCover);
     }
 
     this.setData({
@@ -136,7 +131,6 @@ Page({
       this.loadFavorites();
     }
     // 同步图片时间戳变化
-    console.log('[Favorite] onShow calling syncImageTimes');
     this.syncImageTimes();
   },
 
@@ -144,25 +138,19 @@ Page({
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
     const ct = app.globalData.coverLoadTime;
-    console.log('[Favorite] syncImageTimes, global bt:', bt, 'local loadTime:', this.data.loadTime, 'global ct:', ct, 'local coverLoadTime:', this.data.coverLoadTime);
 
     // 同步横幅时间戳
     if (bt !== this.data.loadTime) {
-      console.log('[Favorite] refreshing banners, old:', this.data.loadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner', bt)
       }));
-      console.log('[Favorite] banner[0] old URL:', this.data.headlines[0]?.image, 'new URL:', headlines[0]?.image);
       this.setData({ loadTime: bt, headlines });
       app.globalData.favoriteHeadlines = headlines;
-    } else {
-      console.log('[Favorite] no banner refresh needed, URL stays:', this.data.headlines[0]?.image);
     }
 
     // 同步封面时间戳
     if (ct !== this.data.coverLoadTime) {
-      console.log('[Favorite] refreshing covers, old:', this.data.coverLoadTime, 'new:', ct);
       const favoriteChapters = this.data.favoriteChapters.map(ch => ({
         ...ch,
         courseCover: this.fixImageUrl(ch.courseCover, 'cover', ct)
