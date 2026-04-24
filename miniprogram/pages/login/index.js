@@ -16,7 +16,6 @@ Page({
   },
 
   onLoad() {
-    console.log('[Login] onLoad called');
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
@@ -37,7 +36,7 @@ Page({
       headlines: cachedHeadlines,
       copyrightLines: cachedCopyright.copyrightLines || [],
       icpNumber: cachedCopyright.icpNumber || '',
-      _wasHidden: false
+      _prevBannerTime: loadTime // 记录进入时的banner时间戳
     });
 
     if (cachedHeadlines.length === 0) this.loadHeadlines();
@@ -45,18 +44,11 @@ Page({
   },
 
   onShow() {
-    console.log('[Login] onShow, _wasHidden:', this.data._wasHidden, 'bannerLoadTime:', app.globalData.bannerLoadTime, 'loadTime:', this.data.loadTime);
-    // 只有页面曾被隐藏（从其他页面返回）时才同步，避免每次onShow都刷新
-    if (this.data._wasHidden) {
-      console.log('[Login] onShow syncing...');
+    // 只有banner时间戳变化了才同步（其他页面下拉刷新了）
+    const currentBannerTime = app.globalData.bannerLoadTime;
+    if (currentBannerTime !== this.data._prevBannerTime) {
       this.syncImageTimes();
     }
-    this.setData({ _wasHidden: false });
-  },
-
-  onHide() {
-    console.log('[Login] onHide, _wasHidden set to true');
-    this.setData({ _wasHidden: true });
   },
 
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
