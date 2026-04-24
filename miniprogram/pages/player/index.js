@@ -83,6 +83,29 @@ Page({
     }
   },
 
+  onShow() {
+    // 同步封面图片时间戳变化
+    this.syncImageTimes();
+  },
+
+  // 同步封面图片（其他页面刷新后返回需要更新图片）
+  syncImageTimes() {
+    const ct = app.globalData.coverLoadTime;
+    if (ct && ct !== this.data.coverLoadTime) {
+      const { playingCourse } = app.globalData;
+      if (playingCourse?.cover) {
+        let courseCover = this.processImageUrl(playingCourse.cover, ct);
+        let bgCover = this.generateBgCoverUrl(playingCourse.cover, ct);
+        // 如果没有封面，使用默认封面
+        if (!courseCover && app.globalData.defaultCoverUrl) {
+          courseCover = app.globalData.defaultCoverUrl;
+          bgCover = app.globalData.defaultCoverUrl;
+        }
+        this.setData({ coverLoadTime: ct, courseCover, bgCover });
+      }
+    }
+  },
+
   processImageUrl(url, coverLoadTime) {
     if (!url || url.includes('seed/fixed_')) return url;
     const t = coverLoadTime || app.globalData.coverLoadTime || Date.now();

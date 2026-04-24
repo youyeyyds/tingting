@@ -44,14 +44,17 @@ Page({
   },
 
   onShow() {
+    console.log('[Login] onShow, _wasHidden:', this.data._wasHidden, 'bannerLoadTime:', app.globalData.bannerLoadTime, 'loadTime:', this.data.loadTime);
     // 只有页面曾被隐藏（从其他页面返回）时才同步，避免每次onShow都刷新
     if (this.data._wasHidden) {
+      console.log('[Login] onShow syncing...');
       this.syncImageTimes();
     }
     this.setData({ _wasHidden: false });
   },
 
   onHide() {
+    console.log('[Login] onHide');
     this.setData({ _wasHidden: true });
   },
 
