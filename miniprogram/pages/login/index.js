@@ -20,7 +20,8 @@ Page({
       app.globalData.bannerLoadTime = Date.now();
     }
     const loadTime = app.globalData.bannerLoadTime;
-    let cachedHeadlines = app.globalData.loginHeadlines || [];
+    // 优先使用首页缓存的 headlines（同一云函数返回，数据相同）
+    let cachedHeadlines = app.globalData.indexHeadlines || [];
     const cachedCopyright = app.globalData.loginCopyright || {};
 
     // 如果有缓存，需要用当前时间戳重建 URL
@@ -36,7 +37,8 @@ Page({
       headlines: cachedHeadlines,
       copyrightLines: cachedCopyright.copyrightLines || [],
       icpNumber: cachedCopyright.icpNumber || '',
-      _prevBannerTime: loadTime // 记录进入时的banner时间戳
+      _prevBannerTime: loadTime, // 记录进入时的banner时间戳
+      _loading: false // 标记是否正在加载
     });
 
     if (cachedHeadlines.length === 0) {
@@ -46,9 +48,9 @@ Page({
   },
 
   onShow() {
-    // 只有banner时间戳变化了才同步（其他页面下拉刷新了）
+    // 只有banner时间戳变化了才同步（其他页面刷新了）
     const currentBannerTime = app.globalData.bannerLoadTime;
-    if (currentBannerTime !== this.data._prevBannerTime) {
+    if (currentBannerTime !== this.data._prevBannerTime && !this.data._loading) {
       this.syncImageTimes();
     }
   },
@@ -56,17 +58,16 @@ Page({
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
-    if (bt !== this.data.loadTime) {
-      const headlines = this.data.headlines.map(h => ({
-        ...h,
-        image: this.processImageUrl(h.image, bt)
-      }));
-      this.setData({ loadTime: bt, headlines });
-      app.globalData.loginHeadlines = headlines;
-    }
+    const headlines = this.data.headlines.map(h => ({
+      ...h,
+      image: this.processImageUrl(h.image, bt)
+    }));
+    this.setData({ loadTime: bt, headlines });
+    app.globalData.indexHeadlines = headlines; // 同步回首页缓存
   },
 
   loadHeadlines() {
+    this.setData({ _loading: true });
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getHeadlines', page: 'login' }
@@ -76,13 +77,17 @@ Page({
           ...h,
           image: this.processImageUrl(h.image, this.data.loadTime)
         }));
-        app.globalData.loginHeadlines = headlines;
+        app.globalData.indexHeadlines = headlines; // 同步到首页缓存
         this.setData({
           headlines,
-          bannerSpeed: (res.result.speed || 5) * 1000
+          bannerSpeed: (res.result.speed || 5) * 1000,
+          _loading: false
         });
       }
-    }).catch(err => console.error('获取头条失败', err));
+    }).catch(err => {
+      console.error('获取头条失败', err);
+      this.setData({ _loading: false });
+    });
   },
 
   loadCopyright() {
@@ -116,6 +121,9 @@ Page({
     const timeMatch = url.match(/seed\/(\d+)_banner_(.+\/\d+\/\d+)$/);
     if (timeMatch && timeMatch[1] != loadTime) {
       return url.replace(/seed\/\d+_banner_/, `seed/${loadTime}_banner_`);
+    }
+    if (timeMatch && timeMatch[1] == loadTime) {
+      return url;
     }
 
     // seed 格式（非时间戳），添加时间戳
