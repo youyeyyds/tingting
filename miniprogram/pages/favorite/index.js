@@ -122,6 +122,7 @@ Page({
     const bt = app.globalData.bannerLoadTime;
     const ct = app.globalData.coverLoadTime;
 
+    // 同步横幅时间戳
     if (bt !== this.data.loadTime) {
       const headlines = this.data.headlines.map(h => ({
         ...h,
@@ -131,6 +132,7 @@ Page({
       app.globalData.favoriteHeadlines = headlines;
     }
 
+    // 同步封面时间戳
     if (ct !== this.data.coverLoadTime) {
       const favoriteChapters = this.data.favoriteChapters.map(ch => ({
         ...ch,

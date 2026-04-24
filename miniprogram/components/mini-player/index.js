@@ -89,13 +89,18 @@ Component({
           }, 300);
         },
         onCoverRefresh: (data) => {
-          if (this.data.visible && data.coverLoadTime) {
-            const courseCover = this.rebuildImageUrl(this.data.courseCover, data.coverLoadTime);
+          if (data.coverLoadTime) {
+            // 无论播放器是否显示，都记录新时间戳，下次显示时会同步
+            const newCover = this.rebuildImageUrl(this.data.courseCover, data.coverLoadTime);
             this.setData({
-              courseCover: courseCover,
+              courseCover: newCover,
               coverLoadTime: data.coverLoadTime,
-              course: { ...this.data.course, cover: courseCover }
+              course: { ...this.data.course, cover: newCover }
             });
+            // 如果播放器正在显示，立即更新
+            if (this.data.visible) {
+              this.setData({ courseCover: newCover });
+            }
           }
         }
       };
