@@ -114,6 +114,7 @@ Page({
       this.loadFavorites();
     }
     // 同步图片时间戳变化
+    console.log('[Favorite] onShow calling syncImageTimes');
     this.syncImageTimes();
   },
 
@@ -121,19 +122,24 @@ Page({
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
     const ct = app.globalData.coverLoadTime;
+    console.log('[Favorite] syncImageTimes, global bt:', bt, 'local loadTime:', this.data.loadTime, 'global ct:', ct, 'local coverLoadTime:', this.data.coverLoadTime);
 
     // 同步横幅时间戳
     if (bt !== this.data.loadTime) {
+      console.log('[Favorite] refreshing banners, old:', this.data.loadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner')
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.favoriteHeadlines = headlines;
+    } else {
+      console.log('[Favorite] no banner refresh needed');
     }
 
     // 同步封面时间戳
     if (ct !== this.data.coverLoadTime) {
+      console.log('[Favorite] refreshing covers, old:', this.data.coverLoadTime, 'new:', ct);
       const favoriteChapters = this.data.favoriteChapters.map(ch => ({
         ...ch,
         courseCover: this.fixImageUrl(ch.courseCover, 'cover')
