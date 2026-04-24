@@ -14,6 +14,7 @@ Page({
   },
 
   onLoad() {
+    console.log('[Favorite] onLoad called');
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();

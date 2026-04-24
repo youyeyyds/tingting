@@ -366,6 +366,7 @@ Page({
       const targetPage = pages.find(p => p.route === 'pages/index/index');
       if (targetPage) {
         const delta = pages.length - pages.indexOf(targetPage) - 1;
+        console.log('[Mine] tabChange to index, delta:', delta, 'pages length:', pages.length);
         if (delta > 0) {
           wx.navigateBack({ delta });
         } else {
@@ -380,6 +381,7 @@ Page({
       const targetPage = pages.find(p => p.route === 'pages/favorite/index');
       if (targetPage) {
         const delta = pages.length - pages.indexOf(targetPage) - 1;
+        console.log('[Mine] tabChange to favorite, delta:', delta, 'pages length:', pages.length);
         if (delta > 0) {
           wx.navigateBack({ delta });
         } else {
