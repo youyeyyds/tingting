@@ -133,22 +133,20 @@
 }
 
 .chapter-author {
-  font-size: 30rpx;
-  color: #333;
-  font-weight: 500;
+  font-size: 28rpx;
+  color: #666;
   flex-shrink: 0;
 }
 
 .chapter-sep-top {
-  font-size: 30rpx;
+  font-size: 28rpx;
   color: #ccc;
   margin: 0 8rpx;
 }
 
 .chapter-course {
-  font-size: 30rpx;
-  color: #333;
-  font-weight: 500;
+  font-size: 28rpx;
+  color: #666;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

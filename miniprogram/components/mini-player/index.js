@@ -563,6 +563,14 @@ Component({
 
     preventMove() {},
 
+    // 封面图片加载失败时使用默认封面
+    onCoverError() {
+      const defaultCover = app.globalData.defaultCoverUrl || '/icons/svg/course.svg';
+      if (this.data.courseCover !== defaultCover) {
+        this.setData({ courseCover: defaultCover });
+      }
+    },
+
     openPlayerPanel() {
       wx.navigateTo({
         url: '/pages/player/index'
