@@ -26,9 +26,9 @@ Page({
     const coverLoadTime = app.globalData.coverLoadTime;
     // 检查是否有缓存的横幅数据和收藏数据
     let cachedHeadlines = app.globalData.favoriteHeadlines || [];
-    const cachedFavorites = app.globalData.favoriteChapters || [];
+    let cachedFavorites = app.globalData.favoriteChapters || [];
 
-    console.log('[Favorite] onLoad before rebuild, loadTime:', loadTime, 'cachedHeadlines length:', cachedHeadlines.length);
+    console.log('[Favorite] onLoad before rebuild, loadTime:', loadTime, 'coverLoadTime:', coverLoadTime, 'cachedHeadlines:', cachedHeadlines.length, 'cachedFavorites:', cachedFavorites.length);
     if (cachedHeadlines.length > 0) {
       const oldUrl = cachedHeadlines[0].image;
       cachedHeadlines = cachedHeadlines.map(h => ({
@@ -36,6 +36,16 @@ Page({
         image: this.fixImageUrl(h.image, 'banner', loadTime)
       }));
       console.log('[Favorite] onLoad rebuilt banner, old URL:', oldUrl, 'new URL:', cachedHeadlines[0].image);
+    }
+
+    // 重建收藏数据的封面URL
+    if (cachedFavorites.length > 0) {
+      const oldCover = cachedFavorites[0].courseCover;
+      cachedFavorites = cachedFavorites.map(ch => ({
+        ...ch,
+        courseCover: this.fixImageUrl(ch.courseCover, 'cover', coverLoadTime)
+      }));
+      console.log('[Favorite] onLoad rebuilt covers, old cover:', oldCover, 'new cover:', cachedFavorites[0].courseCover);
     }
 
     this.setData({
@@ -325,7 +335,7 @@ Page({
 
     return {
       ...chapter,
-      courseCover: this.fixImageUrl(chapter.courseCover, 'cover'),
+      courseCover: this.fixImageUrl(chapter.courseCover, 'cover', this.data.coverLoadTime),
       // 用户进度信息（放到顶层，便于播放器使用）
       lastPlayTime,
       finished,
