@@ -73,6 +73,26 @@ Page({
     }
   },
 
+  onPullDownRefresh() {
+    const t = Date.now();
+    app.globalData.bannerLoadTime = t;
+    app.globalData.coverLoadTime = t;
+    wx.setStorageSync('bannerLoadTime', t);
+    wx.setStorageSync('coverLoadTime', t);
+
+    this.setData({ loadTime: t });
+
+    Promise.all([
+      this.loadHeadlines(),
+      this.refreshUserInfo(),
+      this.loadUserStats()
+    ]).then(() => {
+      wx.stopPullDownRefresh();
+    }).catch(() => {
+      wx.stopPullDownRefresh();
+    });
+  },
+
   // 重新获取用户信息（刷新头像临时URL）
   async refreshUserInfo() {
     if (!app.globalData.userId) return;
