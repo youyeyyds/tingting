@@ -376,20 +376,9 @@ Page({
         wx.reLaunch({ url: '/pages/index/index' });
       }
     } else {
-      // 点击收藏，检查是否已存在
-      const pages = getCurrentPages();
-      const targetPage = pages.find(p => p.route === 'pages/favorite/index');
-      if (targetPage) {
-        const delta = pages.length - pages.indexOf(targetPage) - 1;
-        console.log('[Mine] tabChange to favorite, delta:', delta, 'pages length:', pages.length);
-        if (delta > 0) {
-          wx.navigateBack({ delta });
-        } else {
-          wx.navigateTo({ url: '/pages/favorite/index' });
-        }
-      } else {
-        wx.navigateTo({ url: '/pages/favorite/index' });
-      }
+      // 点击收藏，始终用 navigateTo（避免 navigateBack 导致的页面销毁重建问题）
+      console.log('[Mine] tabChange to favorite, using navigateTo');
+      wx.navigateTo({ url: '/pages/favorite/index' });
     }
   }
 });
