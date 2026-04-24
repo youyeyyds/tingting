@@ -156,6 +156,18 @@ Page({
     return url;
   },
 
+  onShow() {
+    // 检测封面时间戳变化，同步更新封面
+    const globalCoverTime = app.globalData.coverLoadTime;
+    // 如果 courseCover 和 bgCover 的 seed 时间戳不一致，强制同步
+    const coverMatch = this.data.courseCover?.match(/seed\/(\d+)_cover_/);
+    const bgMatch = this.data.bgCover?.match(/seed\/(\d+)_cover_/);
+    if (coverMatch && bgMatch && coverMatch[1] !== bgMatch[1]) {
+      const newBgCover = this.generateBgCoverUrl(this.data.courseCover, globalCoverTime);
+      this.setData({ bgCover: newBgCover, coverLoadTime: globalCoverTime });
+    }
+  },
+
   onUnload() {
     // 检查方法存在再取消监听（兼容低版本基础库）
     if (this.audioCallbacks) {
