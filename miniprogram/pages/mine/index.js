@@ -72,21 +72,27 @@ Page({
       this.loadUserStats();
     }
     // 同步图片时间戳变化
+    console.log('[Mine] onShow calling syncImageTimes');
     this.syncImageTimes();
   },
 
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
+    const localLoadTime = this.data.loadTime;
+    console.log('[Mine] syncImageTimes, global bt:', bt, 'local loadTime:', localLoadTime);
 
     // 同步横幅时间戳
-    if (bt !== this.data.loadTime) {
+    if (bt !== localLoadTime) {
+      console.log('[Mine] refreshing banners, old:', localLoadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner')
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
+    } else {
+      console.log('[Mine] no banner refresh needed');
     }
   },
 
@@ -97,6 +103,7 @@ Page({
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
 
+    console.log('[Mine] onPullDownRefresh, set bannerLoadTime:', t);
     this.setData({ loadTime: t });
 
     Promise.all([
@@ -106,6 +113,7 @@ Page({
     ]).then(() => {
       wx.stopPullDownRefresh();
       app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
+      console.log('[Mine] onPullDownRefresh done, notify callbacks');
     }).catch(() => {
       wx.stopPullDownRefresh();
     });
