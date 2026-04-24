@@ -71,6 +71,22 @@ Page({
     if (app.globalData.userId) {
       this.loadUserStats();
     }
+    // 同步图片时间戳变化
+    this.syncImageTimes();
+  },
+
+  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
+  syncImageTimes() {
+    const bt = app.globalData.bannerLoadTime;
+
+    if (bt !== this.data.loadTime) {
+      const headlines = this.data.headlines.map(h => ({
+        ...h,
+        image: this.fixImageUrl(h.image, 'banner')
+      }));
+      this.setData({ loadTime: bt, headlines });
+      app.globalData.mineHeadlines = headlines;
+    }
   },
 
   onPullDownRefresh() {

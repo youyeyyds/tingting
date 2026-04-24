@@ -113,6 +113,32 @@ Page({
     if (this.data.isLoggedIn && app.globalData.userId && this.data.favoriteChapters.length === 0) {
       this.loadFavorites();
     }
+    // 同步图片时间戳变化
+    this.syncImageTimes();
+  },
+
+  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
+  syncImageTimes() {
+    const bt = app.globalData.bannerLoadTime;
+    const ct = app.globalData.coverLoadTime;
+
+    if (bt !== this.data.loadTime) {
+      const headlines = this.data.headlines.map(h => ({
+        ...h,
+        image: this.fixImageUrl(h.image, 'banner')
+      }));
+      this.setData({ loadTime: bt, headlines });
+      app.globalData.favoriteHeadlines = headlines;
+    }
+
+    if (ct !== this.data.coverLoadTime) {
+      const favoriteChapters = this.data.favoriteChapters.map(ch => ({
+        ...ch,
+        courseCover: this.fixImageUrl(ch.courseCover, 'cover')
+      }));
+      this.setData({ coverLoadTime: ct, favoriteChapters });
+      app.globalData.favoriteChapters = favoriteChapters;
+    }
   },
 
   
