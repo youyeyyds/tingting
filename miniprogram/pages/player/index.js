@@ -93,16 +93,16 @@ Page({
     const ct = app.globalData.coverLoadTime;
     if (ct && ct !== this.data.coverLoadTime) {
       const { playingCourse } = app.globalData;
-      if (playingCourse?.cover) {
-        let courseCover = this.processImageUrl(playingCourse.cover, ct);
-        let bgCover = this.generateBgCoverUrl(playingCourse.cover, ct);
-        // 如果没有封面，使用默认封面
-        if (!courseCover && app.globalData.defaultCoverUrl) {
-          courseCover = app.globalData.defaultCoverUrl;
-          bgCover = app.globalData.defaultCoverUrl;
-        }
-        this.setData({ coverLoadTime: ct, courseCover, bgCover });
+      const coverUrl = playingCourse?.cover || '';
+      // 封面和背景图都用 processImageUrl 处理，保持一致
+      let courseCover = coverUrl ? this.processImageUrl(coverUrl, ct) : '';
+      let bgCover = coverUrl ? this.processImageUrl(coverUrl, ct) : '';
+      // 如果没有封面，使用默认封面
+      if (!courseCover && app.globalData.defaultCoverUrl) {
+        courseCover = app.globalData.defaultCoverUrl;
+        bgCover = app.globalData.defaultCoverUrl;
       }
+      this.setData({ coverLoadTime: ct, courseCover, bgCover });
     }
   },
 
