@@ -78,11 +78,9 @@ Page({
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
   syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
-    console.log('[Mine] syncImageTimes:', { bt, loadTime: this.data.loadTime });
 
     // 同步横幅时间戳
     if (bt !== this.data.loadTime) {
-      console.log('[Mine] refreshing banners, old:', this.data.loadTime, 'new:', bt);
       const headlines = this.data.headlines.map(h => ({
         ...h,
         image: this.fixImageUrl(h.image, 'banner')
