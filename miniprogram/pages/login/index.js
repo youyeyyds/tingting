@@ -26,7 +26,7 @@ Page({
     if (cachedHeadlines.length > 0) {
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
-        image: this.processImageUrl(h.image)
+        image: this.processImageUrl(h.image, loadTime)
       }));
     }
 
@@ -52,7 +52,7 @@ Page({
     if (bt !== this.data.loadTime) {
       const headlines = this.data.headlines.map(h => ({
         ...h,
-        image: this.processImageUrl(h.image)
+        image: this.processImageUrl(h.image, bt)
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.loginHeadlines = headlines;
@@ -67,7 +67,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.processImageUrl(h.image)
+          image: this.processImageUrl(h.image, this.data.loadTime)
         }));
         app.globalData.loginHeadlines = headlines;
         this.setData({
@@ -95,9 +95,12 @@ Page({
     }).catch(err => console.error('获取版权信息失败', err));
   },
 
-  processImageUrl(url) {
+  processImageUrl(url, loadTime) {
     if (!url) return url;
-    const loadTime = app.globalData.bannerLoadTime;
+    // 如果没有传入 loadTime，则从全局获取
+    if (loadTime === undefined) {
+      loadTime = app.globalData.bannerLoadTime;
+    }
 
     // 固定图片不处理
     if (url.includes('seed/fixed_')) return url;
