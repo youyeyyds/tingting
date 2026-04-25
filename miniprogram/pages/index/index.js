@@ -238,7 +238,7 @@ Page({
     }).catch(e => console.error('获取头条失败', e));
   },
 
-  loadCourses() {
+  loadCourses(callback) {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
@@ -249,10 +249,15 @@ Page({
         wx.setStorageSync('indexCourses', courses);
         this.setData({ courses, loading: false });
         this.maskCourses();
+        if (callback) callback();
       } else {
         this.setData({ loading: false });
+        if (callback) callback();
       }
-    }).catch(() => this.setData({ loading: false }));
+    }).catch(() => {
+      this.setData({ loading: false });
+      if (callback) callback();
+    });
   },
 
   maskCourses() {
@@ -301,17 +306,22 @@ Page({
     const isLoggedIn = globalIsLoggedIn || false;
     this.setData({ isLoggedIn }, () => {
       console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
-      // setData 完成后回调，确保 isLoggedIn 已更新
-      this.maskCourses();
-      // 如果已登录但没有课程数据，加载课程
+      // 如果已登录但没有真实课程缓存，先加载课程再恢复
       if (isLoggedIn) {
         const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
         console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
         if (realCourses.length === 0 && !this.data.loading) {
           console.log('[checkLogin] 触发loadCourses');
-          this.loadCourses();
+          this.loadCourses(() => {
+            // loadCourses 完成后恢复真实课程
+            this.maskCourses();
+            console.log('[checkLogin] loadCourses callback完成');
+          });
+          return;
         }
       }
+      // setData 完成后回调，确保 isLoggedIn 已更新
+      this.maskCourses();
       console.log('[checkLogin] ========== END ==========');
     });
   },
