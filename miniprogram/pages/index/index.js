@@ -264,15 +264,15 @@ Page({
 
     // 已登录且有真实课程，直接显示真实课程（不走保护分支）
     if (isLoggedIn && realCourses.length > 0) {
-      if (this.data.courses.some(c => c.title === '登录后可见')) {
-        this.setData({ courses: realCourses });
-      }
+      console.log('[maskCourses] 直接恢复真实课程');
+      this.setData({ courses: realCourses });
       return;
     }
 
     if (!homeProtect || isLoggedIn) {
       // 首页保护关闭或已登录但无真实课程缓存，恢复真实课程数据
-      if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
+      if (realCourses.length) {
+        console.log('[maskCourses] 恢复真实课程');
         this.setData({ courses: realCourses });
       }
       return;
