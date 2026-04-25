@@ -48,10 +48,10 @@ Page({
   },
 
   onLoad() {
+    // 先设置登录状态，确保 WXML 首次渲染就是正确的
+    this.data.isLoggedIn = app.globalData.isLoggedIn || false;
     this.initLayout();
     this.initTimes();
-    // 同步设置 isLoggedIn，避免 WXML 先用 false 渲染再更新
-    this.data.isLoggedIn = app.globalData.isLoggedIn || false;
     this.initCache();
     this.checkLogin();
   },
