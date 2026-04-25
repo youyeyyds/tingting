@@ -129,6 +129,12 @@ Page({
 
   onShow() {
     console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
+    // 直接使用全局登录状态，避免 this.data.isLoggedIn 被页面生命周期重置
+    const gLogin = app.globalData.isLoggedIn;
+    if (this.data.isLoggedIn !== gLogin) {
+      console.log('[onShow] 同步 isLoggedIn:', gLogin);
+      this.setData({ isLoggedIn: gLogin });
+    }
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
