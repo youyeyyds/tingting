@@ -390,7 +390,7 @@ Page({
   },
 
   handleVersionInfo() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+    wx.navigateTo({ url: '/pages/version/index' });
   },
 
   formatDuration(seconds) {

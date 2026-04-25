@@ -1,0 +1,48 @@
+<!--version/index.wxml-->
+<view class="page-container">
+  <!-- 内容区域 -->
+  <view class="content">
+    <!-- 头条轮播 -->
+    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
+      <swiper-item wx:for="{{headlines}}" wx:key="_id">
+        <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+    <!-- 横幅占位 -->
+    <view class="banner-placeholder" wx:else></view>
+
+    <!-- 版本列表 -->
+    <view class="version-list">
+      <view
+        class="version-card {{index === 0 ? 'first' : ''}} {{index === versions.length - 1 ? 'last' : ''}}"
+        wx:for="{{versions}}"
+        wx:for-index="index"
+        wx:key="_id"
+        bindtap="onVersionTap"
+        data-index="{{index}}"
+      >
+        <view class="version-content">
+          <text class="version-title {{index === 0 ? 'bold' : ''}}">{{item.title}}</text>
+          <text class="version-date">{{item.publishDate}}</text>
+        </view>
+        <view class="version-arrow"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" data-index="0" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 0 ? '/icons/svg/home-active.svg' : '/icons/svg/home.svg'}}" mode="aspectFit" />
+      <text class="tab-text">首页</text>
+    </view>
+    <view class="tab-item {{activeTab === 1 ? 'active' : ''}}" data-index="1" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 1 ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" />
+      <text class="tab-text">收藏</text>
+    </view>
+    <view class="tab-item {{activeTab === 2 ? 'active' : ''}}" data-index="2" bindtap="onTabChange">
+      <image class="tab-icon" src="{{activeTab === 2 ? '/icons/svg/mine-active.svg' : '/icons/svg/mine.svg'}}" mode="aspectFit" />
+      <text class="tab-text">我的</text>
+    </view>
+  </view>
+</view>

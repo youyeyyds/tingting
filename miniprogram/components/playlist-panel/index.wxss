@@ -70,7 +70,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20rpx 30rpx;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid #ddd;
 }
 
 .header-left {
@@ -224,7 +224,7 @@
   left: 24rpx;
   right: 24rpx;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 第一行：序号|章节名称 */

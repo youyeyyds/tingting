@@ -61,7 +61,7 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 60rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 .nickname {
@@ -86,7 +86,7 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
   display: flex;
   background: #fff;
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid #ddd;
   z-index: 100;
 }
 
@@ -137,7 +137,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 .stats-title {
@@ -163,7 +163,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 最后一个卡片不需要分隔线 */
@@ -185,7 +185,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 整个学习报告卡片组和下方的间距 */
@@ -238,7 +238,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 中间的卡片：分隔线 */
@@ -249,7 +249,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 最后一个：下方圆角 */
@@ -265,7 +265,7 @@
   right: 36rpx;
   bottom: 0;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 /* 单卡片：上下圆角 */

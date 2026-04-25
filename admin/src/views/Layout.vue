@@ -72,7 +72,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets } from '@element-plus/icons-vue'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled } from '@element-plus/icons-vue'
 import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
@@ -95,6 +95,7 @@ const menuLabels = {
   audios: '音频管理',
   headlines: '首尾管理',
   categories: '分类管理',
+  versions: '版本管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'
@@ -105,12 +106,13 @@ const menuIcons = {
   audios: Headset,
   headlines: Tickets,
   categories: Folder,
+  versions: InfoFilled,
   users: User,
   roles: Lock,
   system: Setting
 }
 
-const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'])
 
 // 获取头像URL（兼容新旧格式）
 function getAvatarUrl(avatarUrl) {
@@ -143,8 +145,11 @@ onMounted(async () => {
   try {
     const result = await getMenuConfig()
     if (result.success && result.data.menuOrder) {
-      // 过滤掉无效的菜单项
-      menuOrder.value = result.data.menuOrder.filter(key => menuLabels[key])
+      // 过滤掉无效的菜单项，并将新菜单项合并进去
+      const savedOrder = result.data.menuOrder.filter(key => menuLabels[key])
+      // 确保新菜单项在列表中
+      const allKeys = [...new Set([...savedOrder, ...Object.keys(menuLabels)])]
+      menuOrder.value = allKeys.filter(key => menuLabels[key])
     }
   } catch (err) {
     console.error('加载菜单配置失败:', err)

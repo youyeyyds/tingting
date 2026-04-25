@@ -50,6 +50,11 @@ const routes = [
         component: () => import('@/views/Categories.vue')
       },
       {
+        path: 'versions',
+        name: 'Versions',
+        component: () => import('@/views/Versions.vue')
+      },
+      {
         path: 'users',
         name: 'Users',
         component: () => import('@/views/Users.vue')

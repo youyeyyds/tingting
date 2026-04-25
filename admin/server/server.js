@@ -1317,6 +1317,100 @@ app.delete('/api/categories/:id', async (req, res) => {
   }
 });
 
+// ========== 版本 API ==========
+
+// 确保集合存在（云开发集合不存在时自动创建）
+async function ensureCollection(db, name) {
+  try {
+    await db.collection(name).limit(1).get();
+  } catch (e) {
+    if (e.message && e.message.includes('not exist')) {
+      await db.createCollection(name);
+    }
+  }
+}
+
+// 获取版本列表
+app.get('/api/versions', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    await ensureCollection(db, 'versions');
+    const result = await db.collection('versions').orderBy('seq', 'desc').get();
+
+    res.json(success(result.data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 创建版本
+app.post('/api/versions', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    await ensureCollection(db, 'versions');
+    const data = req.body;
+
+    const result = await db.collection('versions').add({
+      seq: data.seq || 1,
+      title: data.title,
+      publishDate: data.publishDate || '',
+      description: data.description || ''
+    });
+
+    res.json(success({ id: result.id }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 更新版本
+app.put('/api/versions/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    await ensureCollection(db, 'versions');
+    const id = req.params.id;
+    const data = req.body;
+
+    await db.collection('versions').doc(id).update({
+      seq: data.seq,
+      title: data.title,
+      publishDate: data.publishDate,
+      description: data.description
+    });
+
+    res.json(success({ updated: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 删除版本
+app.delete('/api/versions/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    await ensureCollection(db, 'versions');
+    const id = req.params.id;
+
+    await db.collection('versions').doc(id).remove();
+
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 用户 API ==========
 
 // 上传头像（云端 + 本地同步）
@@ -1891,13 +1985,13 @@ app.get('/api/menu-config', async (req, res) => {
       if (result.data.length > 0) {
         res.json(success({ menuOrder: result.data[0].value }));
       } else {
-        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
+        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'];
         res.json(success({ menuOrder: defaultOrder }));
       }
     } catch (e) {
       // 集合不存在，返回默认配置
       if (e.message && e.message.includes('not exist')) {
-        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
+        const defaultOrder = ['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'];
         res.json(success({ menuOrder: defaultOrder }));
       } else {
         throw e;

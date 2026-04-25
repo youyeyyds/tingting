@@ -310,6 +310,40 @@ export async function deleteCategory(id) {
   return response.data
 }
 
+// ========== 版本 API ==========
+
+/**
+ * 获取版本列表
+ */
+export async function getVersions() {
+  const response = await api.get('/versions')
+  return response.data
+}
+
+/**
+ * 创建版本
+ */
+export async function createVersion(data) {
+  const response = await api.post('/versions', data)
+  return response.data
+}
+
+/**
+ * 更新版本
+ */
+export async function updateVersion(id, data) {
+  const response = await api.put(`/versions/${id}`, data)
+  return response.data
+}
+
+/**
+ * 删除版本
+ */
+export async function deleteVersion(id) {
+  const response = await api.delete(`/versions/${id}`)
+  return response.data
+}
+
 // ========== 角色 API ==========
 
 /**

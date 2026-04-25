@@ -1,0 +1,135 @@
+/* version/index.wxss */
+
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom, 0));
+}
+
+/* 头条轮播 */
+.banner {
+  width: 100%;
+  height: 280rpx;
+}
+
+.banner-placeholder {
+  width: 100%;
+  height: 280rpx;
+  background: #f5f5f5;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+}
+
+/* 版本列表 */
+.version-list {
+  margin: 20rpx 30rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.version-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 36rpx;
+  position: relative;
+}
+
+.version-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.version-title {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.version-title.bold {
+  font-weight: 600;
+}
+
+.version-date {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.version-card:not(.last)::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #ddd;
+}
+
+.version-card.first {
+  border-radius: 16rpx 16rpx 0 0;
+}
+
+.version-card.last {
+  border-radius: 0 0 16rpx 16rpx;
+}
+
+.version-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.version-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-left: 3rpx solid #ccc;
+  border-bottom: 3rpx solid #ccc;
+  transform: rotate(-135deg);
+}
+
+/* 底部导航栏 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex;
+  background: #fff;
+  border-top: 1rpx solid #ddd;
+  z-index: 100;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 16rpx;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.tab-text {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.tab-item.active .tab-text {
+  color: #FF6B00;
+}

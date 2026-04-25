@@ -1,0 +1,45 @@
+/* version-detail/index.wxss */
+
+.page-container {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.content {
+  padding: 40rpx 30rpx;
+}
+
+.version-detail {
+  background: #fff;
+}
+
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 40rpx;
+}
+
+.detail-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.detail-date {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 12rpx;
+}
+
+.detail-desc {
+  background: #f9f9f9;
+  border-radius: 12rpx;
+  padding: 30rpx;
+}
+
+.description {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-line;
+}

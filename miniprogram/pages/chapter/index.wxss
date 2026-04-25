@@ -142,7 +142,7 @@
   left: 24rpx;
   right: 24rpx;
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
 }
 
 .chapter-info {

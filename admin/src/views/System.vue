@@ -237,12 +237,13 @@ const menuLabels = {
   audios: '音频管理',
   headlines: '首尾管理',
   categories: '分类管理',
+  versions: '版本管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'
 }
 
-const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'])
 
 const form = reactive({
   envId: '',
@@ -283,8 +284,10 @@ async function loadMenuConfig() {
   try {
     const result = await getMenuConfig()
     if (result.success && result.data.menuOrder) {
-      // 过滤掉无效的菜单项
-      menuOrder.value = result.data.menuOrder.filter(key => menuLabels[key])
+      // 过滤掉无效的菜单项，并将新菜单项合并进去
+      const savedOrder = result.data.menuOrder.filter(key => menuLabels[key])
+      const allKeys = [...new Set([...savedOrder, ...Object.keys(menuLabels)])]
+      menuOrder.value = allKeys.filter(key => menuLabels[key])
     }
     initMenuSortable()
   } catch (err) {

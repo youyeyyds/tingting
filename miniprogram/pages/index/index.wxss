@@ -162,7 +162,7 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
   display: flex;
   background: #fff;
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid #ddd;
   z-index: 100;
 }
 

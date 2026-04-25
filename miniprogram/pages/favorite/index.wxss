@@ -52,7 +52,7 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
   display: flex;
   background: #fff;
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid #ddd;
   z-index: 100;
 }
 
@@ -120,7 +120,7 @@
   width: 48rpx;
   height: 48rpx;
   border-radius: 24rpx;
-  background: #eee;
+  background: #ddd;
   flex-shrink: 0;
 }
 
@@ -166,7 +166,7 @@
 /* 分隔线 */
 .info-divider {
   height: 1rpx;
-  background: #eee;
+  background: #ddd;
   margin: 24rpx 0;
 }
 

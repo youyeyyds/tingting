@@ -178,7 +178,7 @@
   left: 40rpx;
   right: 40rpx;
   height: 4rpx;
-  background: #eee;
+  background: #ddd;
   border-radius: 2rpx;
 }
 

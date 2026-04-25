@@ -1,0 +1,14 @@
+<!--version-detail/index.wxml-->
+<view class="page-container">
+  <view class="content">
+    <view class="version-detail">
+      <view class="detail-header">
+        <text class="detail-title">{{title}}</text>
+        <text class="detail-date">{{publishDate}}</text>
+      </view>
+      <view class="detail-desc">
+        <text class="description">{{description}}</text>
+      </view>
+    </view>
+  </view>
+</view>

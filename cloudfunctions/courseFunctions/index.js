@@ -71,6 +71,27 @@ const getCategories = async () => {
   }
 };
 
+// 获取版本列表
+const getVersions = async () => {
+  try {
+    console.log('[getVersions] trying to fetch versions collection');
+    const res = await db.collection("versions")
+      .orderBy("seq", "desc")
+      .get();
+    console.log('[getVersions] result:', JSON.stringify(res));
+    return {
+      success: true,
+      data: res.data
+    };
+  } catch (e) {
+    console.error('[getVersions] error:', e.message || e);
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 查询课程列表（关联分类、章节数、用户学习进度）
 const getCourses = async (event) => {
   try {
@@ -584,6 +605,8 @@ exports.main = async (event, context) => {
       };
     case "getCategories":
       return await getCategories();
+    case "getVersions":
+      return await getVersions();
     case "getCourses":
       return await getCourses(event);
     case "getHeadlines":
