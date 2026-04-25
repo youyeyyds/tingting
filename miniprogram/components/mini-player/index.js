@@ -32,41 +32,29 @@ Component({
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this.audioCallback = {
         onCanplay: (data) => {
-          if (this.data.visible) {
-            this.setData({ duration: data.duration });
-          }
+          this.setData({ duration: data.duration });
         },
         onPlay: () => {
-          if (this.data.visible) {
-            this.setData({ isPlaying: true });
-          }
+          this.setData({ isPlaying: true });
         },
         onPause: () => {
-          if (this.data.visible) {
-            this.setData({ isPlaying: false });
-          }
+          this.setData({ isPlaying: false });
         },
         onTimeUpdate: (data) => {
-          if (this.data.visible) {
-            const currentTime = data.currentTime;
-            const duration = this.bgAudioManager.duration || this.data.duration;
-            const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-            this.setData({
-              currentTime: currentTime,
-              progressPercent: progressPercent
-            });
-          }
+          const currentTime = data.currentTime;
+          const duration = this.bgAudioManager.duration || this.data.duration;
+          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          this.setData({
+            currentTime: currentTime,
+            progressPercent: progressPercent
+          });
         },
         onEnded: () => this.onAudioEnded(),
         onError: () => {
-          if (this.data.visible) {
-            this.setData({ isPlaying: false });
-          }
+          this.setData({ isPlaying: false });
         },
         onStop: () => {
-          if (this.data.visible) {
-            this.setData({ isPlaying: false });
-          }
+          this.setData({ isPlaying: false });
         },
         onPlayFromList: (data) => this.playFromList(data),
         onClose: () => {

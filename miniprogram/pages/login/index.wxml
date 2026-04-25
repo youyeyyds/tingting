@@ -7,6 +7,8 @@
         <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
       </swiper-item>
     </swiper>
+    <!-- 横幅占位（骨架屏） -->
+    <view class="banner-placeholder" wx:else></view>
 
     <!-- 内容包裹层 -->
     <view class="content-inner">

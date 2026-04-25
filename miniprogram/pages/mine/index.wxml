@@ -16,17 +16,10 @@
       <image class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
       <text class="nickname">{{userInfo.nickName || '用户'}}</text>
       <text class="phone">{{maskedPhone}}</text>
-      <view class="edit-btn" bindtap="handleEdit">
-        <view class="edit-arrow"></view>
-      </view>
     </view>
 
-    <!-- 学习报告 -->
+    <!-- 学习报告 - 课程 -->
     <view class="stats-card">
-      <view class="stats-row stats-header">
-        <text class="stats-title">学习报告</text>
-      </view>
-      <view class="stats-divider"></view>
       <view class="stats-row">
         <text class="stats-label">课程</text>
         <view class="stats-value">
@@ -37,7 +30,10 @@
           <text>门</text>
         </view>
       </view>
-      <view class="stats-divider"></view>
+    </view>
+
+    <!-- 学习报告 - 收藏 -->
+    <view class="stats-card">
       <view class="stats-row">
         <text class="stats-label">收藏</text>
         <view class="stats-value">
@@ -46,7 +42,10 @@
           <text>章</text>
         </view>
       </view>
-      <view class="stats-divider"></view>
+    </view>
+
+    <!-- 学习报告 - 播放次数 -->
+    <view class="stats-card">
       <view class="stats-row">
         <text class="stats-label">播放次数</text>
         <view class="stats-value">
@@ -55,7 +54,10 @@
           <text>次</text>
         </view>
       </view>
-      <view class="stats-divider"></view>
+    </view>
+
+    <!-- 学习报告 - 学习时长 -->
+    <view class="stats-card">
       <view class="stats-row">
         <text class="stats-label">学习时长</text>
         <view class="stats-value">
@@ -67,7 +69,10 @@
           <text>分</text>
         </view>
       </view>
-      <view class="stats-divider"></view>
+    </view>
+
+    <!-- 学习报告 - 加入听听 -->
+    <view class="stats-card">
       <view class="stats-row">
         <text class="stats-label">加入听听</text>
         <view class="stats-value">
@@ -80,6 +85,42 @@
         </view>
       </view>
     </view>
+
+    <!-- 分隔线 -->
+    <view class="section-divider"></view>
+
+    <!-- 设置卡片 -->
+    <view class="settings-card" bindtap="handleRefreshImages">
+      <text class="settings-label">刷新图片</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <view class="settings-card" bindtap="handleChangeAvatar">
+      <text class="settings-label">更换头像</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <view class="settings-card" bindtap="handleChangeNickname">
+      <text class="settings-label">更换昵称</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <view class="settings-card" bindtap="handleChangePassword">
+      <text class="settings-label">修改密码</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <!-- 分隔线 -->
+    <view class="section-divider"></view>
+
+    <!-- 版本介绍 -->
+    <view class="settings-card" bindtap="handleVersionInfo">
+      <text class="settings-label">版本介绍</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <!-- 分隔线 -->
+    <view class="section-divider"></view>
 
     <!-- 退出登录按钮 -->
     <view class="logout-section">

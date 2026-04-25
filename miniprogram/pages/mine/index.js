@@ -140,11 +140,14 @@ Page({
           try {
             const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
             if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
-              this.setData({
-                userInfo: user,
-                avatarUrl: tempUrlRes.fileList[0].tempFileURL,
-                maskedPhone: this.maskPhone(user.phone)
-              });
+              // 只有 URL 真的变化了才更新，避免头像闪烁
+              if (this.data.avatarUrl !== tempUrlRes.fileList[0].tempFileURL) {
+                this.setData({
+                  userInfo: user,
+                  avatarUrl: tempUrlRes.fileList[0].tempFileURL,
+                  maskedPhone: this.maskPhone(user.phone)
+                });
+              }
               return;
             }
           } catch (e) {
@@ -152,11 +155,14 @@ Page({
           }
         }
         // 没有avatarFileID或获取失败，使用返回的avatarUrl
-        this.setData({
-          userInfo: user,
-          avatarUrl: user.avatarUrl || '/icons/svg/avatar.svg',
-          maskedPhone: this.maskPhone(user.phone)
-        });
+        const newAvatarUrl = user.avatarUrl || '/icons/svg/avatar.svg';
+        if (this.data.avatarUrl !== newAvatarUrl) {
+          this.setData({
+            userInfo: user,
+            avatarUrl: newAvatarUrl,
+            maskedPhone: this.maskPhone(user.phone)
+          });
+        }
       }
     } catch (err) {
       console.error('刷新用户信息失败:', err);
@@ -317,7 +323,23 @@ Page({
     }
   },
 
-  handleEdit() {
+  handleRefreshImages() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleChangeAvatar() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleChangeNickname() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleChangePassword() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleVersionInfo() {
     wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 

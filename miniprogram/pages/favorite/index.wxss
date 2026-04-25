@@ -114,12 +114,13 @@
 .chapter-header {
   display: flex;
   align-items: center;
+  padding-bottom: 16rpx;
 }
 
 .chapter-cover {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 30rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 24rpx;
   background: #eee;
   flex-shrink: 0;
 }
@@ -167,7 +168,7 @@
 .info-divider {
   height: 1rpx;
   background: #eee;
-  margin: 20rpx 0;
+  margin: 12rpx 0;
 }
 
 /* 第二行：序号 | 章节名称 */

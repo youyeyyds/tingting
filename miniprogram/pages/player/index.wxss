@@ -55,7 +55,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.45) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.45) 50%, rgba(0, 0, 0, 0.55) 100%);
   z-index: 3;
 }
 
@@ -203,7 +203,8 @@
   width: 100rpx;
   height: 100rpx;
   border-radius: 50rpx;
-  background: #FF6B00;
+  background: #E85D00;
+  box-shadow: 0 4rpx 20rpx rgba(232, 93, 0, 0.4);
 }
 
 .play-pause-btn .play-icon-cs {

@@ -98,10 +98,17 @@ Page({
 
     // 如果有缓存，需要用当前时间戳重建 URL
     const bannerTime = app.globalData.bannerLoadTime;
+    const coverTime = app.globalData.coverLoadTime;
     if (headlines.length > 0) {
       headlines = headlines.map(h => ({
         ...h,
         image: this.processUrl(h.image, bannerTime, 'banner')
+      }));
+    }
+    if (courses.length > 0) {
+      courses = courses.map(c => ({
+        ...c,
+        cover: this.processUrl(c.cover, coverTime, 'cover')
       }));
     }
 
@@ -111,10 +118,12 @@ Page({
       loading: !courses.length // 有缓存则不显示loading
     });
 
-    if (!headlines.length) this.loadHeadlines();
-    else this.maskCourses();
+    // 始终检查是否需要恢复真实课程（避免闪烁）
+    this.maskCourses();
 
-    if (!courses.length) this.loadCourses();
+    if (!headlines.length) this.loadHeadlines();
+    // 只有当 courses 确实为空时才加载（maskCourses 可能已恢复真实课程）
+    if (!this.data.courses.length) this.loadCourses();
   },
 
   onShow() {
@@ -132,6 +141,7 @@ Page({
         ...h, image: this.processUrl(h.image, bt, 'banner')
       }));
       this.setData({ bannerTime: bt, headlines });
+      app.globalData.indexHeadlines = headlines; // 同步回全局缓存
     }
 
     if (ct !== this.data.coverTime) {
@@ -139,6 +149,7 @@ Page({
         ...c, cover: this.processUrl(c.cover, ct, 'cover')
       }));
       this.setData({ coverTime: ct, courses });
+      app.globalData.indexCourses = courses; // 同步回全局缓存
       this.maskCourses();
     }
   },
