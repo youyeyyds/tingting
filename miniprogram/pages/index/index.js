@@ -299,9 +299,9 @@ Page({
     console.log('[checkLogin] 入口, globalIsLoggedIn:', gLogin, 'this.data.isLoggedIn before:', this.data.isLoggedIn);
     this.setData({ isLoggedIn: gLogin || false }, () => {
       console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
+      // setData 完成后才调用 maskCourses，确保 isLoggedIn 已更新
+      this.maskCourses();
     });
-    console.log('[checkLogin] setData调用后, this.data.isLoggedIn:', this.data.isLoggedIn);
-    this.maskCourses();
   },
 
   handleLogin() {
