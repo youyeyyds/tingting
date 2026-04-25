@@ -127,6 +127,7 @@ Page({
   },
 
   onShow() {
+    console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
@@ -259,6 +260,7 @@ Page({
     // 直接使用全局登录状态，避免 setData 异步导致 this.data.isLoggedIn 滞后
     const isLoggedIn = app.globalData.isLoggedIn;
     const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+    console.log('[maskCourses] isLoggedIn:', isLoggedIn, 'realCourses:', realCourses.length, 'first title:', courses[0]?.title);
 
     // 已登录且有真实课程，直接显示真实课程（不走保护分支）
     if (isLoggedIn && realCourses.length > 0) {
@@ -291,6 +293,7 @@ Page({
   },
 
   checkLogin() {
+    console.log('[checkLogin] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
     this.maskCourses();
   },
