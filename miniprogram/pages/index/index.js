@@ -129,11 +129,16 @@ Page({
 
   onShow() {
     console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
-    // 直接使用全局登录状态，避免 this.data.isLoggedIn 被页面生命周期重置
+    // 如果全局状态是已登录，但页面状态是未登录，先同步状态
     const gLogin = app.globalData.isLoggedIn;
-    if (this.data.isLoggedIn !== gLogin) {
-      console.log('[onShow] 同步 isLoggedIn:', gLogin);
-      this.setData({ isLoggedIn: gLogin });
+    if (gLogin && !this.data.isLoggedIn) {
+      console.log('[onShow] 强制同步 isLoggedIn 为 true');
+      this.setData({ isLoggedIn: true }, () => {
+        this.maskCourses();
+        this.syncTimes();
+        this.showStatusToast();
+      });
+      return;
     }
     this.checkLogin();
     this.syncTimes();
