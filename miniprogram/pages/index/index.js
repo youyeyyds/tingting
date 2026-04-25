@@ -116,10 +116,10 @@ Page({
       headlines,
       courses,
       loading: !courses.length // 有缓存则不显示loading
+    }, () => {
+      // setData 完成后再检查是否需要恢复真实课程
+      this.maskCourses();
     });
-
-    // 始终检查是否需要恢复真实课程（避免闪烁）
-    this.maskCourses();
 
     if (!headlines.length) this.loadHeadlines();
     // 只有当 courses 确实为空时才加载（maskCourses 可能已恢复真实课程）
