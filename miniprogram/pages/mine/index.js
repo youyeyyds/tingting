@@ -388,21 +388,10 @@ Page({
       return;
     }
     if (index == 0) {
-      // 点击首页，检查是否已存在
-      const pages = getCurrentPages();
-      const targetPage = pages.find(p => p.route === 'pages/index/index');
-      if (targetPage) {
-        const delta = pages.length - pages.indexOf(targetPage) - 1;
-        if (delta > 0) {
-          wx.navigateBack({ delta });
-        } else {
-          wx.reLaunch({ url: '/pages/index/index' });
-        }
-      } else {
-        wx.reLaunch({ url: '/pages/index/index' });
-      }
+      // 直接 reLaunch 确保首页状态正确
+      wx.reLaunch({ url: '/pages/index/index' });
     } else {
-      // 点击收藏，始终用 navigateTo（避免 navigateBack 导致的页面销毁重建问题）
+      // 点击收藏，始终用 navigateTo
       wx.navigateTo({ url: '/pages/favorite/index' });
     }
   }
