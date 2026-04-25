@@ -83,6 +83,8 @@ Page({
   },
 
   initCache() {
+    console.log('[initCache] ========== START ==========');
+    console.log('[initCache] globalIsLoggedIn:', app.globalData.isLoggedIn, 'indexCourses length:', (app.globalData.indexCourses || []).length);
     // 优先从本地存储读取缓存，避免空白页
     let headlines = app.globalData.indexHeadlines;
     let courses = app.globalData.indexCourses;
@@ -124,12 +126,16 @@ Page({
     if (!headlines.length) this.loadHeadlines();
     // 只有当 courses 确实为空时才加载（maskCourses 可能已恢复真实课程）
     if (!this.data.courses.length) this.loadCourses();
+    console.log('[initCache] ========== END ==========');
   },
 
   onShow() {
+    console.log('[onShow] ========== START ==========');
+    console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
+    console.log('[onShow] ========== END ==========');
   },
 
   syncTimes() {
@@ -289,9 +295,12 @@ Page({
   },
 
   checkLogin() {
-    console.log('[checkLogin] isLoggedIn:', app.globalData.isLoggedIn, 'userId:', app.globalData.userId);
-    const isLoggedIn = app.globalData.isLoggedIn || false;
+    const globalIsLoggedIn = app.globalData.isLoggedIn;
+    console.log('[checkLogin] ========== START ==========');
+    console.log('[checkLogin] globalIsLoggedIn:', globalIsLoggedIn, 'userId:', app.globalData.userId);
+    const isLoggedIn = globalIsLoggedIn || false;
     this.setData({ isLoggedIn }, () => {
+      console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
       // setData 完成后回调，确保 isLoggedIn 已更新
       this.maskCourses();
       // 如果已登录但没有课程数据，加载课程
@@ -303,6 +312,7 @@ Page({
           this.loadCourses();
         }
       }
+      console.log('[checkLogin] ========== END ==========');
     });
   },
 
