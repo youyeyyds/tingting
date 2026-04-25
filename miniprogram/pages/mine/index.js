@@ -416,23 +416,18 @@ Page({
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
-    if (index == 0) {
-      // 返回首页
-      const pages = getCurrentPages();
-      const targetPage = pages.find(p => p.route === 'pages/index/index');
-      if (targetPage) {
-        const delta = pages.length - pages.indexOf(targetPage) - 1;
-        if (delta > 0) {
-          wx.navigateBack({ delta });
-        } else {
-          wx.reLaunch({ url: '/pages/index/index' });
-        }
+    const targetRoute = index == 0 ? 'pages/index/index' : 'pages/favorite/index';
+    const pages = getCurrentPages();
+    const targetPage = pages.find(p => p.route === targetRoute);
+    if (targetPage) {
+      const delta = pages.length - pages.indexOf(targetPage) - 1;
+      if (delta > 0) {
+        wx.navigateBack({ delta });
       } else {
-        wx.reLaunch({ url: '/pages/index/index' });
+        // 目标页就是当前页，不处理
       }
     } else {
-      // 点击收藏，始终用 navigateTo（避免 navigateBack 导致的页面销毁重建问题）
-      wx.navigateTo({ url: '/pages/favorite/index' });
+      wx.navigateTo({ url: `/${targetRoute}` });
     }
   }
 });

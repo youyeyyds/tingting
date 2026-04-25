@@ -466,23 +466,18 @@ Page({
   onTabChange(e) {
     const { index } = e.currentTarget.dataset;
     if (index == 1) return; // 当前页，不做处理
-    if (index == 0) {
-      // 返回首页
-      const pages = getCurrentPages();
-      const targetPage = pages.find(p => p.route === 'pages/index/index');
-      if (targetPage) {
-        const delta = pages.length - pages.indexOf(targetPage) - 1;
-        if (delta > 0) {
-          wx.navigateBack({ delta });
-        } else {
-          wx.reLaunch({ url: '/pages/index/index' });
-        }
+    const targetRoute = index == 0 ? 'pages/index/index' : 'pages/mine/index';
+    const pages = getCurrentPages();
+    const targetPage = pages.find(p => p.route === targetRoute);
+    if (targetPage) {
+      const delta = pages.length - pages.indexOf(targetPage) - 1;
+      if (delta > 0) {
+        wx.navigateBack({ delta });
       } else {
-        wx.reLaunch({ url: '/pages/index/index' });
+        // 目标页就是当前页，不处理
       }
     } else {
-      // 点击我的，始终用 navigateTo
-      wx.navigateTo({ url: '/pages/mine/index' });
+      wx.navigateTo({ url: `/${targetRoute}` });
     }
   }
 });
