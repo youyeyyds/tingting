@@ -7,6 +7,8 @@ Page({
     bgCover: '', // 竖屏比例背景图
     bgCoverLoaded: false, // 封面背景加载状态
     bgPortraitLoaded: false, // 竖屏背景加载状态
+    bgCoverError: false, // 背景图加载失败状态
+    coverError: false, // 封面图加载失败状态
     courseTitle: '',
     courseAuthor: '',
     chapterCount: 0,
@@ -29,7 +31,9 @@ Page({
     coverRotationAngle: 0,
     coverLoadTime: 0,
     nextChapterSeq: '',
-    nextChapterTitle: ''
+    nextChapterTitle: '',
+    usingDefaultCover: false,
+    originalCover: ''
   },
 
   bgAudioManager: null,
@@ -56,6 +60,7 @@ Page({
     this.setData({
       courseCover,
       bgCover,
+      originalCover: playingCourse?.cover || '',
       courseTitle: playingCourse?.title || '',
       courseAuthor: playingCourse?.author || '',
       chapterCount: playingCourse?.chapterCount || playlistChaptersData?.length || 0,
@@ -228,6 +233,68 @@ Page({
 
   onBgPortraitLoad() {
     this.setData({ bgPortraitLoaded: true });
+  },
+
+  // 背景图加载失败时设置标志，使用默认封面
+  onBgCoverError() {
+    const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+    // 如果已经是默认封面，说明默认封面也加载失败，不再重试
+    if (this.data.courseCover === defaultCover && defaultCover) {
+      this.setData({ bgCoverError: true });
+      return;
+    }
+    this.setData({
+      bgCoverError: true,
+      courseCover: defaultCover || this.data.courseCover,
+      bgCover: defaultCover || this.data.bgCover
+    });
+  },
+
+  // 封面图加载失败时设置标志，使用默认封面
+  onCoverError() {
+    const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+    // 如果已经是默认封面，说明默认封面也加载失败，不再重试
+    if (this.data.courseCover === defaultCover && defaultCover) {
+      this.setData({ coverError: true });
+      return;
+    }
+    this.setData({
+      coverError: true,
+      courseCover: defaultCover || this.data.courseCover
+    });
+  },
+
+  // 点击封面图切换默认封面
+  onCoverTap() {
+    const { usingDefaultCover, originalCover, courseCover } = this.data;
+    const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+    if (!defaultCover) return;
+
+    // 如果当前没有原始封面（即originalCover为空），不切换
+    if (!originalCover) return;
+
+    if (usingDefaultCover) {
+      // 切换回原始封面
+      const newCover = this.processImageUrl(originalCover, this.data.coverLoadTime);
+      const newBgCover = this.generateBgCoverUrl(originalCover, this.data.coverLoadTime);
+      this.setData({
+        usingDefaultCover: false,
+        courseCover: newCover,
+        bgCover: newBgCover,
+        coverError: false,
+        bgCoverError: false
+      });
+    } else {
+      // 切换到默认封面
+      const newBgCover = this.generateBgCoverUrl(defaultCover, this.data.coverLoadTime);
+      this.setData({
+        usingDefaultCover: true,
+        courseCover: defaultCover,
+        bgCover: newBgCover,
+        coverError: false,
+        bgCoverError: false
+      });
+    }
   },
 
   updateProgress() {

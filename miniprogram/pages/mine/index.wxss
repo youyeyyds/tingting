@@ -259,13 +259,7 @@
 }
 
 .settings-card-group-last::after {
-  content: '';
-  position: absolute;
-  left: 36rpx;
-  right: 36rpx;
-  bottom: 0;
-  height: 1rpx;
-  background: #ddd;
+  display: none;
 }
 
 /* 单卡片：上下圆角 */
