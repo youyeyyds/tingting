@@ -467,8 +467,19 @@ Page({
     const { index } = e.currentTarget.dataset;
     if (index == 1) return; // 当前页，不做处理
     if (index == 0) {
-      // 直接 reLaunch 确保首页状态正确
-      wx.reLaunch({ url: '/pages/index/index' });
+      // 返回首页
+      const pages = getCurrentPages();
+      const targetPage = pages.find(p => p.route === 'pages/index/index');
+      if (targetPage) {
+        const delta = pages.length - pages.indexOf(targetPage) - 1;
+        if (delta > 0) {
+          wx.navigateBack({ delta });
+        } else {
+          wx.reLaunch({ url: '/pages/index/index' });
+        }
+      } else {
+        wx.reLaunch({ url: '/pages/index/index' });
+      }
     } else {
       // 点击我的，始终用 navigateTo
       wx.navigateTo({ url: '/pages/mine/index' });
