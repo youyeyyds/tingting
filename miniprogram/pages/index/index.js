@@ -50,6 +50,8 @@ Page({
   onLoad() {
     this.initLayout();
     this.initTimes();
+    // 同步设置 isLoggedIn，避免 WXML 先用 false 渲染再更新
+    this.data.isLoggedIn = app.globalData.isLoggedIn || false;
     this.initCache();
     this.checkLogin();
   },
