@@ -83,8 +83,6 @@ Page({
   },
 
   initCache() {
-    console.log('[initCache] ========== START ==========');
-    console.log('[initCache] globalIsLoggedIn:', app.globalData.isLoggedIn, 'indexCourses length:', (app.globalData.indexCourses || []).length);
     // 优先从本地存储读取缓存，避免空白页
     let headlines = app.globalData.indexHeadlines;
     let courses = app.globalData.indexCourses;
@@ -126,16 +124,12 @@ Page({
     if (!headlines.length) this.loadHeadlines();
     // 只有当 courses 确实为空时才加载（maskCourses 可能已恢复真实课程）
     if (!this.data.courses.length) this.loadCourses();
-    console.log('[initCache] ========== END ==========');
   },
 
   onShow() {
-    console.log('[onShow] ========== START ==========');
-    console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
-    console.log('[onShow] ========== END ==========');
   },
 
   syncTimes() {
@@ -262,14 +256,12 @@ Page({
 
   maskCourses() {
     const { homeProtect, courses, maskedAuthors } = this.data;
-    // 优先检查全局登录状态，因为 initCache 时 data.isLoggedIn 还未设置
-    const isLoggedIn = this.data.isLoggedIn || app.globalData.isLoggedIn;
+    // 直接使用全局登录状态，避免 setData 异步导致 this.data.isLoggedIn 滞后
+    const isLoggedIn = app.globalData.isLoggedIn;
     const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-    console.log('[maskCourses] homeProtect:', homeProtect, 'isLoggedIn:', isLoggedIn, 'realCourses length:', realCourses.length, 'first course title:', courses[0]?.title);
 
     // 已登录且有真实课程，直接显示真实课程（不走保护分支）
     if (isLoggedIn && realCourses.length > 0) {
-      console.log('[maskCourses] 已登录有真实课程，显示真实课程');
       if (this.data.courses.some(c => c.title === '登录后可见')) {
         this.setData({ courses: realCourses });
       }
@@ -279,7 +271,6 @@ Page({
     if (!homeProtect || isLoggedIn) {
       // 首页保护关闭或已登录但无真实课程缓存，恢复真实课程数据
       if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
-        console.log('[maskCourses] 恢复真实课程');
         this.setData({ courses: realCourses });
       }
       return;
@@ -300,30 +291,8 @@ Page({
   },
 
   checkLogin() {
-    const globalIsLoggedIn = app.globalData.isLoggedIn;
-    console.log('[checkLogin] ========== START ==========');
-    console.log('[checkLogin] globalIsLoggedIn:', globalIsLoggedIn, 'userId:', app.globalData.userId);
-    const isLoggedIn = globalIsLoggedIn || false;
-    this.setData({ isLoggedIn }, () => {
-      console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
-      // 如果已登录但没有真实课程缓存，先加载课程再恢复
-      if (isLoggedIn) {
-        const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-        console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
-        if (realCourses.length === 0 && !this.data.loading) {
-          console.log('[checkLogin] 触发loadCourses');
-          this.loadCourses(() => {
-            // loadCourses 完成后恢复真实课程
-            this.maskCourses();
-            console.log('[checkLogin] loadCourses callback完成');
-          });
-          return;
-        }
-      }
-      // setData 完成后回调，确保 isLoggedIn 已更新
-      this.maskCourses();
-      console.log('[checkLogin] ========== END ==========');
-    });
+    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
+    this.maskCourses();
   },
 
   handleLogin() {
