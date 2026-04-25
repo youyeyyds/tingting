@@ -277,6 +277,13 @@ Page({
   checkLogin() {
     this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
     this.maskCourses();
+    // 如果已登录但没有课程数据（realCourses为空），加载课程
+    if (app.globalData.isLoggedIn) {
+      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+      if (realCourses.length === 0 && !this.data.loading) {
+        this.loadCourses();
+      }
+    }
   },
 
   handleLogin() {
