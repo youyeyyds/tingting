@@ -250,12 +250,23 @@ Page({
   },
 
   maskCourses() {
-    const { homeProtect, isLoggedIn, courses, maskedAuthors } = this.data;
-    console.log('[maskCourses] homeProtect:', homeProtect, 'isLoggedIn:', isLoggedIn, 'courses length:', courses.length, 'first course title:', courses[0]?.title);
+    const { homeProtect, courses, maskedAuthors } = this.data;
+    // 优先检查全局登录状态，因为 initCache 时 data.isLoggedIn 还未设置
+    const isLoggedIn = this.data.isLoggedIn || app.globalData.isLoggedIn;
+    const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+    console.log('[maskCourses] homeProtect:', homeProtect, 'isLoggedIn:', isLoggedIn, 'realCourses length:', realCourses.length, 'first course title:', courses[0]?.title);
+
+    // 已登录且有真实课程，直接显示真实课程（不走保护分支）
+    if (isLoggedIn && realCourses.length > 0) {
+      console.log('[maskCourses] 已登录有真实课程，显示真实课程');
+      if (this.data.courses.some(c => c.title === '登录后可见')) {
+        this.setData({ courses: realCourses });
+      }
+      return;
+    }
+
     if (!homeProtect || isLoggedIn) {
-      // 已登录或首页保护关闭，恢复真实课程数据
-      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-      console.log('[maskCourses] 已登录/保护关闭, realCourses length:', realCourses.length, 'current has masked:', this.data.courses.some(c => c.title === '登录后可见'));
+      // 首页保护关闭或已登录但无真实课程缓存，恢复真实课程数据
       if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
         console.log('[maskCourses] 恢复真实课程');
         this.setData({ courses: realCourses });
@@ -281,7 +292,7 @@ Page({
     console.log('[checkLogin] isLoggedIn:', app.globalData.isLoggedIn, 'userId:', app.globalData.userId);
     this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
     this.maskCourses();
-    // 如果已登录但没有课程数据（realCourses为空），加载课程
+    // 如果已登录但没有课程数据，加载课程
     if (app.globalData.isLoggedIn) {
       const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
       console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
