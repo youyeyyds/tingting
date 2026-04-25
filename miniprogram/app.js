@@ -117,7 +117,9 @@ App({
     loginHeadlines: [], // 登录页横幅缓存
     favoriteHeadlines: [], // 收藏页横幅缓存
     mineHeadlines: [], // 我的页横幅缓存
-    favoriteChapters: [] // 收藏章节缓存
+    favoriteChapters: [], // 收藏章节缓存
+    cachedAvatarFileID: null, // 头像云文件ID缓存
+    cachedAvatarTempUrl: null // 头像临时URL缓存
   },
 
   restoreLoginState() {

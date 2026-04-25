@@ -63,6 +63,8 @@ Page({
       headlines: cachedHeadlines
     });
     this.checkLoginStatus();
+    // 刷新头像 temp URL（只在 avatarFileID 变化时才更新，避免切换页面时闪烁）
+    this.refreshAvatarTempUrl();
     // 只在首次加载（无缓存）时获取横幅数据
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
@@ -70,14 +72,11 @@ Page({
   },
 
   onShow() {
-    this.checkLoginStatus();
     // 未登录时跳转到首页
     if (!this.data.isLoggedIn) {
       wx.reLaunch({ url: '/pages/index/index' });
       return;
     }
-    // 重新获取用户信息（刷新头像临时URL）
-    this.refreshUserInfo();
     // 切换页面时不重新加载，保持原有数据
     if (app.globalData.userId) {
       this.loadUserStats();
@@ -116,37 +115,44 @@ Page({
         const user = res.result.data;
         app.globalData.userInfo = user;
         wx.setStorageSync('userInfo', JSON.stringify(user));
-        // 如果有avatarFileID，用客户端API获取新的临时URL
-        if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
-          try {
-            const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
-            if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
-              // 只有 URL 真的变化了才更新，避免头像闪烁
-              if (this.data.avatarUrl !== tempUrlRes.fileList[0].tempFileURL) {
-                this.setData({
-                  userInfo: user,
-                  avatarUrl: tempUrlRes.fileList[0].tempFileURL,
-                  maskedPhone: this.maskPhone(user.phone)
-                });
-              }
-              return;
-            }
-          } catch (e) {
-            console.error('客户端获取头像临时URL失败:', e);
-          }
-        }
-        // 没有avatarFileID或获取失败，使用返回的avatarUrl
-        const newAvatarUrl = user.avatarUrl || '/icons/svg/avatar.svg';
-        if (this.data.avatarUrl !== newAvatarUrl) {
-          this.setData({
-            userInfo: user,
-            avatarUrl: newAvatarUrl,
-            maskedPhone: this.maskPhone(user.phone)
-          });
-        }
+        // 更新 userInfo 和 maskedPhone（头像由 refreshAvatarTempUrl 单独处理）
+        const newAvatarUrl = user.avatarFileID && user.avatarFileID.startsWith('cloud://')
+          ? (app.globalData.cachedAvatarTempUrl || user.avatarUrl)
+          : (user.avatarUrl || '/icons/svg/avatar.svg');
+        this.setData({
+          userInfo: user,
+          avatarUrl: newAvatarUrl,
+          maskedPhone: this.maskPhone(user.phone)
+        });
       }
     } catch (err) {
       console.error('刷新用户信息失败:', err);
+    }
+  },
+
+  // 刷新头像临时URL（仅在 avatarFileID 变化时更新），在 onLoad 中调用一次
+  async refreshAvatarTempUrl() {
+    const user = app.globalData.userInfo;
+    if (!user) return;
+    if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
+      const cachedFileID = app.globalData.cachedAvatarFileID;
+      const cachedTempUrl = app.globalData.cachedAvatarTempUrl;
+      if (cachedFileID === user.avatarFileID && cachedTempUrl) {
+        // avatarFileID 没变，用缓存，不触发 setData 避免闪烁
+        return;
+      }
+      // avatarFileID 变了或无缓存，获取新临时URL
+      try {
+        const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
+        if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
+          const newTempUrl = tempUrlRes.fileList[0].tempFileURL;
+          app.globalData.cachedAvatarFileID = user.avatarFileID;
+          app.globalData.cachedAvatarTempUrl = newTempUrl;
+          this.setData({ avatarUrl: newTempUrl });
+        }
+      } catch (e) {
+        console.error('获取头像临时URL失败:', e);
+      }
     }
   },
 
