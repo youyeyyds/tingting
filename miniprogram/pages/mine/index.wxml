@@ -18,113 +18,123 @@
       <text class="phone">{{maskedPhone}}</text>
     </view>
 
+    <!-- 学习报告标题卡 -->
+    <view class="stats-card stats-card-header">
+      <text class="stats-title">学习报告</text>
+    </view>
+
     <!-- 学习报告 - 课程 -->
-    <view class="stats-card">
-      <view class="stats-row">
-        <text class="stats-label">课程</text>
-        <view class="stats-value">
-          <text>学了</text>
-          <text class="stats-number">{{stats.learnedCourses || 0}}</text>
-          <text>门 / 毕业</text>
-          <text class="stats-number">{{stats.graduatedCourses || 0}}</text>
-          <text>门</text>
-        </view>
+    <view class="stats-card stats-card-row">
+      <text class="stats-label">课程</text>
+      <view class="stats-value">
+        <text>学了</text>
+        <text class="stats-number">{{stats.learnedCourses || 0}}</text>
+        <text>门 / 毕业</text>
+        <text class="stats-number">{{stats.graduatedCourses || 0}}</text>
+        <text>门</text>
       </view>
     </view>
 
     <!-- 学习报告 - 收藏 -->
-    <view class="stats-card">
-      <view class="stats-row">
-        <text class="stats-label">收藏</text>
-        <view class="stats-value">
-          <text>共</text>
-          <text class="stats-number">{{stats.favoriteCount || 0}}</text>
-          <text>章</text>
-        </view>
+    <view class="stats-card stats-card-row">
+      <text class="stats-label">收藏</text>
+      <view class="stats-value">
+        <text>共</text>
+        <text class="stats-number">{{stats.favoriteCount || 0}}</text>
+        <text>章</text>
       </view>
     </view>
 
     <!-- 学习报告 - 播放次数 -->
-    <view class="stats-card">
-      <view class="stats-row">
-        <text class="stats-label">播放次数</text>
-        <view class="stats-value">
-          <text>共</text>
-          <text class="stats-number">{{stats.totalPlayCount || 0}}</text>
-          <text>次</text>
-        </view>
+    <view class="stats-card stats-card-row">
+      <text class="stats-label">播放次数</text>
+      <view class="stats-value">
+        <text>共</text>
+        <text class="stats-number">{{stats.totalPlayCount || 0}}</text>
+        <text>次</text>
       </view>
     </view>
 
     <!-- 学习报告 - 学习时长 -->
-    <view class="stats-card">
-      <view class="stats-row">
-        <text class="stats-label">学习时长</text>
-        <view class="stats-value">
-          <text class="stats-number" wx:if="{{studyTime.days > 0}}">{{studyTime.days}}</text>
-          <text wx:if="{{studyTime.days > 0}}">天</text>
-          <text class="stats-number" wx:if="{{studyTime.hours > 0}}">{{studyTime.hours}}</text>
-          <text wx:if="{{studyTime.hours > 0}}">时</text>
-          <text class="stats-number">{{studyTime.mins}}</text>
-          <text>分</text>
-        </view>
+    <view class="stats-card stats-card-row">
+      <text class="stats-label">学习时长</text>
+      <view class="stats-value">
+        <text class="stats-number" wx:if="{{studyTime.days > 0}}">{{studyTime.days}}</text>
+        <text wx:if="{{studyTime.days > 0}}">天</text>
+        <text class="stats-number" wx:if="{{studyTime.hours > 0}}">{{studyTime.hours}}</text>
+        <text wx:if="{{studyTime.hours > 0}}">时</text>
+        <text class="stats-number">{{studyTime.mins}}</text>
+        <text>分</text>
       </view>
     </view>
 
     <!-- 学习报告 - 加入听听 -->
-    <view class="stats-card">
-      <view class="stats-row">
-        <text class="stats-label">加入听听</text>
-        <view class="stats-value">
-          <text class="stats-number" wx:if="{{joinedTime.days > 0}}">{{joinedTime.days}}</text>
-          <text wx:if="{{joinedTime.days > 0}}">天</text>
-          <text class="stats-number" wx:if="{{joinedTime.hours > 0}}">{{joinedTime.hours}}</text>
-          <text wx:if="{{joinedTime.hours > 0}}">时</text>
-          <text class="stats-number">{{joinedTime.mins}}</text>
-          <text>分</text>
-        </view>
+    <view class="stats-card stats-card-row stats-card-last">
+      <text class="stats-label">加入听听</text>
+      <view class="stats-value">
+        <text class="stats-number" wx:if="{{joinedTime.days > 0}}">{{joinedTime.days}}</text>
+        <text wx:if="{{joinedTime.days > 0}}">天</text>
+        <text class="stats-number" wx:if="{{joinedTime.hours > 0}}">{{joinedTime.hours}}</text>
+        <text wx:if="{{joinedTime.hours > 0}}">时</text>
+        <text class="stats-number">{{joinedTime.mins}}</text>
+        <text>分</text>
       </view>
     </view>
 
-    <!-- 分隔线 -->
-    <view class="section-divider"></view>
-
     <!-- 设置卡片 -->
-    <view class="settings-card" bindtap="handleRefreshImages">
+    <view class="settings-card settings-card-group-first" bindtap="onRefreshTap">
       <text class="settings-label">刷新图片</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <view class="settings-card" bindtap="handleChangeAvatar">
+    <view class="settings-card settings-card-group-middle" bindtap="handleChangeAvatar">
       <text class="settings-label">更换头像</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <view class="settings-card" bindtap="handleChangeNickname">
+    <view class="settings-card settings-card-group-middle" bindtap="handleChangeNickname">
       <text class="settings-label">更换昵称</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <view class="settings-card" bindtap="handleChangePassword">
+    <view class="settings-card settings-card-group-last" bindtap="handleChangePassword">
       <text class="settings-label">修改密码</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <!-- 分隔线 -->
-    <view class="section-divider"></view>
-
-    <!-- 版本介绍 -->
-    <view class="settings-card" bindtap="handleVersionInfo">
+    <!-- 版本介绍（单卡片） -->
+    <view class="settings-card settings-card-single" bindtap="handleVersionInfo">
       <text class="settings-label">版本介绍</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <!-- 分隔线 -->
-    <view class="section-divider"></view>
-
     <!-- 退出登录按钮 -->
-    <view class="logout-section">
-      <button class="logout-btn" bindtap="handleLogout">退出登录</button>
+    <view class="settings-card settings-card-single logout-card" bindtap="onLogoutTap">
+      <text class="logout-text">退出登录</text>
+    </view>
+
+    <!-- 刷新图片确认弹窗 -->
+    <view wx:if="{{refreshConfirmVisible}}" class="confirm-modal">
+      <view class="confirm-mask" catchtap="onRefreshCancel"></view>
+      <view class="confirm-content">
+        <text class="confirm-text">确定要刷新横幅和封面图片吗？</text>
+        <view class="confirm-buttons">
+          <view class="confirm-btn cancel" catchtap="onRefreshCancel">取消</view>
+          <view class="confirm-btn confirm" catchtap="onRefreshConfirm">确定</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 退出登录确认弹窗 -->
+    <view wx:if="{{logoutConfirmVisible}}" class="confirm-modal">
+      <view class="confirm-mask" catchtap="onLogoutCancel"></view>
+      <view class="confirm-content">
+        <text class="confirm-text">确定要退出登录吗？</text>
+        <view class="confirm-buttons">
+          <view class="confirm-btn cancel" catchtap="onLogoutCancel">取消</view>
+          <view class="confirm-btn confirm" catchtap="onLogoutConfirm">确定</view>
+        </view>
+      </view>
     </view>
   </view>
 

@@ -50,8 +50,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30rpx 40rpx;
-  margin: 0 30rpx;
+  padding: 20rpx 40rpx 0;
+  margin: 30rpx 30rpx 0;
   background: #f5f5f5;
   border-radius: 16rpx;
   position: relative;
@@ -114,18 +114,83 @@
   color: #FF6B00;
 }
 
-/* 学习报告卡片 */
+/* 学习报告卡片组 */
 .stats-card {
-  margin: 20rpx 30rpx 0;
+  margin-left: 30rpx;
+  margin-right: 30rpx;
   background: #fff;
-  border-radius: 16rpx;
 }
 
-.stats-row {
+/* 标题卡：第一个，上方圆角 */
+.stats-card-header {
+  border-radius: 16rpx 16rpx 0 0;
+  padding: 28rpx 36rpx;
+  margin-top: 40rpx;
+  position: relative;
+}
+
+/* 标题卡底部加分隔线 */
+.stats-card-header::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+.stats-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 数据行卡：无圆角，用分隔线隔开 */
+.stats-card-row {
+  padding: 28rpx 36rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 28rpx 36rpx;
+  position: relative;
+}
+
+/* 分隔线：只在内容区有，左右各36rpx */
+.stats-card-row::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 最后一个卡片不需要分隔线 */
+.stats-card-last::after {
+  display: none;
+}
+
+/* 最后一个卡片，下方圆角 */
+.stats-card-last {
+  border-radius: 0 0 16rpx 16rpx;
+  position: relative;
+}
+
+/* 最后一个卡片底部加分隔线 */
+.stats-card-last::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 整个学习报告卡片组和下方的间距 */
+.stats-card-last {
+  margin-bottom: 40rpx;
 }
 
 .stats-label {
@@ -136,6 +201,8 @@
 .stats-value {
   font-size: 28rpx;
   color: #333;
+  display: flex;
+  align-items: center;
 }
 
 .stats-number {
@@ -145,33 +212,72 @@
   margin-right: 8rpx;
 }
 
-/* 分隔线 */
-.section-divider {
-  height: 20rpx;
-}
-
-/* 设置卡片 */
+/* 设置卡片组 */
 .settings-card {
-  margin: 0 30rpx;
+  margin-left: 30rpx;
+  margin-right: 30rpx;
   padding: 32rpx 36rpx;
   background: #fff;
-  border-radius: 16rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  box-sizing: border-box;
 }
 
-.settings-card + .settings-card {
-  margin-top: 2rpx;
-  border-radius: 0;
-}
-
-.settings-card:first-of-type {
+/* 第一个：上方圆角 */
+.settings-card-group-first {
   border-radius: 16rpx 16rpx 0 0;
+  margin-top: 40rpx;
 }
 
-.settings-card:last-of-type {
+.settings-card-group-first::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 中间的卡片：分隔线 */
+.settings-card-group-middle::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 最后一个：下方圆角 */
+.settings-card-group-last {
   border-radius: 0 0 16rpx 16rpx;
+  margin-bottom: 40rpx;
+}
+
+.settings-card-group-last::after {
+  content: '';
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #eee;
+}
+
+/* 单卡片：上下圆角 */
+.settings-card-single {
+  border-radius: 16rpx;
+  margin-top: 40rpx;
+  margin-bottom: 40rpx;
+}
+
+/* 单卡片底部圆角和上方圆角 */
+.settings-card-single::after {
+  display: none;
 }
 
 .settings-label {
@@ -187,22 +293,75 @@
   transform: rotate(-135deg);
 }
 
-/* 退出登录 */
-.logout-section {
-  margin: 20rpx 30rpx 0;
+/* 退出登录卡片 */
+.logout-card {
+  margin: 20rpx 30rpx 40rpx;
+  border-radius: 16rpx;
+  justify-content: center;
 }
 
-.logout-btn {
-  width: 100%;
-  padding: 24rpx 0;
-  background: #fff;
-  color: #FF6B00;
+.logout-text {
   font-size: 28rpx;
-  border-radius: 16rpx;
-  border: none;
+  color: #FF6B00;
+  font-weight: 600;
+}
+
+/* 确认弹窗 */
+.confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-content {
+  position: relative;
+  width: 480rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 56rpx 32rpx 48rpx;
   text-align: center;
 }
 
-.logout-btn::after {
-  border: none;
+.confirm-text {
+  font-size: 32rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 56rpx;
+}
+
+.confirm-btn {
+  padding: 20rpx 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+.confirm-btn.cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.confirm-btn.confirm {
+  background: #FF6B00;
+  color: #fff;
 }

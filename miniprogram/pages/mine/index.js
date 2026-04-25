@@ -21,7 +21,9 @@ Page({
     loading: false,
     loadTime: 0, // 横幅时间戳
     bannerSpeed: 5000, // 轮播速度
-    activeTab: 2 // 我的页为 tab 2
+    activeTab: 2, // 我的页为 tab 2
+    refreshConfirmVisible: false, // 刷新图片确认弹窗
+    logoutConfirmVisible: false // 退出登录确认弹窗
   },
 
   // 格式化分钟数，返回拆分后的对象
@@ -97,27 +99,6 @@ Page({
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
     }
-  },
-
-  onPullDownRefresh() {
-    const t = Date.now();
-    app.globalData.bannerLoadTime = t;
-    app.globalData.coverLoadTime = t;
-    wx.setStorageSync('bannerLoadTime', t);
-    wx.setStorageSync('coverLoadTime', t);
-
-    this.setData({ loadTime: t });
-
-    Promise.all([
-      this.loadHeadlines(),
-      this.refreshUserInfo(),
-      this.loadUserStats()
-    ]).then(() => {
-      wx.stopPullDownRefresh();
-      app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
-    }).catch(() => {
-      wx.stopPullDownRefresh();
-    });
   },
 
   // 重新获取用户信息（刷新头像临时URL）
@@ -308,7 +289,11 @@ Page({
 
       if (res.result.success) {
         const stats = res.result.data;
-        const studyTime = this.formatMinutesToObj(stats.totalStudyMinutes || 0);
+        // 学习时长只算到时
+        const totalMins = stats.totalStudyMinutes || 0;
+        const studyHours = Math.floor(totalMins / 60);
+        const studyMins = totalMins % 60;
+        const studyTime = { days: 0, hours: studyHours, mins: studyMins };
         const joinedTime = this.formatMinutesToObj(stats.joinedMinutes || 0);
         this.setData({
           stats: stats,
@@ -327,25 +312,47 @@ Page({
     wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
-  handleChangeAvatar() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+  // 点击刷新图片，显示确认弹窗
+  onRefreshTap() {
+    this.setData({ refreshConfirmVisible: true });
   },
 
-  handleChangeNickname() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+  // 取消刷新图片
+  onRefreshCancel() {
+    this.setData({ refreshConfirmVisible: false });
   },
 
-  handleChangePassword() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+  // 确认刷新图片（与下拉刷新功能相同）
+  onRefreshConfirm() {
+    this.setData({ refreshConfirmVisible: false });
+    const t = Date.now();
+    app.globalData.bannerLoadTime = t;
+    app.globalData.coverLoadTime = t;
+    wx.setStorageSync('bannerLoadTime', t);
+    wx.setStorageSync('coverLoadTime', t);
+    this.setData({ loadTime: t });
+    Promise.all([
+      this.loadHeadlines(),
+      this.refreshUserInfo(),
+      this.loadUserStats()
+    ]).then(() => {
+      app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
+    });
   },
 
-  handleVersionInfo() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+  // 点击退出登录，显示确认弹窗
+  onLogoutTap() {
+    this.setData({ logoutConfirmVisible: true });
   },
 
-  handleLogout() {
-    // 标记退出登录，用于首页显示提示
-    app.globalData.logoutFlag = true;
+  // 取消退出登录
+  onLogoutCancel() {
+    this.setData({ logoutConfirmVisible: false });
+  },
+
+  // 确认退出登录
+  onLogoutConfirm() {
+    this.setData({ logoutConfirmVisible: false });
 
     // 停止播放器并清空播放状态
     app.bgAudioManager.stop();
@@ -368,6 +375,22 @@ Page({
 
     // 跳转到首页（清空页面栈）
     wx.reLaunch({ url: '/pages/index/index' });
+  },
+
+  handleChangeAvatar() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleChangeNickname() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleChangePassword() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  handleVersionInfo() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
   },
 
   formatDuration(seconds) {
