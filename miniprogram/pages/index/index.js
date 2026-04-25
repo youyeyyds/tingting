@@ -133,7 +133,9 @@ Page({
     const gLogin = app.globalData.isLoggedIn;
     if (gLogin && !this.data.isLoggedIn) {
       console.log('[onShow] 强制同步 isLoggedIn 为 true');
-      this.setData({ isLoggedIn: true }, () => {
+      this.setData({ isLoggedIn: true });
+      // 等待 setData 完成后再执行后续操作
+      wx.nextTick(() => {
         this.maskCourses();
         this.syncTimes();
         this.showStatusToast();
