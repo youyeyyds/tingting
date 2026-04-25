@@ -251,10 +251,13 @@ Page({
 
   maskCourses() {
     const { homeProtect, isLoggedIn, courses, maskedAuthors } = this.data;
+    console.log('[maskCourses] homeProtect:', homeProtect, 'isLoggedIn:', isLoggedIn, 'courses length:', courses.length, 'first course title:', courses[0]?.title);
     if (!homeProtect || isLoggedIn) {
       // 已登录或首页保护关闭，恢复真实课程数据
       const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+      console.log('[maskCourses] 已登录/保护关闭, realCourses length:', realCourses.length, 'current has masked:', this.data.courses.some(c => c.title === '登录后可见'));
       if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
+        console.log('[maskCourses] 恢复真实课程');
         this.setData({ courses: realCourses });
       }
       return;
@@ -275,12 +278,15 @@ Page({
   },
 
   checkLogin() {
+    console.log('[checkLogin] isLoggedIn:', app.globalData.isLoggedIn, 'userId:', app.globalData.userId);
     this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
     this.maskCourses();
     // 如果已登录但没有课程数据（realCourses为空），加载课程
     if (app.globalData.isLoggedIn) {
       const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+      console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
       if (realCourses.length === 0 && !this.data.loading) {
+        console.log('[checkLogin] 触发loadCourses');
         this.loadCourses();
       }
     }
