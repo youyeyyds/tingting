@@ -261,11 +261,12 @@ Page({
     // 直接使用全局登录状态，避免 setData 异步导致 this.data.isLoggedIn 滞后
     const isLoggedIn = app.globalData.isLoggedIn;
     const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-    console.log('[maskCourses] isLoggedIn:', isLoggedIn, 'realCourses:', realCourses.length, 'first title:', courses[0]?.title);
+    const hasMasked = this.data.courses.some ? this.data.courses.some(c => c.title === '登录后可见') : false;
+    console.log('[maskCourses] isLoggedIn:', isLoggedIn, 'realCourses len:', realCourses.length, 'realCourses[0]:', realCourses[0]?.title, 'this.courses[0]:', courses[0]?.title, 'hasMasked:', hasMasked);
 
     // 已登录且有真实课程，直接显示真实课程（不走保护分支）
     if (isLoggedIn && realCourses.length > 0) {
-      console.log('[maskCourses] 直接恢复真实课程');
+      console.log('[maskCourses] 已登录有课程，直接恢复');
       this.setData({ courses: realCourses });
       return;
     }
@@ -295,8 +296,11 @@ Page({
 
   checkLogin() {
     const gLogin = app.globalData.isLoggedIn;
-    console.log('[checkLogin] 入口, globalIsLoggedIn:', gLogin);
-    this.setData({ isLoggedIn: gLogin || false });
+    console.log('[checkLogin] 入口, globalIsLoggedIn:', gLogin, 'this.data.isLoggedIn before:', this.data.isLoggedIn);
+    this.setData({ isLoggedIn: gLogin || false }, () => {
+      console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
+    });
+    console.log('[checkLogin] setData调用后, this.data.isLoggedIn:', this.data.isLoggedIn);
     this.maskCourses();
   },
 
