@@ -290,17 +290,20 @@ Page({
 
   checkLogin() {
     console.log('[checkLogin] isLoggedIn:', app.globalData.isLoggedIn, 'userId:', app.globalData.userId);
-    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
-    this.maskCourses();
-    // 如果已登录但没有课程数据，加载课程
-    if (app.globalData.isLoggedIn) {
-      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-      console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
-      if (realCourses.length === 0 && !this.data.loading) {
-        console.log('[checkLogin] 触发loadCourses');
-        this.loadCourses();
+    const isLoggedIn = app.globalData.isLoggedIn || false;
+    this.setData({ isLoggedIn }, () => {
+      // setData 完成后回调，确保 isLoggedIn 已更新
+      this.maskCourses();
+      // 如果已登录但没有课程数据，加载课程
+      if (isLoggedIn) {
+        const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+        console.log('[checkLogin] realCourses length:', realCourses.length, 'loading:', this.data.loading);
+        if (realCourses.length === 0 && !this.data.loading) {
+          console.log('[checkLogin] 触发loadCourses');
+          this.loadCourses();
+        }
       }
-    }
+    });
   },
 
   handleLogin() {
