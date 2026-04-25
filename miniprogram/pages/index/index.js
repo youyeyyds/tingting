@@ -48,7 +48,6 @@ Page({
   },
 
   onLoad() {
-    console.log('[onLoad] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.initLayout();
     this.initTimes();
     this.initCache();
@@ -117,31 +116,15 @@ Page({
       headlines,
       courses,
       loading: !courses.length // 有缓存则不显示loading
-    }, () => {
-      // setData 完成后再检查是否需要恢复真实课程
-      this.maskCourses();
     });
 
     if (!headlines.length) this.loadHeadlines();
-    // 只有当 courses 确实为空时才加载（maskCourses 可能已恢复真实课程）
-    if (!this.data.courses.length) this.loadCourses();
+    else this.maskCourses();
+
+    if (!courses.length) this.loadCourses();
   },
 
   onShow() {
-    console.log('[onShow] globalIsLoggedIn:', app.globalData.isLoggedIn);
-    // 如果全局状态是已登录，但页面状态是未登录，先同步状态
-    const gLogin = app.globalData.isLoggedIn;
-    if (gLogin && !this.data.isLoggedIn) {
-      console.log('[onShow] 强制同步 isLoggedIn 为 true');
-      this.setData({ isLoggedIn: true });
-      // 等待 setData 完成后再执行后续操作
-      wx.nextTick(() => {
-        this.maskCourses();
-        this.syncTimes();
-        this.showStatusToast();
-      });
-      return;
-    }
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
@@ -247,7 +230,7 @@ Page({
     }).catch(e => console.error('获取头条失败', e));
   },
 
-  loadCourses(callback) {
+  loadCourses() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
@@ -258,36 +241,18 @@ Page({
         wx.setStorageSync('indexCourses', courses);
         this.setData({ courses, loading: false });
         this.maskCourses();
-        if (callback) callback();
       } else {
         this.setData({ loading: false });
-        if (callback) callback();
       }
-    }).catch(() => {
-      this.setData({ loading: false });
-      if (callback) callback();
-    });
+    }).catch(() => this.setData({ loading: false }));
   },
 
   maskCourses() {
-    const { homeProtect, courses, maskedAuthors } = this.data;
-    // 直接使用全局登录状态，避免 setData 异步导致 this.data.isLoggedIn 滞后
-    const isLoggedIn = app.globalData.isLoggedIn;
-    const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-    const hasMasked = this.data.courses.some ? this.data.courses.some(c => c.title === '登录后可见') : false;
-    console.log('[maskCourses] isLoggedIn:', isLoggedIn, 'realCourses len:', realCourses.length, 'realCourses[0]:', realCourses[0]?.title, 'this.courses[0]:', courses[0]?.title, 'hasMasked:', hasMasked);
-
-    // 已登录且有真实课程，直接显示真实课程（不走保护分支）
-    if (isLoggedIn && realCourses.length > 0) {
-      console.log('[maskCourses] 已登录有课程，直接恢复');
-      this.setData({ courses: realCourses });
-      return;
-    }
-
+    const { homeProtect, isLoggedIn, courses, maskedAuthors } = this.data;
     if (!homeProtect || isLoggedIn) {
-      // 首页保护关闭或已登录但无真实课程缓存，恢复真实课程数据
-      if (realCourses.length) {
-        console.log('[maskCourses] 恢复真实课程');
+      // 已登录或首页保护关闭，恢复真实课程数据
+      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
+      if (realCourses.length && this.data.courses.some(c => c.title === '登录后可见')) {
         this.setData({ courses: realCourses });
       }
       return;
@@ -308,13 +273,8 @@ Page({
   },
 
   checkLogin() {
-    const gLogin = app.globalData.isLoggedIn;
-    console.log('[checkLogin] 入口, globalIsLoggedIn:', gLogin, 'this.data.isLoggedIn before:', this.data.isLoggedIn);
-    this.setData({ isLoggedIn: gLogin || false }, () => {
-      console.log('[checkLogin] setData callback, this.data.isLoggedIn:', this.data.isLoggedIn);
-      // setData 完成后才调用 maskCourses，确保 isLoggedIn 已更新
-      this.maskCourses();
-    });
+    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
+    this.maskCourses();
   },
 
   handleLogin() {
