@@ -114,7 +114,6 @@
 .chapter-header {
   display: flex;
   align-items: center;
-  padding-bottom: 16rpx;
 }
 
 .chapter-cover {
@@ -155,10 +154,10 @@
 }
 
 .course-arrow {
-  width: 12rpx;
-  height: 12rpx;
-  border-left: 2rpx solid #999;
-  border-bottom: 2rpx solid #999;
+  width: 16rpx;
+  height: 16rpx;
+  border-left: 3rpx solid #999;
+  border-bottom: 3rpx solid #999;
   transform: rotate(-135deg);
   margin-left: 8rpx;
   flex-shrink: 0;
@@ -168,7 +167,7 @@
 .info-divider {
   height: 1rpx;
   background: #eee;
-  margin: 12rpx 0;
+  margin: 24rpx 0;
 }
 
 /* 第二行：序号 | 章节名称 */
