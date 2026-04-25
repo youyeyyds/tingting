@@ -48,6 +48,7 @@ Page({
   },
 
   onLoad() {
+    console.log('[onLoad] globalIsLoggedIn:', app.globalData.isLoggedIn);
     this.initLayout();
     this.initTimes();
     this.initCache();
@@ -293,8 +294,9 @@ Page({
   },
 
   checkLogin() {
-    console.log('[checkLogin] globalIsLoggedIn:', app.globalData.isLoggedIn);
-    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
+    const gLogin = app.globalData.isLoggedIn;
+    console.log('[checkLogin] 入口, globalIsLoggedIn:', gLogin);
+    this.setData({ isLoggedIn: gLogin || false });
     this.maskCourses();
   },
 
