@@ -116,6 +116,11 @@ Component({
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
+      console.log('[mini-player] pageLifetimes.show:', {
+        route: this.currentPageRoute,
+        isTabBarPage,
+        miniPlayerActive: app.globalData.miniPlayerActive
+      });
 
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
@@ -152,6 +157,12 @@ Component({
       const currentTime = this.bgAudioManager.currentTime || 0;
       const duration = this.bgAudioManager.duration || 0;
       const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+      console.log('[mini-player] showMiniPlayer called:', {
+        currentTime, duration, progressPercent,
+        playingChapterId: playingChapter?._id,
+        isPlaying: !this.bgAudioManager.paused,
+        miniPlayerActive: app.globalData.miniPlayerActive
+      });
 
       const data = {
         playerBottom: this.calcPosition(),
