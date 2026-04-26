@@ -11,7 +11,9 @@ Page({
     sortOrder: 'asc',
     loading: true,
     coverLoadTime: 0,
-    playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' }
+    playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' },
+    isCurrentCoursePlaying: false, // 当前课程是否正在播放
+    isCurrentChapterPlaying: false // 当前章节是否正在播放
   },
 
   onLoad(options) {
@@ -24,10 +26,15 @@ Page({
       onStop: () => this.resetPlayingState(),
       onPlayPause: () => {
         // 暂停时不改变章节卡片的播放样式，保持显示正在播放状态
+        this.updatePlayingState();
       },
       onChapterChange: ({ chapterId }) => {
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
         this.setData({
-          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
+          isCurrentCoursePlaying: isCurrentCourse,
+          isCurrentChapterPlaying: isCurrentCourse
         });
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
@@ -79,6 +86,20 @@ Page({
     }
     // 同步图片时间戳变化
     this.syncImageTimes();
+    // 同步播放状态
+    this.updatePlayingState();
+  },
+
+  // 更新当前播放状态
+  updatePlayingState() {
+    const playingCourseId = app.globalData.playingCourse?._id;
+    const playingChapterId = app.globalData.playingChapter?._id;
+    const isCurrentCourse = playingCourseId === this.data.courseId;
+    const isCurrentChapter = isCurrentCourse && playingChapterId && this.data.chapters.some(ch => ch._id === playingChapterId && ch.isPlaying);
+    this.setData({
+      isCurrentCoursePlaying: isCurrentCourse && app.globalData.miniPlayerActive,
+      isCurrentChapterPlaying: isCurrentChapter
+    });
   },
 
   // 同步图片时间戳（其他页面刷新后返回需要更新图片）
@@ -171,6 +192,13 @@ Page({
       isPlaying: app.globalData.playingChapter?._id === chapter._id,
       isFavorite: chapter.isFavorite || false
     };
+  },
+
+  handlePausePlay() {
+    const miniPlayer = this.selectComponent('#miniPlayer');
+    if (miniPlayer) {
+      miniPlayer.togglePlayPause();
+    }
   },
 
   handleContinuePlay() {
