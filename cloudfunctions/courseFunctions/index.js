@@ -599,6 +599,14 @@ const getCourseSettings = async (event) => {
     const { courseId } = event;
     const currentUserId = getUserId(event);
 
+    // 验证参数
+    if (!currentUserId) {
+      return {
+        success: false,
+        errMsg: '用户未登录'
+      };
+    }
+
     const res = await db.collection("userCourseSettings")
       .where({
         userId: currentUserId,
@@ -640,6 +648,20 @@ const updateCourseSettings = async (event) => {
   try {
     const { courseId, sortOrder, showUnfinishedOnly, lastPlayedChapterId } = event;
     const currentUserId = getUserId(event);
+
+    // 验证参数
+    if (!currentUserId) {
+      return {
+        success: false,
+        errMsg: '用户未登录'
+      };
+    }
+    if (!courseId) {
+      return {
+        success: false,
+        errMsg: '课程ID不能为空'
+      };
+    }
 
     // 查询是否已存在设置
     const res = await db.collection("userCourseSettings")

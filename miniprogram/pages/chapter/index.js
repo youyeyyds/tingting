@@ -108,7 +108,8 @@ Page({
       name: 'courseFunctions',
       data: { type: 'getCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId }
     }).then(settingsRes => {
-      const userSettings = settingsRes.result?.data || { sortOrder: 'asc', showUnfinishedOnly: false, lastPlayedChapterId: null };
+      // 获取设置失败时使用默认值
+      const userSettings = (settingsRes.result && settingsRes.result.success) ? settingsRes.result.data : { sortOrder: 'asc', showUnfinishedOnly: false, lastPlayedChapterId: null };
 
       // 然后获取课程详情
       return wx.cloud.callFunction({
