@@ -114,7 +114,7 @@ const tableRef = ref(null)
 const roles = ref([])
 
 // 菜单排序（从系统配置获取）
-const defaultMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system']
+const defaultMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system']
 const menuOrder = ref(defaultMenuOrder)
 
 const permissionLabels = {
@@ -122,6 +122,7 @@ const permissionLabels = {
   audios: '音频管理',
   headlines: '首尾管理',
   categories: '分类管理',
+  versions: '版本管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'

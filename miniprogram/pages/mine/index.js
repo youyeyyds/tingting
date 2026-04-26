@@ -72,6 +72,8 @@ Page({
   },
 
   onShow() {
+    // 同步全局登录状态，避免 navigateBack 回来时 local state 仍是旧值
+    this.checkLoginStatus();
     // 未登录时跳转到首页
     if (!this.data.isLoggedIn) {
       wx.reLaunch({ url: '/pages/index/index' });

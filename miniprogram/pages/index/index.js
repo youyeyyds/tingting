@@ -538,12 +538,14 @@ Page({
 
     const newMasked = { ...maskedCourses };
     const masked = courses.map(c => {
-      let art = newMasked[c._id];
-      if (!art) {
-        art = MARTIAL_ARTS[Math.floor(Math.random() * MARTIAL_ARTS.length)];
-        newMasked[c._id] = art;
+      let cached = newMasked[c._id];
+      if (!cached) {
+        const art = MARTIAL_ARTS[Math.floor(Math.random() * MARTIAL_ARTS.length)];
+        const user = art.users[Math.floor(Math.random() * art.users.length)];
+        cached = { art, user };
+        newMasked[c._id] = cached;
       }
-      return { ...c, title: art.name, author: art.users[Math.floor(Math.random() * art.users.length)], categoryName: art.type };
+      return { ...c, title: cached.art.name, author: cached.user, categoryName: cached.art.type };
     });
 
     app.globalData.homePageMaskedCourses = newMasked;

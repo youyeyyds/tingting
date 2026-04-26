@@ -117,9 +117,8 @@ Page({
       data: { type: 'getVersions' }
     }).then(res => {
       if (res.result.success) {
-        // 倒序展示（确保与预期一致）
-        const sorted = [...res.result.data].reverse();
-        this.setData({ versions: sorted });
+        // 与后台排序一致（seq desc）
+        this.setData({ versions: res.result.data });
       }
     }).catch(err => console.error('获取版本失败', err));
   },
