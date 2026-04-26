@@ -36,6 +36,7 @@ Component({
           const duration = data.duration;
           const currentTime = this.bgAudioManager.currentTime || 0;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          console.log('[mini-player] onCanplay:', { duration, currentTime, progressPercent, data });
           this.setData({
             duration: duration,
             currentTime: currentTime,
@@ -43,9 +44,11 @@ Component({
           });
         },
         onPlay: () => {
+          console.log('[mini-player] onPlay, isPlaying set to true');
           this.setData({ isPlaying: true });
         },
         onPause: () => {
+          console.log('[mini-player] onPause, isPlaying set to false');
           this.setData({ isPlaying: false });
         },
         onTimeUpdate: (data) => {
@@ -53,6 +56,7 @@ Component({
           // 始终使用 bgAudioManager.duration 获取最新值，避免切换章节后 duration 未更新的问题
           const duration = this.bgAudioManager.duration;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          console.log('[mini-player] onTimeUpdate:', { currentTime, duration, progressPercent, thisDataDuration: this.data.duration });
           this.setData({
             currentTime: currentTime,
             progressPercent: progressPercent
@@ -148,6 +152,11 @@ Component({
         courseCover = this.rebuildImageUrl(playingCourse?.cover || '', globalCoverTime);
       }
 
+      const currentTime = this.bgAudioManager.currentTime || 0;
+      const duration = this.bgAudioManager.duration || 0;
+      const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+      console.log('[mini-player] showMiniPlayer:', { currentTime, duration, progressPercent, isPlaying: !this.bgAudioManager.paused });
+
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
@@ -159,8 +168,9 @@ Component({
         course: { ...playingCourse, cover: courseCover } || {},
         playlistSortOrder: playlistSortOrder || 'asc',
         isFavoriteList: isFavoriteList || false,
-        currentTime: this.bgAudioManager.currentTime || 0,
-        duration: this.bgAudioManager.duration || 0,
+        currentTime: currentTime,
+        duration: duration,
+        progressPercent: progressPercent,
         playbackRate: playbackRate,
         coverLoadTime: globalCoverTime
       };

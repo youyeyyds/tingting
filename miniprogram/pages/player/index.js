@@ -238,6 +238,7 @@ Page({
 
   onCanplay() {
     const duration = this.bgAudioManager.duration;
+    console.log('[player] onCanplay:', { duration, currentTime: this.bgAudioManager.currentTime });
     this.setData({ duration });
     // 更新进度显示
     const currentTime = this.bgAudioManager.currentTime;
@@ -250,6 +251,7 @@ Page({
     const currentTime = this.bgAudioManager.currentTime;
     // 始终使用 bgAudioManager.duration 获取最新值
     const duration = this.bgAudioManager.duration;
+    console.log('[player] onTimeUpdate:', { currentTime, duration, progressPercent: duration > 0 ? (currentTime / duration) * 100 : 0 });
     this.setData({
       currentTime,
       progressPercent: duration > 0 ? (currentTime / duration) * 100 : 0
