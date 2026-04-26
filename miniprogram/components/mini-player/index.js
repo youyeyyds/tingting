@@ -44,9 +44,19 @@ Component({
         },
         onPlay: () => {
           this.setData({ isPlaying: true });
+          // 通知章节变化，更新 chapter 页面的高亮样式
+          const { currentChapter } = this.data;
+          if (currentChapter) {
+            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id });
+          }
         },
         onPause: () => {
           this.setData({ isPlaying: false });
+          // 通知播放暂停状态变化
+          const { currentChapter } = this.data;
+          if (currentChapter) {
+            app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+          }
         },
         onTimeUpdate: (data) => {
           const currentTime = data.currentTime;
