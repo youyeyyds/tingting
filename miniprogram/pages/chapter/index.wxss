@@ -71,6 +71,21 @@
   border-left: 16rpx solid #fff;
 }
 
+.pause-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.pause-bar {
+  width: 6rpx;
+  height: 20rpx;
+  background-color: #fff;
+  margin: 0 2rpx;
+}
+
 .play-text {
   font-size: 28rpx;
   color: #fff;
