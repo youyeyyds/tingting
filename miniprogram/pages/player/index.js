@@ -106,21 +106,14 @@ Page({
 
     // 根据当前播放时间和排序方向计算封面旋转角度
     // 每12秒完成一圈，每50ms旋转1.5度
+    // 注意：currentTime 的单位是秒，rotationCycle 的单位是毫秒，需要转换
     const rotationCycle = 12000; // 一圈的时间（毫秒）
-    const elapsedInCycle = currentTime % rotationCycle;
+    const currentTimeMs = currentTime * 1000; // 转换为毫秒
+    const elapsedInCycle = currentTimeMs % rotationCycle;
     let coverRotationAngle = (elapsedInCycle / rotationCycle) * 360;
     if (sortOrder === 'desc') {
       coverRotationAngle = -coverRotationAngle;
     }
-
-    console.log('[player] syncPlaybackState:', {
-      currentTime,
-      duration,
-      progressPercent,
-      coverRotationAngle,
-      isPlaying,
-      startTime: this.bgAudioManager.startTime
-    });
 
     this.setData({
       isPlaying,
