@@ -320,7 +320,6 @@ Component({
       // 每次点击章节卡片开始播放时，都继承章节列表当前的排序
       // 排序改变后，只有再次点击章节卡片开始播放时才会继承新的排序
       const order = sortOrder || app.globalData.playlistSortOrder || 'asc';
-      console.log('[miniPlayer.play] sortOrder param:', sortOrder, 'globalData.sortOrder:', app.globalData.playlistSortOrder, 'final order:', order, 'isNewPlaylist:', isNewPlaylist);
 
       // filteredChapters 已经是章节列表排序后的数组，直接使用即可
       const globalChapters = chapters;
@@ -668,11 +667,9 @@ Component({
     },
 
     onPlaylistSyncSort(e) {
-      console.log('[mini-player] onPlaylistSyncSort called, detail:', e.detail);
       const sortedChapters = e.detail.chapters;
       const currentId = this.data.currentChapter._id;
       const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
-      console.log('[mini-player] currentId:', currentId, 'newIndex:', newIndex);
       this.setData({ chapters: sortedChapters, currentIndex: newIndex });
       app.globalData.playingIndex = newIndex;
     },

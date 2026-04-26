@@ -68,7 +68,6 @@ Page({
   },
 
   onShow() {
-    console.log('[chapter.onShow] called, sortOrder:', this.data.sortOrder);
     // 不再每次都 loadCourseData，只在首次加载或需要刷新数据时
     if (this.data.courseId && this.data.chapters.length === 0) {
       this.loadCourseData();
@@ -104,25 +103,37 @@ Page({
   },
 
   loadCourseData() {
+    // 先获取用户课程偏好设置
     wx.cloud.callFunction({
       name: 'courseFunctions',
-      data: { type: 'getCourseDetail', courseId: this.data.courseId, userId: app.globalData.userId }
-    }).then(res => {
-      if (res.result.success) {
-        const course = res.result.course;
-        course.cover = this.processImageUrl(course.cover);
-        console.log('[chapter.loadCourseData] before setData, sortOrder:', this.data.sortOrder);
-        this.setData({
-          course,
-          chapters: res.result.chapters.map(ch => this.formatChapter(ch)),
-          filteredChapters: res.result.chapters.map(ch => this.formatChapter(ch)),
-          loading: false
-        });
-        console.log('[chapter.loadCourseData] after setData, sortOrder:', this.data.sortOrder);
-      } else {
-        wx.showToast({ title: '加载失败', icon: 'none' });
-        this.setData({ loading: false });
-      }
+      data: { type: 'getCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId }
+    }).then(settingsRes => {
+      const userSettings = settingsRes.result?.data || { sortOrder: 'asc', showUnfinishedOnly: false, lastPlayedChapterId: null };
+
+      // 然后获取课程详情
+      return wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: { type: 'getCourseDetail', courseId: this.data.courseId, userId: app.globalData.userId }
+      }).then(res => {
+        if (res.result.success) {
+          const course = res.result.course;
+          course.cover = this.processImageUrl(course.cover);
+          const chapters = res.result.chapters.map(ch => this.formatChapter(ch));
+          this.setData({
+            course,
+            chapters,
+            filteredChapters: chapters,
+            sortOrder: userSettings.sortOrder,
+            showUnfinishedOnly: userSettings.showUnfinishedOnly,
+            lastPlayedChapterId: userSettings.lastPlayedChapterId,
+            loading: false
+          });
+          this.applyFilterAndSort();
+        } else {
+          wx.showToast({ title: '加载失败', icon: 'none' });
+          this.setData({ loading: false });
+        }
+      });
     }).catch(err => {
       console.error('加载课程数据失败', err);
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -167,20 +178,35 @@ Page({
   },
 
   onFilterChange(e) {
-    this.setData({ showUnfinishedOnly: e.detail.value });
+    const showUnfinishedOnly = e.detail.value;
+    this.setData({ showUnfinishedOnly });
     this.applyFilterAndSort();
+    this.saveCourseSettings({ showUnfinishedOnly });
   },
 
   onSortChange() {
-    this.setData({ sortOrder: this.data.sortOrder === 'asc' ? 'desc' : 'asc' });
+    const sortOrder = this.data.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.setData({ sortOrder });
     this.applyFilterAndSort();
+    this.saveCourseSettings({ sortOrder });
+  },
+
+  saveCourseSettings(settings) {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: {
+        type: 'updateCourseSettings',
+        courseId: this.data.courseId,
+        userId: app.globalData.userId,
+        ...settings
+      }
+    });
   },
 
   applyFilterAndSort() {
     let chapters = [...this.data.chapters];
     if (this.data.showUnfinishedOnly) chapters = chapters.filter(ch => ch.progress < 100);
     chapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
-    console.log('[chapter.applyFilterAndSort] sortOrder:', this.data.sortOrder, 'sorted seqs:', chapters.map(c => c.seq));
     this.setData({ filteredChapters: chapters });
   },
 
@@ -194,7 +220,6 @@ Page({
 
   playChapter(chapterId) {
     const miniPlayer = this.selectComponent('#miniPlayer');
-    console.log('[chapter.playChapter] sortOrder:', this.data.sortOrder, 'chapterId:', chapterId);
     if (miniPlayer) {
       const state = { courseId: this.data.courseId, showUnfinishedOnly: this.data.showUnfinishedOnly, sortOrder: this.data.sortOrder };
       if (state.courseId !== this.data.playlistState.courseId || state.showUnfinishedOnly !== this.data.playlistState.showUnfinishedOnly || state.sortOrder !== this.data.playlistState.sortOrder) {
@@ -203,9 +228,9 @@ Page({
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
     this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
-    console.log('[chapter.playChapter] before applyFilterAndSort, sortOrder:', this.data.sortOrder);
     this.applyFilterAndSort();
-    console.log('[chapter.playChapter] after applyFilterAndSort, filteredChapters seqs:', this.data.filteredChapters.map(c => c.seq));
+    // 保存最近播放的章节ID
+    this.saveCourseSettings({ lastPlayedChapterId: chapterId });
   },
 
   onFavoriteTap(e) {

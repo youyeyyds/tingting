@@ -593,6 +593,100 @@ const getDefaultCover = async () => {
   }
 };
 
+// 获取用户课程偏好设置
+const getCourseSettings = async (event) => {
+  try {
+    const { courseId } = event;
+    const currentUserId = getUserId(event);
+
+    const res = await db.collection("userCourseSettings")
+      .where({
+        userId: currentUserId,
+        courseId: courseId
+      })
+      .limit(1)
+      .get();
+
+    if (res.data.length > 0) {
+      const settings = res.data[0];
+      return {
+        success: true,
+        data: {
+          sortOrder: settings.sortOrder || 'asc',
+          showUnfinishedOnly: settings.showUnfinishedOnly || false,
+          lastPlayedChapterId: settings.lastPlayedChapterId || null
+        }
+      };
+    }
+    // 如果没有设置，返回默认值
+    return {
+      success: true,
+      data: {
+        sortOrder: 'asc',
+        showUnfinishedOnly: false,
+        lastPlayedChapterId: null
+      }
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
+// 更新用户课程偏好设置
+const updateCourseSettings = async (event) => {
+  try {
+    const { courseId, sortOrder, showUnfinishedOnly, lastPlayedChapterId } = event;
+    const currentUserId = getUserId(event);
+
+    // 查询是否已存在设置
+    const res = await db.collection("userCourseSettings")
+      .where({
+        userId: currentUserId,
+        courseId: courseId
+      })
+      .limit(1)
+      .get();
+
+    const updateData = {
+      updateTime: Date.now()
+    };
+    if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+    if (showUnfinishedOnly !== undefined) updateData.showUnfinishedOnly = showUnfinishedOnly;
+    if (lastPlayedChapterId !== undefined) updateData.lastPlayedChapterId = lastPlayedChapterId;
+
+    if (res.data.length > 0) {
+      // 更新已有记录
+      await db.collection("userCourseSettings")
+        .doc(res.data[0]._id)
+        .update({ data: updateData });
+    } else {
+      // 创建新记录
+      const newData = {
+        userId: currentUserId,
+        courseId: courseId,
+        updateTime: Date.now()
+      };
+      if (sortOrder !== undefined) newData.sortOrder = sortOrder;
+      if (showUnfinishedOnly !== undefined) newData.showUnfinishedOnly = showUnfinishedOnly;
+      if (lastPlayedChapterId !== undefined) newData.lastPlayedChapterId = lastPlayedChapterId;
+      await db.collection("userCourseSettings")
+        .add({ data: newData });
+    }
+
+    return {
+      success: true
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   switch (event.type) {
@@ -623,6 +717,10 @@ exports.main = async (event, context) => {
       return await getCopyright();
     case "getDefaultCover":
       return await getDefaultCover();
+    case "getCourseSettings":
+      return await getCourseSettings(event);
+    case "updateCourseSettings":
+      return await updateCourseSettings(event);
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }
