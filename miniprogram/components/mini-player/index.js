@@ -184,7 +184,16 @@ Component({
         this.setData({ visible: true, fadeInClass: '', ...data });
       }
 
-      // 启动定时器轮询进度，确保在各种情况下都能正确更新
+      // 启动定时器轮询进度
+      this._startProgressTimer();
+    },
+
+    // 启动进度定时器
+    _startProgressTimer() {
+      if (this._progressTimer) {
+        clearInterval(this._progressTimer);
+        this._progressTimer = null;
+      }
       this._progressTimer = setInterval(() => {
         if (!this.data.visible) {
           if (this._progressTimer) {
@@ -196,12 +205,20 @@ Component({
         const ct = this.bgAudioManager.currentTime || 0;
         const dur = this.bgAudioManager.duration || 0;
         const pct = dur > 0 ? Math.min((ct / dur) * 100, 100) : 0;
+        // 同步 isPlaying 状态
+        const isPlaying = !this.bgAudioManager.paused;
         this.setData({
           currentTime: ct,
           duration: dur,
-          progressPercent: pct
+          progressPercent: pct,
+          isPlaying: isPlaying
         });
       }, 500);
+    },
+
+    // 确保定时器运行（从 play() 调用）
+    _ensureProgressTimer() {
+      this._startProgressTimer();
     },
 
     calcPosition() {
@@ -353,6 +370,9 @@ Component({
         courseName: course.title || '',
         isFavoriteList: false
       });
+
+      // 立即启动定时器，确保进度同步
+      this._ensureProgressTimer();
 
       this.loadAudio(chapter);
     },
