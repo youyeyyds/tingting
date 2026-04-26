@@ -242,11 +242,9 @@ Page({
 
   onCanplay() {
     const duration = this.bgAudioManager.duration;
-    this.setData({ duration });
-    // 更新进度显示
     const currentTime = this.bgAudioManager.currentTime;
     const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-    this.setData({ currentTime, progressPercent });
+    this.setData({ duration, currentTime, progressPercent });
     this.updateProgress();
   },
 

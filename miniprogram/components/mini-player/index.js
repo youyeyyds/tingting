@@ -68,23 +68,7 @@ Component({
         },
         onPlayFromList: (data) => this.playFromList(data),
         onClose: () => {
-          const pages = getCurrentPages();
-          const isForeground = this.currentPageRoute === pages[pages.length - 1]?.route;
-          this.setData({ fadeInClass: 'fade-out' });
-          setTimeout(() => {
-            this.setData({
-              visible: false,
-              fadeInClass: '',
-              chapters: [],
-              currentChapter: {},
-              currentIndex: 0,
-              course: {},
-              isPlaying: false,
-              currentTime: 0,
-              duration: 0,
-              progressPercent: 0
-            });
-          }, 300);
+          // 关闭通知已由 methods.onClose() 处理，这里只记录状态变化
         },
         onCoverRefresh: (data) => {
           if (data.coverLoadTime) {
@@ -196,29 +180,20 @@ Component({
       }
       this._progressTimer = setInterval(() => {
         if (!this.data.visible) {
-          if (this._progressTimer) {
-            clearInterval(this._progressTimer);
-            this._progressTimer = null;
-          }
+          clearInterval(this._progressTimer);
+          this._progressTimer = null;
           return;
         }
         const ct = this.bgAudioManager.currentTime || 0;
         const dur = this.bgAudioManager.duration || 0;
         const pct = dur > 0 ? Math.min((ct / dur) * 100, 100) : 0;
-        // 同步 isPlaying 状态
-        const isPlaying = !this.bgAudioManager.paused;
         this.setData({
           currentTime: ct,
           duration: dur,
           progressPercent: pct,
-          isPlaying: isPlaying
+          isPlaying: !this.bgAudioManager.paused
         });
       }, 500);
-    },
-
-    // 确保定时器运行（从 play() 调用）
-    _ensureProgressTimer() {
-      this._startProgressTimer();
     },
 
     calcPosition() {
@@ -311,6 +286,7 @@ Component({
         isPlaying: false
       });
 
+      this._startProgressTimer();
       this.loadAudio(chapter);
     },
 
@@ -372,7 +348,7 @@ Component({
       });
 
       // 立即启动定时器，确保进度同步
-      this._ensureProgressTimer();
+      this._startProgressTimer();
 
       this.loadAudio(chapter);
     },
@@ -464,6 +440,7 @@ Component({
         if (currentChapter?.audioUrl) {
           currentChapter.lastPlayTime = 0;
           this.setData({ currentChapter });
+          this._startProgressTimer();
           this.loadAudio(currentChapter);
         } else {
           this.setData({ isPlaying: false });
@@ -482,6 +459,7 @@ Component({
             app.globalData.playingIndex = 0;
             this.updateChapterCache(firstChapter, 0);
             this.setData({ currentChapter: firstChapter, currentIndex: 0 });
+            this._startProgressTimer();
             this.loadAudio(firstChapter);
             app.notifyCallbacks('onChapterChange', { chapterId: firstChapter._id });
           }
@@ -498,6 +476,7 @@ Component({
         app.globalData.playingIndex = nextIndex;
         this.updateChapterCache(nextChapter, nextIndex);
         this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
+        this._startProgressTimer();
         this.loadAudio(nextChapter);
         app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
       } else {
@@ -507,10 +486,24 @@ Component({
     },
 
     onClose() {
+      // 停止定时器
       if (this._progressTimer) {
         clearInterval(this._progressTimer);
         this._progressTimer = null;
       }
+      // 立即重置状态
+      this.setData({
+        visible: false,
+        fadeInClass: '',
+        chapters: [],
+        currentChapter: {},
+        currentIndex: 0,
+        course: {},
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        progressPercent: 0
+      });
       this.saveProgress();
       this.bgAudioManager.stop();
       app.globalData.miniPlayerActive = false;
@@ -700,6 +693,7 @@ Component({
           currentIndex: index,
           isPlaying: false
         });
+        this._startProgressTimer();
         this.loadAudio(chapter);
         app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
       }
@@ -726,6 +720,7 @@ Component({
             currentChapter: nextChapter,
             currentIndex: nextIndex
           });
+          this._startProgressTimer();
           this.loadAudio(nextChapter);
           app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
         } else {
