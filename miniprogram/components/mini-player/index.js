@@ -43,9 +43,11 @@ Component({
           });
         },
         onPlay: () => {
+          console.log('[mini-player] onPlay callback');
           this.setData({ isPlaying: true });
         },
         onPause: () => {
+          console.log('[mini-player] onPause callback');
           this.setData({ isPlaying: false });
         },
         onTimeUpdate: (data) => {
