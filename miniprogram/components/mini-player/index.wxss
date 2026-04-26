@@ -117,8 +117,11 @@
 
 .speed-text {
   font-size: 26rpx;
-  color: #FF6B00;
+  color: #999;
   font-weight: 500;
+}
+.speed-text.active {
+  color: #FF6B00;
 }
 
 .play-btn {

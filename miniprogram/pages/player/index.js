@@ -91,6 +91,43 @@ Page({
   onShow() {
     // 同步封面图片时间戳变化
     this.syncImageTimes();
+    // 同步播放状态
+    this.syncPlaybackState();
+  },
+
+  // 同步播放状态
+  syncPlaybackState() {
+    const isPlaying = !this.bgAudioManager.paused;
+    const currentTime = this.bgAudioManager.currentTime || 0;
+    const duration = this.bgAudioManager.duration || 0;
+    const playbackRate = this.bgAudioManager.playbackRate || 2;
+    const { sortOrder } = this.data;
+
+    // 根据当前播放时间和排序方向计算封面旋转角度
+    // 每12秒完成一圈，每50ms旋转1.5度
+    const rotationCycle = 12000; // 一圈的时间（毫秒）
+    const elapsedInCycle = currentTime % rotationCycle;
+    let coverRotationAngle = (elapsedInCycle / rotationCycle) * 360;
+    if (sortOrder === 'desc') {
+      coverRotationAngle = -coverRotationAngle;
+    }
+
+    this.setData({
+      isPlaying,
+      currentTime,
+      duration,
+      playbackRate,
+      coverRotationAngle
+    });
+    this.updateProgress();
+    this.updateSpeedIndicator();
+
+    // 如果正在播放，启动封面旋转；否则停止
+    if (isPlaying) {
+      this.startCoverRotation();
+    } else {
+      this.stopCoverRotation();
+    }
   },
 
   // 同步封面图片（其他页面刷新后返回需要更新图片）
@@ -159,18 +196,6 @@ Page({
     }
 
     return url;
-  },
-
-  onShow() {
-    // 检测封面时间戳变化，同步更新封面
-    const globalCoverTime = app.globalData.coverLoadTime;
-    // 如果 courseCover 和 bgCover 的 seed 时间戳不一致，强制同步
-    const coverMatch = this.data.courseCover?.match(/seed\/(\d+)_cover_/);
-    const bgMatch = this.data.bgCover?.match(/seed\/(\d+)_cover_/);
-    if (coverMatch && bgMatch && coverMatch[1] !== bgMatch[1]) {
-      const newBgCover = this.generateBgCoverUrl(this.data.courseCover, globalCoverTime);
-      this.setData({ bgCover: newBgCover, coverLoadTime: globalCoverTime });
-    }
   },
 
   onUnload() {
@@ -483,7 +508,75 @@ Page({
   },
 
   showPlaylist() {
-    wx.showToast({ title: '播放列表功能开发中', icon: 'none' });
+    const playlistPanel = this.selectComponent('#playerPlaylistPanel');
+    if (playlistPanel) playlistPanel.show();
+  },
+
+  onPlaylistPlay(e) {
+    const { chapterId, index } = e.detail;
+    const chapter = this.data.chapters.find(ch => ch._id === chapterId);
+
+    if (chapterId === this.data.currentChapter._id) {
+      if (this.data.isPlaying) {
+        this.bgAudioManager.pause();
+      } else {
+        this.bgAudioManager.play();
+      }
+      return;
+    }
+
+    if (chapter?.audioUrl) {
+      this.saveProgress();
+      this.setData({ currentChapter: chapter, currentIndex: index });
+      app.globalData.playingChapter = chapter;
+      app.globalData.playingIndex = index;
+      this.loadAudio(chapter);
+      this.checkFavoriteStatus();
+      this.updateNextChapterInfo();
+    }
+  },
+
+  onPlaylistDelete(e) {
+    const { chapterId } = e.detail;
+    const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
+    this.setData({ chapters });
+    app.globalData.playlistChaptersData = chapters;
+
+    if (chapterId === this.data.currentChapter._id) {
+      const nextIndex = this.data.currentIndex;
+      if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
+        const nextChapter = chapters[nextIndex];
+        app.globalData.playingChapter = nextChapter;
+        app.globalData.playingIndex = nextIndex;
+        this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
+        this.loadAudio(nextChapter);
+      } else {
+        this.bgAudioManager.stop();
+        this.setData({ isPlaying: false });
+      }
+    }
+    this.updateNextChapterInfo();
+  },
+
+  onPlaylistCollapse() {},
+
+  onPlaylistClear() {
+    this.bgAudioManager.stop();
+    this.setData({ isPlaying: false, chapters: [], currentChapter: {}, currentIndex: 0 });
+    app.globalData.miniPlayerActive = false;
+    app.globalData.playingCourse = null;
+    app.globalData.playingChapter = null;
+    app.globalData.playingIndex = 0;
+    app.globalData.playlistChaptersData = [];
+  },
+
+  onPlaylistSyncSort(e) {
+    const sortedChapters = e.detail.chapters;
+    const currentId = this.data.currentChapter._id;
+    const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
+    this.setData({ chapters: sortedChapters, currentIndex: newIndex });
+    app.globalData.playingIndex = newIndex;
+    app.globalData.playlistChaptersData = sortedChapters;
   },
 
   toggleSort() {

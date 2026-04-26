@@ -42,7 +42,7 @@ Component({
         },
         onTimeUpdate: (data) => {
           const currentTime = data.currentTime;
-          const duration = this.bgAudioManager.duration || this.data.duration;
+          const duration = this.bgAudioManager.duration;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           this.setData({
             currentTime: currentTime,
@@ -361,11 +361,21 @@ Component({
     },
 
     onPlayPause() {
-      if (this.data.isPlaying) {
+      // 防止快速点击导致状态混乱
+      if (this._playPauseLock) return;
+      this._playPauseLock = true;
+      setTimeout(() => { this._playPauseLock = false; }, 300);
+
+      const { currentChapter, isPlaying } = this.data;
+      if (isPlaying) {
         this.bgAudioManager.pause();
         this.saveProgress();
+        this.setData({ isPlaying: false });
+        app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
       } else {
         this.bgAudioManager.play();
+        this.setData({ isPlaying: true });
+        app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: true });
       }
     },
 
@@ -375,7 +385,8 @@ Component({
 
     onSpeedChange() {
       const { playbackRate } = this.data;
-      const nextRate = this.speedOptions[(this.speedOptions.indexOf(playbackRate) + 1) % this.speedOptions.length];
+      // 只有1x和2x，切换逻辑：<2时直接切到2，=2时切到1
+      const nextRate = playbackRate >= 2 ? 1 : 2;
       this.setData({ playbackRate: nextRate });
       this.bgAudioManager.playbackRate = nextRate;
     },

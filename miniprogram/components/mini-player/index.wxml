@@ -29,7 +29,7 @@
 
     <!-- 倍速 -->
     <view class="speed-btn" catchtap="onSpeedChange">
-      <text class="speed-text">{{playbackRate}}x</text>
+      <text class="speed-text {{playbackRate === 1 || playbackRate === 2 ? 'active' : ''}}">{{playbackRate}}x</text>
     </view>
 
     <!-- 播放/暂停 -->

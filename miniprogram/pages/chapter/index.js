@@ -22,6 +22,9 @@ Page({
     this.audioCallback = {
       onClose: () => this.resetPlayingState(),
       onStop: () => this.resetPlayingState(),
+      onPlayPause: () => {
+        // 暂停时不改变章节卡片的播放样式，保持显示正在播放状态
+      },
       onChapterChange: ({ chapterId }) => {
         this.setData({
           chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
