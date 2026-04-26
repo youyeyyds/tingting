@@ -317,16 +317,23 @@ Component({
 
       const currentCourseId = app.globalData.playingCourse && app.globalData.playingCourse._id;
       const isNewPlaylist = !app.globalData.miniPlayerActive || currentCourseId !== course._id;
-      const order = isNewPlaylist ? (sortOrder || 'asc') : (app.globalData.playlistSortOrder || sortOrder || 'asc');
+      // 每次点击章节卡片开始播放时，都继承章节列表当前的排序
+      // 排序改变后，只有再次点击章节卡片开始播放时才会继承新的排序
+      const order = sortOrder || app.globalData.playlistSortOrder || 'asc';
+      console.log('[miniPlayer.play] sortOrder param:', sortOrder, 'globalData.sortOrder:', app.globalData.playlistSortOrder, 'final order:', order, 'isNewPlaylist:', isNewPlaylist);
+
+      // filteredChapters 已经是章节列表排序后的数组，直接使用即可
+      const globalChapters = chapters;
 
       this.setData({ chapters: chapters, course: course, playlistSortOrder: order, isFavoriteList: false, coverLoadTime: coverLoadTime });
 
       app.globalData.playingCourse = course;
       app.globalData.playingChapter = chapter;
       app.globalData.playingIndex = index;
-      app.globalData.playlistChaptersData = chapters;
+      app.globalData.playlistChaptersData = globalChapters;
+      // 每次点击章节卡片都更新排序状态
+      app.globalData.playlistSortOrder = order;
       if (isNewPlaylist) {
-        app.globalData.playlistSortOrder = order;
         app.globalData.playMode = 'sequence';
       }
       app.globalData.miniPlayerActive = true;
@@ -432,8 +439,9 @@ Component({
       this._audioEndedProcessing = true;
 
       this.updateProgress(0, true);
-      const { chapters, currentIndex } = this.data;
+      const { chapters, currentIndex, playlistSortOrder } = this.data;
       const playMode = app.globalData.playMode || 'sequence';
+      const isDesc = playlistSortOrder === 'desc';
 
       if (playMode === 'single') {
         const currentChapter = chapters[currentIndex];
@@ -449,19 +457,22 @@ Component({
         return;
       }
 
-      const nextIndex = currentIndex + 1;
+      // 计算下一曲的索引：正序+1，倒序-1
+      let nextIndex = isDesc ? currentIndex - 1 : currentIndex + 1;
 
-      if (nextIndex >= chapters.length) {
+      if (nextIndex < 0 || nextIndex >= chapters.length) {
         if (playMode === 'loop') {
-          const firstChapter = chapters[0];
-          if (firstChapter?.audioUrl) {
-            app.globalData.playingChapter = firstChapter;
-            app.globalData.playingIndex = 0;
-            this.updateChapterCache(firstChapter, 0);
-            this.setData({ currentChapter: firstChapter, currentIndex: 0 });
+          // 循环模式：正序回到第一首，倒序回到最后一首
+          const targetIndex = isDesc ? chapters.length - 1 : 0;
+          const targetChapter = chapters[targetIndex];
+          if (targetChapter?.audioUrl) {
+            app.globalData.playingChapter = targetChapter;
+            app.globalData.playingIndex = targetIndex;
+            this.updateChapterCache(targetChapter, targetIndex);
+            this.setData({ currentChapter: targetChapter, currentIndex: targetIndex });
             this._startProgressTimer();
-            this.loadAudio(firstChapter);
-            app.notifyCallbacks('onChapterChange', { chapterId: firstChapter._id });
+            this.loadAudio(targetChapter);
+            app.notifyCallbacks('onChapterChange', { chapterId: targetChapter._id });
           }
         } else {
           this.setData({ isPlaying: false });
@@ -657,9 +668,11 @@ Component({
     },
 
     onPlaylistSyncSort(e) {
+      console.log('[mini-player] onPlaylistSyncSort called, detail:', e.detail);
       const sortedChapters = e.detail.chapters;
       const currentId = this.data.currentChapter._id;
       const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
+      console.log('[mini-player] currentId:', currentId, 'newIndex:', newIndex);
       this.setData({ chapters: sortedChapters, currentIndex: newIndex });
       app.globalData.playingIndex = newIndex;
     },

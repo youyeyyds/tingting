@@ -62,6 +62,7 @@ Component({
 
   methods: {
     show() {
+      console.log('[playlist-panel] show() called, chapters length:', this.properties.chapters ? this.properties.chapters.length : 0, 'sortOrder:', app.globalData.playlistSortOrder);
       // 从全局数据同步播放模式和排序状态
       const playMode = app.globalData.playMode || 'sequence';
       const sortOrder = app.globalData.playlistSortOrder || this.properties.initialSortOrder || 'asc';
@@ -92,6 +93,7 @@ Component({
     applySort() {
       let chapters = [...this.properties.chapters];
       const currentId = this.properties.currentChapterId;
+      console.log('[playlist-panel] applySort called, chapters length:', chapters.length, 'sortOrder:', this.data.sortOrder, 'isFavoriteList:', this.properties.isFavoriteList, 'chapters seqs:', chapters.map(c => c.seq));
 
       // 收藏列表按原始顺序排列（不按 seq 排序）
       // 排序按钮只是切换显示顺序（正序/倒序），不改变播放顺序
@@ -111,6 +113,7 @@ Component({
         ...ch,
         isPlaying: ch._id === currentId
       }));
+      console.log('[playlist-panel] applySort result, sorted seqs:', chapters.map(c => c.seq));
       this.setData({ sortedChapters: chapters });
     },
 
@@ -189,9 +192,10 @@ Component({
     },
 
     onDragEnd() {
+      const sortedChapters = this.data.sortedChapters;
       this.setData({ dragIndex: -1 });
-      app.globalData.playlistChapters = this.data.sortedChapters.map(ch => ch._id);
-      this.triggerEvent('syncSort', { chapters: this.data.sortedChapters });
+      app.globalData.playlistChapters = sortedChapters.map(ch => ch._id);
+      this.triggerEvent('syncSort', { chapters: sortedChapters });
     },
 
     preventMove() {}

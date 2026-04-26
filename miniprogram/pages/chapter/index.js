@@ -43,9 +43,9 @@ Page({
         const courseProgress = chapters.length ? Math.round(chapters.reduce((s, c) => s + (c.progress || 0), 0) / chapters.length) : 0;
         this.setData({
           chapters,
-          filteredChapters: chapters,
           course: { ...this.data.course, progress: courseProgress, progressText: courseProgress === 100 ? '已学完' : courseProgress ? `已学${courseProgress}%` : '未学习' }
         });
+        this.applyFilterAndSort();
       },
       onFavoriteChange: ({ chapterId, isFavorite }) => {
         this.setData({ chapters: this.data.chapters.map(ch => ch._id === chapterId ? { ...ch, isFavorite } : ch) });
@@ -68,7 +68,14 @@ Page({
   },
 
   onShow() {
-    if (this.data.courseId) this.loadCourseData();
+    console.log('[chapter.onShow] called, sortOrder:', this.data.sortOrder);
+    // 不再每次都 loadCourseData，只在首次加载或需要刷新数据时
+    if (this.data.courseId && this.data.chapters.length === 0) {
+      this.loadCourseData();
+    } else {
+      // 保持现有数据，只更新进度等动态信息
+      this.applyFilterAndSort();
+    }
     // 同步图片时间戳变化
     this.syncImageTimes();
   },
@@ -104,12 +111,14 @@ Page({
       if (res.result.success) {
         const course = res.result.course;
         course.cover = this.processImageUrl(course.cover);
+        console.log('[chapter.loadCourseData] before setData, sortOrder:', this.data.sortOrder);
         this.setData({
           course,
           chapters: res.result.chapters.map(ch => this.formatChapter(ch)),
           filteredChapters: res.result.chapters.map(ch => this.formatChapter(ch)),
           loading: false
         });
+        console.log('[chapter.loadCourseData] after setData, sortOrder:', this.data.sortOrder);
       } else {
         wx.showToast({ title: '加载失败', icon: 'none' });
         this.setData({ loading: false });
@@ -171,23 +180,21 @@ Page({
     let chapters = [...this.data.chapters];
     if (this.data.showUnfinishedOnly) chapters = chapters.filter(ch => ch.progress < 100);
     chapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
+    console.log('[chapter.applyFilterAndSort] sortOrder:', this.data.sortOrder, 'sorted seqs:', chapters.map(c => c.seq));
     this.setData({ filteredChapters: chapters });
   },
 
   onChapterTap(e) {
-    const chapter = this.data.chapters.find(ch => ch._id === e.currentTarget.dataset.id);
-    if (chapter?.isPlaying) this.selectComponent('#miniPlayer')?.togglePlayPause?.();
-    else this.playChapter(e.currentTarget.dataset.id);
+    this.playChapter(e.currentTarget.dataset.id);
   },
 
   onPlayTap(e) {
-    const chapter = this.data.chapters.find(ch => ch._id === e.currentTarget.dataset.id);
-    if (chapter?.isPlaying) this.selectComponent('#miniPlayer')?.togglePlayPause?.();
-    else this.playChapter(e.currentTarget.dataset.id);
+    this.playChapter(e.currentTarget.dataset.id);
   },
 
   playChapter(chapterId) {
     const miniPlayer = this.selectComponent('#miniPlayer');
+    console.log('[chapter.playChapter] sortOrder:', this.data.sortOrder, 'chapterId:', chapterId);
     if (miniPlayer) {
       const state = { courseId: this.data.courseId, showUnfinishedOnly: this.data.showUnfinishedOnly, sortOrder: this.data.sortOrder };
       if (state.courseId !== this.data.playlistState.courseId || state.showUnfinishedOnly !== this.data.playlistState.showUnfinishedOnly || state.sortOrder !== this.data.playlistState.sortOrder) {
@@ -196,7 +203,9 @@ Page({
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
     this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
+    console.log('[chapter.playChapter] before applyFilterAndSort, sortOrder:', this.data.sortOrder);
     this.applyFilterAndSort();
+    console.log('[chapter.playChapter] after applyFilterAndSort, filteredChapters seqs:', this.data.filteredChapters.map(c => c.seq));
   },
 
   onFavoriteTap(e) {

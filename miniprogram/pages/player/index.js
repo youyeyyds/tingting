@@ -89,10 +89,24 @@ Page({
   },
 
   onShow() {
+    console.log('[player.onShow] called');
     // 同步封面图片时间戳变化
     this.syncImageTimes();
     // 同步播放状态
     this.syncPlaybackState();
+    // 同步播放列表数据（从 globalData 读取最新的播放列表和排序）
+    const { playlistChaptersData, playlistSortOrder } = app.globalData;
+    console.log('[player.onShow] playlistChaptersData length:', playlistChaptersData?.length, 'sortOrder:', playlistSortOrder);
+    if (playlistChaptersData && playlistChaptersData.length > 0) {
+      const currentId = this.data.currentChapter?._id;
+      const newIndex = playlistChaptersData.findIndex(ch => ch._id === currentId);
+      console.log('[player.onShow] updating chapters, newIndex:', newIndex);
+      this.setData({
+        chapters: playlistChaptersData,
+        sortOrder: playlistSortOrder || 'asc',
+        currentIndex: newIndex >= 0 ? newIndex : this.data.currentIndex
+      });
+    }
   },
 
   // 同步播放状态
@@ -422,43 +436,31 @@ Page({
       return;
     }
 
-    // 倒序时，prev/next 的逻辑需要反转
-    if (sortOrder === 'asc') {
-      if (currentIndex > 0) this.playChapter(currentIndex - 1);
-      else if (playMode === 'loop') this.playChapter(chapters.length - 1);
-      else wx.showToast({ title: '已经是第一条', icon: 'none' });
-    } else {
-      // 倒序时：currentIndex 0 是最后一条，currentIndex 最大是第一
-      if (currentIndex < chapters.length - 1) this.playChapter(currentIndex + 1);
-      else if (playMode === 'loop') this.playChapter(0);
-      else wx.showToast({ title: '已经是第一条', icon: 'none' });
-    }
+    // playPrev：不管正序倒序，都是 -1
+    if (currentIndex > 0) this.playChapter(currentIndex - 1);
+    else if (playMode === 'loop') this.playChapter(chapters.length - 1);
+    else wx.showToast({ title: '已经是第一条', icon: 'none' });
   },
 
   playNext() {
-    const { currentIndex, chapters, playMode, sortOrder } = this.data;
+    const { currentIndex, chapters, playMode } = this.data;
+    console.log('[playNext] currentIndex:', currentIndex, 'chapters.length:', chapters.length);
     if (playMode === 'single') {
       this.bgAudioManager.seek(0);
       this.bgAudioManager.play();
       return;
     }
 
-    // 倒序时，prev/next 的逻辑需要反转
-    if (sortOrder === 'asc') {
-      if (currentIndex < chapters.length - 1) this.playChapter(currentIndex + 1);
-      else if (playMode === 'loop') this.playChapter(0);
-      else {
-        this.bgAudioManager.stop();
-        this.setData({ isPlaying: false });
-      }
-    } else {
-      // 倒序时：currentIndex 0 是最后一条，currentIndex 最大是第一
-      if (currentIndex > 0) this.playChapter(currentIndex - 1);
-      else if (playMode === 'loop') this.playChapter(chapters.length - 1);
-      else {
-        this.bgAudioManager.stop();
-        this.setData({ isPlaying: false });
-      }
+    // playNext：不管正序倒序，都是 +1
+    if (currentIndex < chapters.length - 1) {
+      console.log('[playNext] playChapter:', currentIndex + 1, 'seq:', chapters[currentIndex + 1]?.seq);
+      this.playChapter(currentIndex + 1);
+    }
+    else if (playMode === 'loop') {
+      this.playChapter(0);
+    }
+    else {
+      wx.showToast({ title: '已经是最后一条', icon: 'none' });
     }
   },
 
@@ -610,21 +612,39 @@ Page({
   },
 
   onPlaylistSyncSort(e) {
+    console.log('[player] onPlaylistSyncSort called, detail:', e.detail);
     const sortedChapters = e.detail.chapters;
     const currentId = this.data.currentChapter._id;
     const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
+    console.log('[player] currentId:', currentId, 'newIndex:', newIndex);
     this.setData({ chapters: sortedChapters, currentIndex: newIndex });
     app.globalData.playingIndex = newIndex;
     app.globalData.playlistChaptersData = sortedChapters;
   },
 
   toggleSort() {
-    const newOrder = this.data.sortOrder === 'asc' ? 'desc' : 'asc';
-    const newChapters = [...this.data.chapters].reverse();
-    this.setData({ sortOrder: newOrder, chapters: newChapters, currentIndex: newChapters.length - 1 - this.data.currentIndex });
+    const { sortOrder, currentIndex, chapters } = this.data;
+    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    const newChapters = [...chapters].reverse();
+    const newIndex = newChapters.length - 1 - currentIndex;
+    console.log('[toggleSort] sortOrder:', sortOrder, '-> newOrder:', newOrder, 'currentIndex:', currentIndex, 'newIndex:', newIndex);
+    console.log('[toggleSort] newChapters seqs:', newChapters.map(c => c.seq));
+
+    // 先更新全局数据
     app.globalData.playlistSortOrder = newOrder;
     app.globalData.playlistChaptersData = newChapters;
-    this.updateNextChapterInfo();
+
+    // 更新 UI
+    this.setData({ sortOrder: newOrder, chapters: newChapters, currentIndex: newIndex }, () => {
+      console.log('[toggleSort] setData callback - this.data.sortOrder:', this.data.sortOrder, 'currentIndex:', this.data.currentIndex);
+      this.updateNextChapterInfo();
+    });
+
+    // Toast 放在 setData 之后，避免阻塞 UI 更新
+    wx.showToast({
+      title: newOrder === 'asc' ? '正序' : '倒序',
+      icon: 'none'
+    });
   },
 
   toggleFavorite() {
@@ -647,6 +667,7 @@ Page({
   // 更新下一条信息
   updateNextChapterInfo() {
     const { chapters, currentIndex, playMode, sortOrder } = this.data;
+    console.log('[updateNextChapterInfo] sortOrder:', sortOrder, 'currentIndex:', currentIndex, 'chapters.length:', chapters.length, 'playMode:', playMode);
     if (!chapters || chapters.length === 0) {
       this.setData({ nextChapterSeq: '', nextChapterTitle: '' });
       return;
@@ -654,42 +675,25 @@ Page({
     // 单曲循环模式：下一条就是当前条
     if (playMode === 'single') {
       const current = chapters[currentIndex];
+      console.log('[updateNextChapterInfo] single mode, next is current:', current.seq);
       this.setData({ nextChapterSeq: current.seq, nextChapterTitle: current.title });
       return;
     }
 
-    // 倒序时，next/prev 的逻辑需要反转
-    if (sortOrder === 'asc') {
-      // 列表循环模式：最后一条的下一条是第一条
-      if (playMode === 'loop' && currentIndex === chapters.length - 1) {
-        const first = chapters[0];
-        this.setData({ nextChapterSeq: first.seq, nextChapterTitle: first.title });
-        return;
-      }
-      // 顺序播放模式：最后一条显示提示
-      if (currentIndex === chapters.length - 1) {
-        this.setData({ nextChapterSeq: '', nextChapterTitle: '已经是最后一条' });
-        return;
-      }
-      // 其他情况：显示下一条
+    // 不管正序倒序，next 都是 currentIndex + 1
+    if (currentIndex < chapters.length - 1) {
       const next = chapters[currentIndex + 1];
+      console.log('[updateNextChapterInfo] normal, next:', next.seq, next.title);
       this.setData({ nextChapterSeq: next.seq, nextChapterTitle: next.title });
+    } else if (playMode === 'loop') {
+      // 最后一首且循环模式：下一首是第一首
+      const first = chapters[0];
+      console.log('[updateNextChapterInfo] at end + loop, next is first:', first.seq);
+      this.setData({ nextChapterSeq: first.seq, nextChapterTitle: first.title });
     } else {
-      // 倒序时：currentIndex 0 是最后一条，currentIndex 最大是第一
-      // 列表循环模式：第一条的下一条是最后一条
-      if (playMode === 'loop' && currentIndex === 0) {
-        const last = chapters[chapters.length - 1];
-        this.setData({ nextChapterSeq: last.seq, nextChapterTitle: last.title });
-        return;
-      }
-      // 顺序播放模式：第一条显示提示
-      if (currentIndex === 0) {
-        this.setData({ nextChapterSeq: '', nextChapterTitle: '已经是最后一条' });
-        return;
-      }
-      // 其他情况：显示下一条（倒序时 index 减小）
-      const next = chapters[currentIndex - 1];
-      this.setData({ nextChapterSeq: next.seq, nextChapterTitle: next.title });
+      // 最后一首且非循环模式
+      console.log('[updateNextChapterInfo] at end, no next');
+      this.setData({ nextChapterSeq: '', nextChapterTitle: '已经是最后一条' });
     }
   },
 
