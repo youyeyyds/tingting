@@ -109,7 +109,8 @@ App({
     playlistSortOrder: 'asc', // 'asc' | 'desc'
     loginPageLoadTime: null, // 登录页图片加载时间戳，保持稳定
     homePageLoadTime: null, // 首页图片加载时间戳，保持稳定
-    homePageMaskedAuthors: null, // 首页随机作者映射，保持稳定
+    homePageMaskedAuthors: null, // 首页伪装课程映射（已废弃，保留字段兼容）
+    homePageMaskedCourses: {}, // 首页伪装课程-武功映射
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
     defaultCoverUrl: null, // 默认封面URL
