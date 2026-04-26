@@ -607,7 +607,7 @@ const getCourseSettings = async (event) => {
       };
     }
 
-    const res = await db.collection("userCourseSettings")
+    const res = await db.collection("userPlaylistSettings")
       .where({
         userId: currentUserId,
         courseId: courseId
@@ -664,7 +664,7 @@ const updateCourseSettings = async (event) => {
     }
 
     // 查询是否已存在设置
-    const res = await db.collection("userCourseSettings")
+    const res = await db.collection("userPlaylistSettings")
       .where({
         userId: currentUserId,
         courseId: courseId
@@ -681,7 +681,7 @@ const updateCourseSettings = async (event) => {
 
     if (res.data.length > 0) {
       // 更新已有记录
-      await db.collection("userCourseSettings")
+      await db.collection("userPlaylistSettings")
         .doc(res.data[0]._id)
         .update({ data: updateData });
     } else {
@@ -694,7 +694,7 @@ const updateCourseSettings = async (event) => {
       if (sortOrder !== undefined) newData.sortOrder = sortOrder;
       if (showUnfinishedOnly !== undefined) newData.showUnfinishedOnly = showUnfinishedOnly;
       if (lastPlayedChapterId !== undefined) newData.lastPlayedChapterId = lastPlayedChapterId;
-      await db.collection("userCourseSettings")
+      await db.collection("userPlaylistSettings")
         .add({ data: newData });
     }
 
