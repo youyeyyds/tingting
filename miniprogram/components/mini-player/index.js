@@ -32,7 +32,15 @@ Component({
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this.audioCallback = {
         onCanplay: (data) => {
-          this.setData({ duration: data.duration });
+          // 更新duration后重新计算进度
+          const duration = data.duration;
+          const currentTime = this.bgAudioManager.currentTime || 0;
+          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          this.setData({
+            duration: duration,
+            currentTime: currentTime,
+            progressPercent: progressPercent
+          });
         },
         onPlay: () => {
           this.setData({ isPlaying: true });
@@ -42,7 +50,8 @@ Component({
         },
         onTimeUpdate: (data) => {
           const currentTime = data.currentTime;
-          const duration = this.bgAudioManager.duration;
+          // 优先使用 this.data.duration（由 onCanplay 设置），避免切换章节后 duration 未更新的问题
+          const duration = this.data.duration || this.bgAudioManager.duration;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           this.setData({
             currentTime: currentTime,

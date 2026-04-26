@@ -213,6 +213,9 @@ Page({
       if (this.bgAudioManager.offEnded) {
         this.bgAudioManager.offEnded(this.audioCallbacks.onEnded);
       }
+      if (this.bgAudioManager.offCanplay) {
+        this.bgAudioManager.offCanplay(this.audioCallbacks.onCanplay);
+      }
     }
     this.stopCoverRotation();
   },
@@ -223,17 +226,30 @@ Page({
       onTimeUpdate: () => this.onTimeUpdate(),
       onPlay: () => this.onPlay(),
       onPause: () => this.onPause(),
-      onEnded: () => this.onEnded()
+      onEnded: () => this.onEnded(),
+      onCanplay: () => this.onCanplay()
     };
     this.bgAudioManager.onTimeUpdate(this.audioCallbacks.onTimeUpdate);
     this.bgAudioManager.onPlay(this.audioCallbacks.onPlay);
     this.bgAudioManager.onPause(this.audioCallbacks.onPause);
     this.bgAudioManager.onEnded(this.audioCallbacks.onEnded);
+    this.bgAudioManager.onCanplay(this.audioCallbacks.onCanplay);
+  },
+
+  onCanplay() {
+    const duration = this.bgAudioManager.duration;
+    this.setData({ duration });
+    // 更新进度显示
+    const currentTime = this.bgAudioManager.currentTime;
+    const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+    this.setData({ currentTime, progressPercent });
+    this.updateProgress();
   },
 
   onTimeUpdate() {
     const currentTime = this.bgAudioManager.currentTime;
-    const duration = this.bgAudioManager.duration;
+    // 优先使用 this.data.duration（由 onCanplay 设置），避免切换章节后 duration 未更新的问题
+    const duration = this.data.duration || this.bgAudioManager.duration;
     this.setData({
       currentTime,
       progressPercent: duration > 0 ? (currentTime / duration) * 100 : 0
