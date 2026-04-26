@@ -31,10 +31,12 @@ Page({
       onChapterChange: ({ chapterId }) => {
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
+        // 检查 chapterId 是否属于当前课程
+        const isCurrentChapter = isCurrentCourse && chapterId && this.data.chapters.some(ch => ch._id === chapterId);
         this.setData({
           chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
           isCurrentCoursePlaying: isCurrentCourse,
-          isCurrentChapterPlaying: isCurrentCourse
+          isCurrentChapterPlaying: isCurrentChapter
         });
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
