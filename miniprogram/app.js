@@ -184,14 +184,20 @@ App({
 
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
+    console.log('[app] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length);
     this.miniPlayerCallbacks.forEach(cb => {
-      if (cb[event]) cb[event](data);
+      if (cb[event]) {
+        console.log('[app] calling callback:', event);
+        cb[event](data);
+      }
     });
   },
 
   // 注册 mini-player 回调
   registerMiniPlayer(callback) {
+    console.log('[app] registerMiniPlayer, current callbacks:', this.miniPlayerCallbacks.length);
     this.miniPlayerCallbacks.push(callback);
+    console.log('[app] after register, callbacks:', this.miniPlayerCallbacks.length);
   },
 
   // 移除 mini-player 回调
