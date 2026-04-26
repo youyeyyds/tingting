@@ -113,6 +113,15 @@ Page({
       coverRotationAngle = -coverRotationAngle;
     }
 
+    console.log('[player] syncPlaybackState:', {
+      currentTime,
+      duration,
+      progressPercent,
+      coverRotationAngle,
+      isPlaying,
+      startTime: this.bgAudioManager.startTime
+    });
+
     this.setData({
       isPlaying,
       currentTime,
