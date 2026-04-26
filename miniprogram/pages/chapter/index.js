@@ -30,6 +30,8 @@ Page({
           chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
         });
         this.applyFilterAndSort();
+        // 保存最近播放的章节ID
+        this.saveCourseSettings({ lastPlayedChapterId: chapterId });
       },
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
         const chapters = this.data.chapters.map(ch => {
@@ -172,10 +174,30 @@ Page({
   },
 
   handleContinuePlay() {
-    const { filteredChapters } = this.data;
-    if (!filteredChapters.length) return wx.showToast({ title: '暂无章节', icon: 'none' });
-    const unfinished = filteredChapters.filter(ch => ch.progress < 100);
-    this.playChapter(unfinished.length ? unfinished.reduce((max, ch) => ch.progress > max.progress ? ch : max, unfinished[0])._id : filteredChapters[0]._id);
+    const { filteredChapters, lastPlayedChapterId, showUnfinishedOnly } = this.data;
+
+    // 如果只看未学完且没有未学完的章节
+    if (showUnfinishedOnly && filteredChapters.length === 0) {
+      return wx.showToast({ title: '所有章节已学完', icon: 'none' });
+    }
+
+    if (!filteredChapters.length) {
+      return wx.showToast({ title: '暂无章节', icon: 'none' });
+    }
+
+    let chapterToPlay = null;
+
+    // 优先使用上次播放的章节
+    if (lastPlayedChapterId) {
+      chapterToPlay = filteredChapters.find(ch => ch._id === lastPlayedChapterId);
+    }
+
+    // 如果找不到上次播放的章节（可能被删除了），使用第一个
+    if (!chapterToPlay) {
+      chapterToPlay = filteredChapters[0];
+    }
+
+    this.playChapter(chapterToPlay._id);
   },
 
   onFilterChange(e) {

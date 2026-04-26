@@ -61,7 +61,7 @@
 
     <!-- 空状态 -->
     <view class="empty-tip" wx:if="{{!loading && filteredChapters.length === 0}}">
-      <text class="empty-text">暂无章节数据</text>
+      <text class="empty-text">{{showUnfinishedOnly ? '所有章节已学完' : '暂无章节数据'}}</text>
     </view>
 
     <!-- 底部文案 -->
