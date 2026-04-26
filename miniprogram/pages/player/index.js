@@ -248,8 +248,8 @@ Page({
 
   onTimeUpdate() {
     const currentTime = this.bgAudioManager.currentTime;
-    // 优先使用 this.data.duration（由 onCanplay 设置），避免切换章节后 duration 未更新的问题
-    const duration = this.data.duration || this.bgAudioManager.duration;
+    // 始终使用 bgAudioManager.duration 获取最新值
+    const duration = this.bgAudioManager.duration;
     this.setData({
       currentTime,
       progressPercent: duration > 0 ? (currentTime / duration) * 100 : 0

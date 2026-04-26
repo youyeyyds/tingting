@@ -50,8 +50,8 @@ Component({
         },
         onTimeUpdate: (data) => {
           const currentTime = data.currentTime;
-          // 优先使用 this.data.duration（由 onCanplay 设置），避免切换章节后 duration 未更新的问题
-          const duration = this.data.duration || this.bgAudioManager.duration;
+          // 始终使用 bgAudioManager.duration 获取最新值，避免切换章节后 duration 未更新的问题
+          const duration = this.bgAudioManager.duration;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           this.setData({
             currentTime: currentTime,

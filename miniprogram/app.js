@@ -145,11 +145,9 @@ App({
     bgAudio.onCanplay(() => {
       bgAudio.playbackRate = 2;
       const duration = bgAudio.duration;
-      if (duration && duration > 0) {
-        this.notifyCallbacks('onCanplay', {
-          duration: duration
-        });
-      }
+      this.notifyCallbacks('onCanplay', {
+        duration: duration || 0
+      });
     });
 
     bgAudio.onPlay(() => {
