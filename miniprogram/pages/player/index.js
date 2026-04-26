@@ -101,6 +101,7 @@ Page({
     const currentTime = this.bgAudioManager.currentTime || 0;
     const duration = this.bgAudioManager.duration || 0;
     const playbackRate = this.bgAudioManager.playbackRate || 2;
+    const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
     const { sortOrder } = this.data;
 
     // 根据当前播放时间和排序方向计算封面旋转角度
@@ -117,6 +118,7 @@ Page({
       currentTime,
       duration,
       playbackRate,
+      progressPercent,
       coverRotationAngle
     });
     this.updateProgress();
