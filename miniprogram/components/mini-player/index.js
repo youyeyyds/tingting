@@ -43,11 +43,9 @@ Component({
           });
         },
         onPlay: () => {
-          console.log('[mini-player] onPlay callback');
           this.setData({ isPlaying: true });
         },
         onPause: () => {
-          console.log('[mini-player] onPause callback');
           this.setData({ isPlaying: false });
         },
         onTimeUpdate: (data) => {
@@ -118,11 +116,6 @@ Component({
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
-      console.log('[mini-player] pageLifetimes.show:', {
-        route: this.currentPageRoute,
-        isTabBarPage,
-        miniPlayerActive: app.globalData.miniPlayerActive
-      });
 
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
@@ -138,6 +131,12 @@ Component({
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
         return;
+      }
+
+      // 停止之前的轮询
+      if (this._progressTimer) {
+        clearInterval(this._progressTimer);
+        this._progressTimer = null;
       }
 
       if (!app.globalData.coverLoadTime) {
@@ -159,12 +158,6 @@ Component({
       const currentTime = this.bgAudioManager.currentTime || 0;
       const duration = this.bgAudioManager.duration || 0;
       const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-      console.log('[mini-player] showMiniPlayer called:', {
-        currentTime, duration, progressPercent,
-        playingChapterId: playingChapter?._id,
-        isPlaying: !this.bgAudioManager.paused,
-        miniPlayerActive: app.globalData.miniPlayerActive
-      });
 
       const data = {
         playerBottom: this.calcPosition(),
@@ -190,6 +183,25 @@ Component({
       } else {
         this.setData({ visible: true, fadeInClass: '', ...data });
       }
+
+      // 启动定时器轮询进度，确保在各种情况下都能正确更新
+      this._progressTimer = setInterval(() => {
+        if (!this.data.visible) {
+          if (this._progressTimer) {
+            clearInterval(this._progressTimer);
+            this._progressTimer = null;
+          }
+          return;
+        }
+        const ct = this.bgAudioManager.currentTime || 0;
+        const dur = this.bgAudioManager.duration || 0;
+        const pct = dur > 0 ? Math.min((ct / dur) * 100, 100) : 0;
+        this.setData({
+          currentTime: ct,
+          duration: dur,
+          progressPercent: pct
+        });
+      }, 500);
     },
 
     calcPosition() {
@@ -475,6 +487,10 @@ Component({
     },
 
     onClose() {
+      if (this._progressTimer) {
+        clearInterval(this._progressTimer);
+        this._progressTimer = null;
+      }
       this.saveProgress();
       this.bgAudioManager.stop();
       app.globalData.miniPlayerActive = false;
