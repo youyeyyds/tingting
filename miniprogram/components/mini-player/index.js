@@ -31,6 +31,16 @@ Component({
       this.bgAudioManager = app.bgAudioManager;
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this.audioCallback = {
+        onChapterChange: ({ chapterId }) => {
+          // 当外部（player页面）改变播放章节时，同步更新mini-player的currentChapter
+          if (chapterId) {
+            const chapter = this.data.chapters.find(ch => ch._id === chapterId);
+            const index = this.data.chapters.findIndex(ch => ch._id === chapterId);
+            if (chapter && index >= 0) {
+              this.setData({ currentChapter: chapter, currentIndex: index });
+            }
+          }
+        },
         onCanplay: (data) => {
           // 更新duration后重新计算进度
           const duration = data.duration;
@@ -138,7 +148,7 @@ Component({
       }
       const globalCoverTime = app.globalData.coverLoadTime;
 
-      const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, isFavoriteList } = app.globalData;
+      const { playingCourse, playingChapter, playingSeq, playlistChaptersData, playlistSortOrder, isFavoriteList } = app.globalData;
       let playbackRate = this.bgAudioManager.playbackRate || 2;
       if (!this.speedOptions.includes(playbackRate)) {
         playbackRate = 2;
@@ -149,6 +159,11 @@ Component({
         courseCover = this.rebuildImageUrl(playingCourse?.cover || '', globalCoverTime);
       }
 
+      // 通过 playingSeq 找到 currentChapter 和 index
+      const chapters = playlistChaptersData || [];
+      const currentChapter = playingChapter || chapters.find(ch => ch.seq === playingSeq) || {};
+      const currentIndex = chapters.findIndex(ch => ch._id === currentChapter._id);
+
       const currentTime = this.bgAudioManager.currentTime || 0;
       const duration = this.bgAudioManager.duration || 0;
       const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
@@ -156,8 +171,8 @@ Component({
       const data = {
         playerBottom: this.calcPosition(),
         isPlaying: !this.bgAudioManager.paused,
-        currentChapter: playingChapter || {},
-        currentIndex: playingIndex || 0,
+        currentChapter: currentChapter,
+        currentIndex: currentIndex >= 0 ? currentIndex : 0,
         courseCover: courseCover,
         courseName: playingCourse?.title || '',
         chapters: playlistChaptersData || [],
@@ -219,10 +234,10 @@ Component({
       return 8 + tabBarHeight + safeArea;
     },
 
-    savePlayStateCache(course, chapter, index, sortOrder, playMode) {
+    savePlayStateCache(course, chapter, sortOrder, playMode) {
       wx.setStorageSync('playingCourse', JSON.stringify(course));
       wx.setStorageSync('playingChapter', JSON.stringify(chapter));
-      wx.setStorageSync('playingIndex', index);
+      wx.setStorageSync('playingSeq', chapter?.seq);
       wx.setStorageSync('playlistSortOrder', sortOrder);
       wx.setStorageSync('playMode', playMode);
     },
@@ -230,14 +245,14 @@ Component({
     clearPlayStateCache() {
       wx.removeStorageSync('playingCourse');
       wx.removeStorageSync('playingChapter');
-      wx.removeStorageSync('playingIndex');
+      wx.removeStorageSync('playingSeq');
       wx.removeStorageSync('playlistSortOrder');
       wx.removeStorageSync('playMode');
     },
 
-    updateChapterCache(chapter, index) {
+    updateChapterCache(chapter) {
       wx.setStorageSync('playingChapter', JSON.stringify(chapter));
-      wx.setStorageSync('playingIndex', index);
+      wx.setStorageSync('playingSeq', chapter?.seq);
     },
 
     playFromList(data) {
@@ -279,6 +294,7 @@ Component({
 
       app.globalData.playingCourse = course;
       app.globalData.playingChapter = chapter;
+      app.globalData.playingSeq = chapter.seq;
       app.globalData.playingIndex = index;
       app.globalData.playlistChaptersData = chapters;
       app.globalData.playlistSortOrder = 'asc';
@@ -287,7 +303,7 @@ Component({
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.isFavoriteList = true;
 
-      this.savePlayStateCache(course, chapter, index, 'asc', 'sequence');
+      this.savePlayStateCache(course, chapter, 'asc', 'sequence');
 
       this.setData({
         visible: true,
@@ -338,6 +354,7 @@ Component({
 
       app.globalData.playingCourse = course;
       app.globalData.playingChapter = chapter;
+      app.globalData.playingSeq = chapter.seq;
       app.globalData.playingIndex = index;
       app.globalData.playlistChaptersData = globalChapters;
       // 每次点击章节卡片都更新排序状态
@@ -349,7 +366,7 @@ Component({
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.isFavoriteList = false;
 
-      this.savePlayStateCache(course, chapter, index, order, 'sequence');
+      this.savePlayStateCache(course, chapter, order, 'sequence');
 
       this.setData({
         visible: true,
@@ -476,8 +493,9 @@ Component({
           const targetChapter = chapters[targetIndex];
           if (targetChapter?.audioUrl) {
             app.globalData.playingChapter = targetChapter;
+            app.globalData.playingSeq = targetChapter.seq;
             app.globalData.playingIndex = targetIndex;
-            this.updateChapterCache(targetChapter, targetIndex);
+            this.updateChapterCache(targetChapter);
             this.setData({ currentChapter: targetChapter, currentIndex: targetIndex });
             this._startProgressTimer();
             this.loadAudio(targetChapter);
@@ -493,8 +511,9 @@ Component({
       if (chapters[nextIndex]?.audioUrl) {
         const nextChapter = chapters[nextIndex];
         app.globalData.playingChapter = nextChapter;
+        app.globalData.playingSeq = nextChapter.seq;
         app.globalData.playingIndex = nextIndex;
-        this.updateChapterCache(nextChapter, nextIndex);
+        this.updateChapterCache(nextChapter);
         this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
         this._startProgressTimer();
         this.loadAudio(nextChapter);
@@ -532,6 +551,7 @@ Component({
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.playingCourse = null;
       app.globalData.playingChapter = null;
+      app.globalData.playingSeq = null;
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
@@ -672,6 +692,7 @@ Component({
       app.globalData.miniPlayerIndexFadedIn = false;
       app.globalData.playingCourse = null;
       app.globalData.playingChapter = null;
+      app.globalData.playingSeq = null;
       app.globalData.playingIndex = 0;
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
@@ -684,8 +705,10 @@ Component({
       const sortedChapters = e.detail.chapters;
       const currentId = this.data.currentChapter._id;
       const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
+      const currentChapter = sortedChapters[newIndex];
       this.setData({ chapters: sortedChapters, currentIndex: newIndex });
       app.globalData.playingIndex = newIndex;
+      app.globalData.playingSeq = currentChapter?.seq;
     },
 
     onPlaylistPlay(e) {
@@ -710,8 +733,9 @@ Component({
 
       if (chapter?.audioUrl) {
         app.globalData.playingChapter = chapter;
+        app.globalData.playingSeq = chapter.seq;
         app.globalData.playingIndex = index;
-        this.updateChapterCache(chapter, index);
+        this.updateChapterCache(chapter);
         this.setData({
           currentChapter: chapter,
           currentIndex: index,
@@ -738,8 +762,9 @@ Component({
         if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
           const nextChapter = chapters[nextIndex];
           app.globalData.playingChapter = nextChapter;
+          app.globalData.playingSeq = nextChapter.seq;
           app.globalData.playingIndex = nextIndex;
-          this.updateChapterCache(nextChapter, nextIndex);
+          this.updateChapterCache(nextChapter);
           this.setData({
             currentChapter: nextChapter,
             currentIndex: nextIndex

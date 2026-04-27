@@ -368,6 +368,7 @@ Page({
     app.globalData.miniPlayerIndexFadedIn = false;
     app.globalData.playingCourse = null;
     app.globalData.playingChapter = null;
+    app.globalData.playingSeq = null;
     app.globalData.playingIndex = 0;
     app.globalData.playlistChaptersData = [];
     app.globalData.playMode = 'sequence';

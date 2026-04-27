@@ -39,13 +39,27 @@ Page({
   bgAudioManager: null,
   speedOptions: [0.75, 1, 1.25, 1.5, 2],
   audioCallbacks: null, // 保存音频事件回调引用
+  chapterCallback: null, // 保存章节变化回调引用
 
   onLoad() {
     this.bgAudioManager = app.bgAudioManager;
     this.setupAudioEvents();
 
+    // 注册章节变化回调
+    this.chapterCallback = {
+      onChapterChange: ({ chapterId }) => {
+        const chapters = this.data.chapters;
+        const index = chapters.findIndex(ch => ch._id === chapterId);
+        if (index >= 0) {
+          const chapter = chapters[index];
+          this.setData({ currentChapter: chapter, currentIndex: index });
+        }
+      }
+    };
+    app.registerMiniPlayer(this.chapterCallback);
+
     const coverLoadTime = app.globalData.coverLoadTime || Date.now();
-    const { playingCourse, playingChapter, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
+    const { playingCourse, playingChapter, playingSeq, playingIndex, playlistChaptersData, playlistSortOrder, playMode } = app.globalData;
 
     // 处理封面URL，如果没有封面则使用默认封面
     let courseCover = this.processImageUrl(playingCourse?.cover || '', coverLoadTime);
@@ -57,16 +71,21 @@ Page({
       bgCover = app.globalData.defaultCoverUrl;
     }
 
+    // 通过 playingSeq 找到 currentChapter 和 currentIndex
+    const chapters = playlistChaptersData || [];
+    const currentChapter = playingChapter || chapters.find(ch => ch.seq === playingSeq) || {};
+    const currentIndex = chapters.findIndex(ch => ch._id === currentChapter._id);
+
     this.setData({
       courseCover,
       bgCover,
       originalCover: playingCourse?.cover || '',
       courseTitle: playingCourse?.title || '',
       courseAuthor: playingCourse?.author || '',
-      chapterCount: playingCourse?.chapterCount || playlistChaptersData?.length || 0,
-      currentChapter: playingChapter || {},
-      currentIndex: playingIndex || 0,
-      chapters: playlistChaptersData || [],
+      chapterCount: playingCourse?.chapterCount || chapters.length || 0,
+      currentChapter: currentChapter,
+      currentIndex: currentIndex >= 0 ? currentIndex : 0,
+      chapters: chapters,
       course: playingCourse || {},
       sortOrder: playlistSortOrder || 'asc',
       playMode: playMode || 'sequence',
@@ -94,14 +113,16 @@ Page({
     // 同步播放状态
     this.syncPlaybackState();
     // 同步播放列表数据（从 globalData 读取最新的播放列表和排序）
-    const { playlistChaptersData, playlistSortOrder } = app.globalData;
+    const { playlistChaptersData, playlistSortOrder, playingChapter } = app.globalData;
     if (playlistChaptersData && playlistChaptersData.length > 0) {
-      const currentId = this.data.currentChapter?._id;
+      const currentId = playingChapter?._id || this.data.currentChapter?._id;
       const newIndex = playlistChaptersData.findIndex(ch => ch._id === currentId);
+      const newChapter = newIndex >= 0 ? playlistChaptersData[newIndex] : this.data.currentChapter;
       this.setData({
         chapters: playlistChaptersData,
         sortOrder: playlistSortOrder || 'asc',
-        currentIndex: newIndex >= 0 ? newIndex : this.data.currentIndex
+        currentIndex: newIndex >= 0 ? newIndex : this.data.currentIndex,
+        currentChapter: newChapter
       });
     }
   },
@@ -233,6 +254,9 @@ Page({
       }
     }
     this.stopCoverRotation();
+    if (this.chapterCallback) {
+      app.unregisterMiniPlayer(this.chapterCallback);
+    }
   },
 
   setupAudioEvents() {
@@ -493,6 +517,7 @@ Page({
     this.saveProgress();
     this.setData({ currentChapter: chapter, currentIndex: index });
     app.globalData.playingChapter = chapter;
+    app.globalData.playingSeq = chapter.seq;
     app.globalData.playingIndex = index;
     app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
     this.loadAudio(chapter);
@@ -588,6 +613,7 @@ Page({
       this.saveProgress();
       this.setData({ currentChapter: chapter, currentIndex: index });
       app.globalData.playingChapter = chapter;
+      app.globalData.playingSeq = chapter.seq;
       app.globalData.playingIndex = index;
       this.loadAudio(chapter);
       this.checkFavoriteStatus();
@@ -606,6 +632,7 @@ Page({
       if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
         const nextChapter = chapters[nextIndex];
         app.globalData.playingChapter = nextChapter;
+        app.globalData.playingSeq = nextChapter.seq;
         app.globalData.playingIndex = nextIndex;
         this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
         this.loadAudio(nextChapter);
@@ -625,6 +652,7 @@ Page({
     app.globalData.miniPlayerActive = false;
     app.globalData.playingCourse = null;
     app.globalData.playingChapter = null;
+    app.globalData.playingSeq = null;
     app.globalData.playingIndex = 0;
     app.globalData.playlistChaptersData = [];
   },

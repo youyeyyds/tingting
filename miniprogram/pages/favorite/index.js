@@ -409,6 +409,7 @@ Page({
     app.globalData.playlistChaptersData = playlistData;
     app.globalData.playingIndex = startIndex;
     app.globalData.playingChapter = playlistData[startIndex];
+    app.globalData.playingSeq = playlistData[startIndex]?.seq;
 
     // 获取第一个章节对应的课程信息作为播放课程
     const firstChapter = playlistData[startIndex];

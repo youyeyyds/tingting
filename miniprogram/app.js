@@ -77,7 +77,7 @@ App({
     // 从缓存恢复播放状态（只要有缓存数据就恢复）
     const playingCourseStr = wx.getStorageSync('playingCourse');
     const playingChapterStr = wx.getStorageSync('playingChapter');
-    const playingIndex = wx.getStorageSync('playingIndex');
+    const playingSeq = wx.getStorageSync('playingSeq');
     const playlistSortOrder = wx.getStorageSync('playlistSortOrder');
     const playMode = wx.getStorageSync('playMode');
 
@@ -85,7 +85,7 @@ App({
       try {
         this.globalData.playingCourse = JSON.parse(playingCourseStr);
         this.globalData.playingChapter = JSON.parse(playingChapterStr);
-        this.globalData.playingIndex = playingIndex || 0;
+        this.globalData.playingSeq = playingSeq || null;
         this.globalData.playlistSortOrder = playlistSortOrder || 'asc';
         this.globalData.playMode = playMode || 'sequence';
         this.globalData.miniPlayerActive = true;
@@ -102,6 +102,7 @@ App({
     playingCourse: null,
     playingChapter: null,
     playingIndex: 0,
+    playingSeq: null, // 当前播放章节的seq，用于跨页面同步
     miniPlayerActive: false,
     miniPlayerIndexFadedIn: false,
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
