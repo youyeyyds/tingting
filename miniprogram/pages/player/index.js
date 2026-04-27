@@ -43,6 +43,7 @@ Page({
 
   onLoad() {
     this.bgAudioManager = app.bgAudioManager;
+    console.log('[player] onLoad, bgAudioManager id:', this.bgAudioManager._id);
     this.setupAudioEvents();
 
     // 注册章节变化回调
