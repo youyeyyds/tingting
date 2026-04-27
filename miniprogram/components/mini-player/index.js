@@ -69,17 +69,14 @@ Component({
           }
         },
         onTimeUpdate: (data) => {
-          console.log('[mini-player] audioCallback.onTimeUpdate:', data, 'this.data.duration:', this.data.duration);
           const currentTime = data.currentTime;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = data.progressPercent;
-          console.log('[mini-player] about to setData, current progressPercent:', this.data.progressPercent);
           this.setData({
             currentTime: currentTime,
             duration: duration,
             progressPercent: progressPercent
           });
-          console.log('[mini-player] setData completed');
         },
         onEnded: () => this.onAudioEnded(),
         onError: () => {
@@ -110,53 +107,44 @@ Component({
       };
     },
     attached() {
-      console.log('[mini-player] attached called, registering callback');
-      this._callbackId = Date.now() + '_' + Math.random();
-      this.audioCallback._callbackId = this._callbackId;
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
-      console.log('[mini-player] detached called, unregistering callback');
       app.unregisterMiniPlayer(this.audioCallback);
     }
   },
 
   pageLifetimes: {
     show() {
-      console.log('[mini-player] pageLifetimes.show, miniPlayerActive:', app.globalData.miniPlayerActive);
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
 
       if (!app.globalData.miniPlayerActive) {
-        console.log('[mini-player] pageLifetimes.show early return, visible=false');
         this.setData({ visible: false, fadeInClass: '' });
         return;
       }
 
-      console.log('[mini-player] calling showMiniPlayer');
-      console.log('[mini-player] showMiniPlayer, bgAudioManager.paused:', this.bgAudioManager.paused, 'currentTime:', this.bgAudioManager.currentTime);
       this.showMiniPlayer(isTabBarPage);
-      console.log('[mini-player] showMiniPlayer completed, visible:', this.data.visible);
 
-      // Fallback: 如果 onTimeUpdate 回调没有在 2 秒内触发，重新注册 bgAudioManager 的监听
+      // Fallback: 如果 onTimeUpdate 回调没有触发（app.js 监听器失效），直接监听 bgAudioManager
       clearTimeout(this._fallbackTimer);
       this._fallbackTimer = setTimeout(() => {
-        console.log('[mini-player] Fallback: re-registering bgAudioManager.onTimeUpdate');
-        this.bgAudioManager.onTimeUpdate(() => {
-          console.log('[mini-player] Fallback onTimeUpdate:', this.bgAudioManager.currentTime);
-          const currentTime = this.bgAudioManager.currentTime;
-          const duration = this.bgAudioManager.duration || 0;
-          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-          this.setData({ currentTime, duration, progressPercent });
-        });
+        if (!this._fallbackRegistered) {
+          this._fallbackRegistered = true;
+          this.bgAudioManager.onTimeUpdate(() => {
+            const currentTime = this.bgAudioManager.currentTime;
+            const duration = this.bgAudioManager.duration || 0;
+            const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+            this.setData({ currentTime, duration, progressPercent });
+          });
+        }
       }, 2000);
     },
   },
 
   methods: {
     showMiniPlayer(isTabBarPage) {
-      console.log('[mini-player] showMiniPlayer called, miniPlayerActive:', app.globalData.miniPlayerActive);
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
         return;

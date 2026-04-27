@@ -43,7 +43,6 @@ Page({
 
   onLoad() {
     this.bgAudioManager = app.bgAudioManager;
-    console.log('[player] onLoad, bgAudioManager id:', this.bgAudioManager._id);
     this.setupAudioEvents();
 
     // 注册章节变化回调
@@ -285,7 +284,6 @@ Page({
   },
 
   onTimeUpdate() {
-    console.log('[player] onTimeUpdate called, currentTime:', this.bgAudioManager.currentTime);
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
     this.setData({

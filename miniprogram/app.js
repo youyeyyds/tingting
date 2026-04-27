@@ -12,8 +12,6 @@ App({
 
     // 初始化背景音频管理器
     this.bgAudioManager = wx.getBackgroundAudioManager();
-    this.bgAudioManager._id = 'app_bgAudioManager';
-    console.log('[app.js] bgAudioManager initialized, id:', this.bgAudioManager._id);
     this.miniPlayerCallbacks = [];
     this.setupAudioEvents();
 
@@ -165,7 +163,6 @@ App({
       const currentTime = bgAudio.currentTime;
       const duration = bgAudio.duration;
       const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
-      console.log('[app.js] bgAudio.onTimeUpdate fired, manager id:', bgAudio._id);
       this.notifyCallbacks('onTimeUpdate', {
         currentTime: currentTime,
         progressPercent: percent
@@ -188,13 +185,8 @@ App({
 
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
-    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length);
-    this.miniPlayerCallbacks.forEach((cb, i) => {
-      const hasMethod = !!cb[event];
-      console.log(`[app.js] callback[${i}] has ${event}:`, hasMethod, '_callbackId:', cb._callbackId);
-      if (hasMethod) {
-        cb[event](data);
-      }
+    this.miniPlayerCallbacks.forEach(cb => {
+      if (cb[event]) cb[event](data);
     });
   },
 
