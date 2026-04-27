@@ -147,7 +147,7 @@
 .progress-section {
   display: flex;
   flex-direction: column;
-  padding: 20rpx 20rpx;
+  padding: 20rpx 30rpx;
 }
 
 .progress-slider {
@@ -263,7 +263,7 @@
 .mode-icon {
   width: 44rpx;
   height: 44rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  border: 3rpx solid rgba(255, 255, 255, 0.7);
   border-radius: 22rpx;
   display: flex;
   align-items: center;
@@ -271,8 +271,9 @@
 }
 
 .mode-text {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
 }
 
 /* 播放控制面板播放列表图标，gap为8rpx */
