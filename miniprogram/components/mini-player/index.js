@@ -43,6 +43,8 @@ Component({
         },
         onPlay: () => {
           this.setData({ isPlaying: true });
+          // 确保 onTimeUpdate 监听器已注册
+          this._ensureTimeUpdateListener();
           // 通知章节变化，更新 chapter 页面的高亮样式
           const { currentChapter } = this.data;
           if (currentChapter) {
@@ -112,20 +114,28 @@ Component({
       }
 
       this.showMiniPlayer(isTabBarPage);
-
-      // 在 pageLifetimes.show 时注册 onTimeUpdate 监听器
-      // 这样每次页面显示时都能确保监听器正确设置
-      this._onTimeUpdate = () => {
-        const currentTime = this.bgAudioManager.currentTime || 0;
-        const duration = this.bgAudioManager.duration || 0;
-        const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-        this.setData({ currentTime, duration, progressPercent });
-      };
-      this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
+      this._ensureTimeUpdateListener();
     },
   },
 
   methods: {
+    _ensureTimeUpdateListener() {
+      // 确保 onTimeUpdate 监听器已注册且唯一
+      if (!this._onTimeUpdate) {
+        this._onTimeUpdate = () => {
+          const currentTime = this.bgAudioManager.currentTime || 0;
+          const duration = this.bgAudioManager.duration || 0;
+          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          this.setData({ currentTime, duration, progressPercent });
+        };
+      }
+      // 移除旧监听器并注册新监听器
+      if (this.bgAudioManager.offTimeUpdate) {
+        this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
+      }
+      this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
+    },
+
     showMiniPlayer(isTabBarPage) {
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
