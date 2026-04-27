@@ -186,9 +186,13 @@ App({
 
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
-    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length, 'callbacks:', this.miniPlayerCallbacks.map(cb => cb._id || 'unknown'));
-    this.miniPlayerCallbacks.forEach(cb => {
-      if (cb[event]) cb[event](data);
+    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length);
+    this.miniPlayerCallbacks.forEach((cb, i) => {
+      const hasMethod = !!cb[event];
+      console.log(`[app.js] callback[${i}] has ${event}:`, hasMethod, '_callbackId:', cb._callbackId);
+      if (hasMethod) {
+        cb[event](data);
+      }
     });
   },
 

@@ -284,6 +284,7 @@ Page({
   },
 
   onTimeUpdate() {
+    console.log('[player] onTimeUpdate called, currentTime:', this.bgAudioManager.currentTime);
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
     this.setData({
