@@ -36,6 +36,7 @@
   display: flex;
   align-items: center;
   flex: 1;
+  min-width: 0;
 }
 
 .chapter-cover {
@@ -57,6 +58,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .chapter-meta {
