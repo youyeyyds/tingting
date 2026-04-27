@@ -69,15 +69,17 @@ Component({
           }
         },
         onTimeUpdate: (data) => {
-          console.log('[mini-player] audioCallback.onTimeUpdate:', data, 'callbackId:', this._callbackId);
+          console.log('[mini-player] audioCallback.onTimeUpdate:', data, 'this.data.duration:', this.data.duration);
           const currentTime = data.currentTime;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = data.progressPercent;
+          console.log('[mini-player] about to setData, current progressPercent:', this.data.progressPercent);
           this.setData({
             currentTime: currentTime,
             duration: duration,
             progressPercent: progressPercent
           });
+          console.log('[mini-player] setData completed');
         },
         onEnded: () => this.onAudioEnded(),
         onError: () => {
@@ -133,7 +135,9 @@ Component({
       }
 
       console.log('[mini-player] calling showMiniPlayer');
+      console.log('[mini-player] showMiniPlayer, bgAudioManager.paused:', this.bgAudioManager.paused, 'currentTime:', this.bgAudioManager.currentTime);
       this.showMiniPlayer(isTabBarPage);
+      console.log('[mini-player] showMiniPlayer completed, visible:', this.data.visible);
     },
   },
 
