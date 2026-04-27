@@ -323,11 +323,12 @@ Page({
   // 背景图加载失败时设置标志，使用默认封面
   onBgCoverError() {
     const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
-    // 如果已经是默认封面，说明默认封面也加载失败，不再重试
+    // 如果已经是默认封面，说明默认封面也加载失败，不再重试，清空封面显示默认渐变
     if (this.data.courseCover === defaultCover && defaultCover) {
-      this.setData({ bgCoverError: true });
+      this.setData({ bgCoverError: true, courseCover: '', bgCover: '' });
       return;
     }
+    // 首次失败，尝试使用默认封面
     this.setData({
       bgCoverError: true,
       courseCover: defaultCover || this.data.courseCover,
@@ -338,11 +339,12 @@ Page({
   // 封面图加载失败时设置标志，使用默认封面
   onCoverError() {
     const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
-    // 如果已经是默认封面，说明默认封面也加载失败，不再重试
+    // 如果已经是默认封面，说明默认封面也加载失败，不再重试，清空封面显示默认渐变
     if (this.data.courseCover === defaultCover && defaultCover) {
-      this.setData({ coverError: true });
+      this.setData({ coverError: true, courseCover: '' });
       return;
     }
+    // 首次失败，尝试使用默认封面
     this.setData({
       coverError: true,
       courseCover: defaultCover || this.data.courseCover
