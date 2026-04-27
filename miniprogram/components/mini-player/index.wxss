@@ -79,7 +79,8 @@
 .action-buttons {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 8rpx;
+  flex-shrink: 0;
 }
 
 .playlist-btn {

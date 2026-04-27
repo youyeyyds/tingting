@@ -666,6 +666,7 @@ Page({
       app.globalData.playingChapter = chapter;
       app.globalData.playingSeq = chapter.seq;
       app.globalData.playingIndex = index;
+      app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
       this.loadAudio(chapter);
       this.checkFavoriteStatus();
       this.updateNextChapterInfo();

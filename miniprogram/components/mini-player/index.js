@@ -565,31 +565,35 @@ Component({
     onClose() {
       // 保存当前章节ID用于回调
       const lastChapterId = this.data.currentChapter?._id || app.globalData.playingChapter?._id;
-      // 立即重置状态
-      this.setData({
-        visible: false,
-        fadeInClass: '',
-        chapters: [],
-        currentChapter: {},
-        currentIndex: 0,
-        course: {},
-        isPlaying: false,
-        currentTime: 0,
-        duration: 0,
-        progressPercent: 0
-      });
-      this.saveProgress();
-      this.bgAudioManager.stop();
-      app.globalData.miniPlayerActive = false;
-      app.globalData.miniPlayerIndexFadedIn = false;
-      app.globalData.playingCourse = null;
-      app.globalData.playingChapter = null;
-      app.globalData.playingSeq = null;
-      app.globalData.playingIndex = 0;
-      app.globalData.playlistChaptersData = [];
-      app.globalData.isFavoriteList = false;
-      this.clearPlayStateCache();
-      app.notifyCallbacks('onClose', { chapterId: lastChapterId });
+      // 先触发淡出动画
+      this.setData({ fadeInClass: 'fade-out' });
+      // 等待动画完成后重置状态
+      setTimeout(() => {
+        this.setData({
+          visible: false,
+          fadeInClass: '',
+          chapters: [],
+          currentChapter: {},
+          currentIndex: 0,
+          course: {},
+          isPlaying: false,
+          currentTime: 0,
+          duration: 0,
+          progressPercent: 0
+        });
+        this.saveProgress();
+        this.bgAudioManager.stop();
+        app.globalData.miniPlayerActive = false;
+        app.globalData.miniPlayerIndexFadedIn = false;
+        app.globalData.playingCourse = null;
+        app.globalData.playingChapter = null;
+        app.globalData.playingSeq = null;
+        app.globalData.playingIndex = 0;
+        app.globalData.playlistChaptersData = [];
+        app.globalData.isFavoriteList = false;
+        this.clearPlayStateCache();
+        app.notifyCallbacks('onClose', { chapterId: lastChapterId });
+      }, 300);
     },
 
     saveProgress() {
