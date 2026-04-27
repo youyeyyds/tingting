@@ -70,9 +70,8 @@ Component({
         },
         onTimeUpdate: (data) => {
           const currentTime = data.currentTime;
-          const duration = this.bgAudioManager.duration;
-          // 同时更新 this.data.duration，确保与其他地方同步
-          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          const duration = this.bgAudioManager.duration || 0;
+          const progressPercent = data.progressPercent;
           this.setData({
             currentTime: currentTime,
             duration: duration,
