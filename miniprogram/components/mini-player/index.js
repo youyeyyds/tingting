@@ -90,6 +90,8 @@ Component({
     attached() {
       // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
+      // 确保 onTimeUpdate 监听器已注册
+      this._ensureTimeUpdateListener();
     },
     detached() {
       // 注销直接监听
