@@ -137,17 +137,6 @@ Component({
         return;
       }
 
-      // 停止之前的轮询
-      if (this._progressTimer) {
-        clearInterval(this._progressTimer);
-        this._progressTimer = null;
-      }
-
-      if (!app.globalData.coverLoadTime) {
-        app.globalData.coverLoadTime = Date.now();
-      }
-      const globalCoverTime = app.globalData.coverLoadTime;
-
       const { playingCourse, playingChapter, playingSeq, playlistChaptersData, playlistSortOrder, isFavoriteList } = app.globalData;
       let playbackRate = this.bgAudioManager.playbackRate || 2;
       if (!this.speedOptions.includes(playbackRate)) {
@@ -155,9 +144,6 @@ Component({
       }
 
       let courseCover = this.data.courseCover;
-      if (globalCoverTime !== this.data.coverLoadTime) {
-        courseCover = this.rebuildImageUrl(playingCourse?.cover || '', globalCoverTime);
-      }
 
       // 通过 playingSeq 找到 currentChapter 和 index
       const chapters = playlistChaptersData || [];
@@ -182,8 +168,7 @@ Component({
         currentTime: currentTime,
         duration: duration,
         progressPercent: progressPercent,
-        playbackRate: playbackRate,
-        coverLoadTime: globalCoverTime
+        playbackRate: playbackRate
       };
 
       if (isTabBarPage && !app.globalData.miniPlayerIndexFadedIn) {
@@ -192,33 +177,6 @@ Component({
       } else {
         this.setData({ visible: true, fadeInClass: '', ...data });
       }
-
-      // 启动定时器轮询进度
-      this._startProgressTimer();
-    },
-
-    // 启动进度定时器
-    _startProgressTimer() {
-      if (this._progressTimer) {
-        clearInterval(this._progressTimer);
-        this._progressTimer = null;
-      }
-      this._progressTimer = setInterval(() => {
-        if (!this.data.visible) {
-          clearInterval(this._progressTimer);
-          this._progressTimer = null;
-          return;
-        }
-        const ct = this.bgAudioManager.currentTime || 0;
-        const dur = this.bgAudioManager.duration || 0;
-        const pct = dur > 0 ? Math.min((ct / dur) * 100, 100) : 0;
-        this.setData({
-          currentTime: ct,
-          duration: dur,
-          progressPercent: pct,
-          isPlaying: !this.bgAudioManager.paused
-        });
-      }, 500);
     },
 
     calcPosition() {
@@ -305,14 +263,21 @@ Component({
 
       this.savePlayStateCache(course, chapter, 'asc', 'sequence');
 
+      // 计算新章节的播放进度
+      const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+      const chapterDuration = Number(chapter.duration) || 0;
+      const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
         playerBottom: this.calcPosition(),
-        isPlaying: false
+        isPlaying: false,
+        currentTime: lastPlayTime,
+        duration: chapterDuration,
+        progressPercent: progressPercent
       });
 
-      this._startProgressTimer();
       this.loadAudio(chapter);
     },
 
@@ -368,6 +333,11 @@ Component({
 
       this.savePlayStateCache(course, chapter, order, 'sequence');
 
+      // 计算新章节的播放进度
+      const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+      const chapterDuration = Number(chapter.duration) || 0;
+      const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
@@ -377,11 +347,11 @@ Component({
         currentIndex: index,
         courseCover: courseCover,
         courseName: course.title || '',
-        isFavoriteList: false
+        isFavoriteList: false,
+        currentTime: lastPlayTime,
+        duration: chapterDuration,
+        progressPercent: progressPercent
       });
-
-      // 立即启动定时器，确保进度同步
-      this._startProgressTimer();
 
       this.loadAudio(chapter);
     },
@@ -426,7 +396,7 @@ Component({
       const duration = Number(chapter.duration) || 0;
       const startTime = (lastPlayTime >= duration && duration > 0) ? 0 : lastPlayTime;
       bgAudio.startTime = startTime;
-      bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(baseUrl);
+      bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(src);
     },
 
     onPlayPause() {
@@ -473,8 +443,13 @@ Component({
         const currentChapter = chapters[currentIndex];
         if (currentChapter?.audioUrl) {
           currentChapter.lastPlayTime = 0;
-          this.setData({ currentChapter });
-          this._startProgressTimer();
+          // 单曲循环时重置进度
+          this.setData({
+            currentChapter,
+            currentTime: 0,
+            duration: Number(currentChapter.duration) || 0,
+            progressPercent: 0
+          });
           this.loadAudio(currentChapter);
         } else {
           this.setData({ isPlaying: false });
@@ -496,8 +471,18 @@ Component({
             app.globalData.playingSeq = targetChapter.seq;
             app.globalData.playingIndex = targetIndex;
             this.updateChapterCache(targetChapter);
-            this.setData({ currentChapter: targetChapter, currentIndex: targetIndex });
-            this._startProgressTimer();
+
+            const lastPlayTime = Number(targetChapter.lastPlayTime) || 0;
+            const chapterDuration = Number(targetChapter.duration) || 0;
+            const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
+            this.setData({
+              currentChapter: targetChapter,
+              currentIndex: targetIndex,
+              currentTime: lastPlayTime,
+              duration: chapterDuration,
+              progressPercent: progressPercent
+            });
             this.loadAudio(targetChapter);
             app.notifyCallbacks('onChapterChange', { chapterId: targetChapter._id });
           }
@@ -514,8 +499,18 @@ Component({
         app.globalData.playingSeq = nextChapter.seq;
         app.globalData.playingIndex = nextIndex;
         this.updateChapterCache(nextChapter);
-        this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
-        this._startProgressTimer();
+
+        const lastPlayTime = Number(nextChapter.lastPlayTime) || 0;
+        const chapterDuration = Number(nextChapter.duration) || 0;
+        const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
+        this.setData({
+          currentChapter: nextChapter,
+          currentIndex: nextIndex,
+          currentTime: lastPlayTime,
+          duration: chapterDuration,
+          progressPercent: progressPercent
+        });
         this.loadAudio(nextChapter);
         app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
       } else {
@@ -525,11 +520,6 @@ Component({
     },
 
     onClose() {
-      // 停止定时器
-      if (this._progressTimer) {
-        clearInterval(this._progressTimer);
-        this._progressTimer = null;
-      }
       // 保存当前章节ID用于回调
       const lastChapterId = this.data.currentChapter?._id || app.globalData.playingChapter?._id;
       // 立即重置状态
@@ -736,12 +726,20 @@ Component({
         app.globalData.playingSeq = chapter.seq;
         app.globalData.playingIndex = index;
         this.updateChapterCache(chapter);
+
+        // 计算新章节的播放进度
+        const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+        const chapterDuration = Number(chapter.duration) || 0;
+        const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
         this.setData({
           currentChapter: chapter,
           currentIndex: index,
-          isPlaying: false
+          isPlaying: false,
+          currentTime: lastPlayTime,
+          duration: chapterDuration,
+          progressPercent: progressPercent
         });
-        this._startProgressTimer();
         this.loadAudio(chapter);
         app.notifyCallbacks('onChapterChange', { chapterId: chapter._id });
       }
@@ -765,11 +763,19 @@ Component({
           app.globalData.playingSeq = nextChapter.seq;
           app.globalData.playingIndex = nextIndex;
           this.updateChapterCache(nextChapter);
+
+          // 计算新章节的播放进度
+          const lastPlayTime = Number(nextChapter.lastPlayTime) || 0;
+          const chapterDuration = Number(nextChapter.duration) || 0;
+          const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
           this.setData({
             currentChapter: nextChapter,
-            currentIndex: nextIndex
+            currentIndex: nextIndex,
+            currentTime: lastPlayTime,
+            duration: chapterDuration,
+            progressPercent: progressPercent
           });
-          this._startProgressTimer();
           this.loadAudio(nextChapter);
           app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
         } else {
