@@ -172,7 +172,16 @@ Component({
         playbackRate = 2;
       }
 
+      // 重新计算课程封面，确保使用最新的 coverLoadTime
       let courseCover = this.data.courseCover;
+      if (playingCourse?.cover) {
+        if (!app.globalData.coverLoadTime) {
+          app.globalData.coverLoadTime = Date.now();
+        }
+        courseCover = this.fixImageUrl(playingCourse.cover, app.globalData.coverLoadTime);
+      } else if (app.globalData.defaultCoverUrl) {
+        courseCover = app.globalData.defaultCoverUrl;
+      }
 
       // 通过 playingSeq 找到 currentChapter 和 index
       const chapters = playlistChaptersData || [];
