@@ -69,6 +69,7 @@ Component({
           }
         },
         onTimeUpdate: (data) => {
+          console.log('[mini-player] onTimeUpdate:', data);
           const currentTime = data.currentTime;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = data.progressPercent;

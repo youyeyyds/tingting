@@ -163,6 +163,7 @@ App({
       const currentTime = bgAudio.currentTime;
       const duration = bgAudio.duration;
       const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+      console.log('[app.js] bgAudio.onTimeUpdate, currentTime:', currentTime, 'duration:', duration, 'percent:', percent);
       this.notifyCallbacks('onTimeUpdate', {
         currentTime: currentTime,
         progressPercent: percent
@@ -185,6 +186,7 @@ App({
 
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
+    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length);
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
