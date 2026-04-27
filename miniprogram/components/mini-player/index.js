@@ -87,16 +87,6 @@ Component({
     },
     attached() {
       console.log('[mini-player] attached');
-      // 直接监听 bgAudioManager.onTimeUpdate，不依赖 notifyCallbacks
-      this._onTimeUpdate = () => {
-        console.log('[mini-player] onTimeUpdate fired');
-        const currentTime = this.bgAudioManager.currentTime || 0;
-        const duration = this.bgAudioManager.duration || 0;
-        const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-        this.setData({ currentTime, duration, progressPercent });
-      };
-      this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
-      console.log('[mini-player] registered onTimeUpdate listener');
       // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
     },
@@ -105,7 +95,6 @@ Component({
       // 注销直接监听
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) {
         this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
-        console.log('[mini-player] unregistered onTimeUpdate listener');
       }
       app.unregisterMiniPlayer(this.audioCallback);
     }
@@ -123,6 +112,16 @@ Component({
       }
 
       this.showMiniPlayer(isTabBarPage);
+
+      // 在 pageLifetimes.show 时注册 onTimeUpdate 监听器
+      // 这样每次页面显示时都能确保监听器正确设置
+      this._onTimeUpdate = () => {
+        const currentTime = this.bgAudioManager.currentTime || 0;
+        const duration = this.bgAudioManager.duration || 0;
+        const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+        this.setData({ currentTime, duration, progressPercent });
+      };
+      this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
     },
   },
 
