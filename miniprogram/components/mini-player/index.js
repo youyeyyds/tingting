@@ -127,23 +127,28 @@ Component({
 
       this.showMiniPlayer(isTabBarPage);
 
-      // Fallback: 如果 onTimeUpdate 回调没有触发（app.js 监听器失效），直接监听 bgAudioManager
-      clearTimeout(this._fallbackTimer);
-      this._fallbackTimer = setTimeout(() => {
-        if (!this._fallbackRegistered) {
-          this._fallbackRegistered = true;
-          this.bgAudioManager.onTimeUpdate(() => {
-            const currentTime = this.bgAudioManager.currentTime;
-            const duration = this.bgAudioManager.duration || 0;
-            const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-            this.setData({ currentTime, duration, progressPercent });
-          });
-        }
-      }, 2000);
+      // Fallback: 直接监听 bgAudioManager 作为主要进度更新机制（更可靠）
+      // 每次 show 时都重新注册，确保覆盖
+      this._registerFallbackListener();
     },
   },
 
   methods: {
+    _registerFallbackListener() {
+      // 使用 setInterval 持续更新进度，不依赖 notifyCallbacks
+      clearInterval(this._fallbackInterval);
+      this._fallbackInterval = setInterval(() => {
+        if (this.data.visible && app.globalData.miniPlayerActive) {
+          const currentTime = this.bgAudioManager.currentTime || 0;
+          const duration = this.bgAudioManager.duration || 0;
+          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          this.setData({ currentTime, duration, progressPercent });
+        } else {
+          clearInterval(this._fallbackInterval);
+        }
+      }, 500);
+    },
+
     showMiniPlayer(isTabBarPage) {
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
