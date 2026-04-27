@@ -45,6 +45,7 @@ Component({
           // 清除章节同步标志，允许 onTimeUpdate 更新进度
           this._syncingChapter = false;
           this.setData({ isPlaying: true });
+          console.log('[mini-player onPlay] currentChapter:', this.data.currentChapter?.title, 'currentIndex:', this.data.currentIndex);
           // 通知章节变化，更新 chapter 页面的高亮样式
           const { currentChapter } = this.data;
           if (currentChapter) {
@@ -328,6 +329,8 @@ Component({
     },
 
     async play(chapterId, playlistChapters, courseData, sortOrder) {
+      console.log('[mini-player play] chapterId:', chapterId, 'chapters.length:', playlistChapters?.length);
+
       if (this.data.currentChapter._id && this.data.isPlaying) {
         this.saveProgress();
       }
@@ -336,6 +339,7 @@ Component({
       let course = courseData || this.properties.initialCourse;
 
       const index = chapters.findIndex(ch => ch._id === chapterId);
+      console.log('[mini-player play] findIndex result:', index, 'chapters[index]?.title:', chapters[index]?.title, 'chapters[index]?.audioUrl:', chapters[index]?.audioUrl?.substring(0, 50));
 
       if (index === -1 || !chapters[index]?.audioUrl) {
         wx.showToast({ title: '暂无音频', icon: 'none' });
@@ -436,6 +440,7 @@ Component({
     },
 
     playWithUrl(chapter, src) {
+      console.log('[mini-player playWithUrl] chapter.title:', chapter.title, 'src:', src?.substring(0, 100));
       const bgAudio = this.bgAudioManager;
       const [baseUrl, query] = src.split('?');
       bgAudio.title = chapter.title || '音频课程';
