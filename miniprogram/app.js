@@ -186,7 +186,7 @@ App({
 
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
-    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length);
+    console.log('[app.js] notifyCallbacks:', event, 'callbacks count:', this.miniPlayerCallbacks.length, 'callbacks:', this.miniPlayerCallbacks.map(cb => cb._id || 'unknown'));
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });

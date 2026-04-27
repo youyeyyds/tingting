@@ -69,7 +69,7 @@ Component({
           }
         },
         onTimeUpdate: (data) => {
-          console.log('[mini-player] audioCallback.onTimeUpdate:', data);
+          console.log('[mini-player] audioCallback.onTimeUpdate:', data, 'callbackId:', this._callbackId);
           const currentTime = data.currentTime;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = data.progressPercent;
@@ -109,6 +109,8 @@ Component({
     },
     attached() {
       console.log('[mini-player] attached called, registering callback');
+      this._callbackId = Date.now() + '_' + Math.random();
+      this.audioCallback._callbackId = this._callbackId;
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
