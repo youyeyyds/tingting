@@ -88,12 +88,10 @@ Component({
       };
     },
     attached() {
-      console.log('[mini-player] attached');
       // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
-      console.log('[mini-player] detached');
       // 注销直接监听
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) {
         this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
