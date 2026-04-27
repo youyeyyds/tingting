@@ -99,7 +99,7 @@ Component({
     },
     detached() {
       // 注销直接监听
-      if (this._onTimeUpdate) {
+      if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) {
         this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
       }
       app.unregisterMiniPlayer(this.audioCallback);
