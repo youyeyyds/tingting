@@ -42,6 +42,7 @@ Component({
           }
         },
         onPlay: () => {
+          console.log('[mini-player] onPlay callback');
           this.setData({ isPlaying: true });
           // 确保 onTimeUpdate 监听器已注册
           this._ensureTimeUpdateListener();
@@ -88,10 +89,12 @@ Component({
       };
     },
     attached() {
+      console.log('[mini-player] attached');
       // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
+      console.log('[mini-player] detached');
       // 注销直接监听
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) {
         this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
@@ -102,6 +105,7 @@ Component({
 
   pageLifetimes: {
     show() {
+      console.log('[mini-player] pageLifetimes.show');
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
@@ -118,6 +122,7 @@ Component({
 
   methods: {
     _ensureTimeUpdateListener() {
+      console.log('[mini-player] _ensureTimeUpdateListener called');
       // 确保 onTimeUpdate 监听器已注册且唯一
       if (!this._onTimeUpdate) {
         this._onTimeUpdate = () => {
@@ -126,12 +131,14 @@ Component({
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           this.setData({ currentTime, duration, progressPercent });
         };
+        console.log('[mini-player] _onTimeUpdate created');
       }
       // 移除旧监听器并注册新监听器
       if (this.bgAudioManager.offTimeUpdate) {
         this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
       }
       this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
+      console.log('[mini-player] onTimeUpdate listener registered');
     },
 
     showMiniPlayer(isTabBarPage) {
