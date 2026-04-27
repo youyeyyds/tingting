@@ -88,6 +88,9 @@ Component({
       };
     },
     attached() {
+      // 添加实例ID用于调试
+      this._instanceId = Date.now() + '_' + Math.random();
+      console.log('[mini-player] attached, instanceId:', this._instanceId);
       // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
       // 确保 onTimeUpdate 监听器已注册
@@ -120,6 +123,7 @@ Component({
 
   methods: {
     _ensureTimeUpdateListener() {
+      console.log('[mini-player] _ensureTimeUpdateListener, instanceId:', this._instanceId);
       // 确保 onTimeUpdate 监听器已注册且唯一
       if (!this._onTimeUpdate) {
         this._onTimeUpdate = () => {
