@@ -511,6 +511,8 @@ Component({
         clearInterval(this._progressTimer);
         this._progressTimer = null;
       }
+      // 保存当前章节ID用于回调
+      const lastChapterId = this.data.currentChapter?._id || app.globalData.playingChapter?._id;
       // 立即重置状态
       this.setData({
         visible: false,
@@ -534,7 +536,7 @@ Component({
       app.globalData.playlistChaptersData = [];
       app.globalData.isFavoriteList = false;
       this.clearPlayStateCache();
-      app.notifyCallbacks('onClose', {});
+      app.notifyCallbacks('onClose', { chapterId: lastChapterId });
     },
 
     saveProgress() {
@@ -664,6 +666,7 @@ Component({
     onPlaylistCollapse() {},
 
     onPlaylistClear() {
+      const lastChapterId = this.data.currentChapter?._id;
       this.bgAudioManager.stop();
       app.globalData.miniPlayerActive = false;
       app.globalData.miniPlayerIndexFadedIn = false;
@@ -674,6 +677,7 @@ Component({
       app.globalData.isFavoriteList = false;
       this.clearPlayStateCache();
       this.setData({ visible: false, isPlaying: false, chapters: [], isFavoriteList: false });
+      app.notifyCallbacks('onStop', { chapterId: lastChapterId });
     },
 
     onPlaylistSyncSort(e) {
@@ -744,12 +748,13 @@ Component({
           this.loadAudio(nextChapter);
           app.notifyCallbacks('onChapterChange', { chapterId: nextChapter._id });
         } else {
+          const lastChapterId = this.data.currentChapter?._id;
           this.bgAudioManager.stop();
           app.globalData.miniPlayerActive = false;
           app.globalData.playlistChaptersData = [];
           this.clearPlayStateCache();
           this.setData({ visible: false, isPlaying: false });
-          app.notifyCallbacks('onStop', {});
+          app.notifyCallbacks('onStop', { chapterId: lastChapterId });
         }
       }
     }

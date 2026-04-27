@@ -7,16 +7,9 @@ Component({
       type: Array,
       value: [],
       observer: function(newVal) {
-        // chapters 变化时，更新 sortedChapters 的进度数据
-        if (this.data.visible && newVal && this.data.sortedChapters.length > 0) {
-          const sortedChapters = this.data.sortedChapters.map(ch => {
-            const updated = newVal.find(c => c._id === ch._id);
-            if (updated) {
-              return { ...ch, ...updated, isPlaying: ch.isPlaying };
-            }
-            return ch;
-          });
-          this.setData({ sortedChapters });
+        // chapters 变化时，重新应用当前排序
+        if (newVal && newVal.length > 0) {
+          this.applySort();
         }
       }
     },
@@ -36,7 +29,17 @@ Component({
         }
       }
     },
-    initialSortOrder: { type: String, value: 'asc' },
+    initialSortOrder: {
+      type: String,
+      value: 'asc',
+      observer: function(newVal) {
+        if (newVal && newVal !== this.data.sortOrder) {
+          this.setData({ sortOrder: newVal }, () => {
+            this.applySort();
+          });
+        }
+      }
+    },
     isFavoriteList: { type: Boolean, value: false } // 是否是收藏列表
   },
 
@@ -92,18 +95,19 @@ Component({
     applySort() {
       let chapters = [...this.properties.chapters];
       const currentId = this.properties.currentChapterId;
+      const sortOrder = this.data.sortOrder || 'asc';
 
       // 收藏列表按原始顺序排列（不按 seq 排序）
       // 排序按钮只是切换显示顺序（正序/倒序），不改变播放顺序
       if (this.properties.isFavoriteList) {
-        if (this.data.sortOrder === 'desc') {
+        if (sortOrder === 'desc') {
           chapters.reverse();
         }
       } else {
         // 课程列表按 seq 排序
         chapters.sort((a, b) => {
           const diff = (a.seq || 0) - (b.seq || 0);
-          return this.data.sortOrder === 'asc' ? diff : -diff;
+          return sortOrder === 'asc' ? diff : -diff;
         });
       }
 
@@ -120,6 +124,7 @@ Component({
       const nextMode = modes[(currentIdx + 1) % modes.length];
       this.setData({ playMode: nextMode });
       app.globalData.playMode = nextMode;
+      this.triggerEvent('modeChange', { playMode: nextMode });
     },
 
     onToggleSort() {
@@ -129,7 +134,7 @@ Component({
       this.applySort();
       // 收藏列表的排序只是视图展示切换，不同步回播放器
       if (!this.properties.isFavoriteList) {
-        this.triggerEvent('syncSort', { chapters: this.data.sortedChapters });
+        this.triggerEvent('syncSort', { chapters: this.data.sortedChapters, sortOrder: newOrder });
       }
       setTimeout(() => this.scrollToCurrent(), 100);
     },

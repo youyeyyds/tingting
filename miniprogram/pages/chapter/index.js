@@ -22,11 +22,32 @@ Page({
     });
 
     this.audioCallback = {
-      onClose: () => this.resetPlayingState(),
-      onStop: () => this.resetPlayingState(),
-      onPlayPause: () => {
-        // 暂停时不改变章节卡片的播放样式，保持显示正在播放状态
-        this.updatePlayingState();
+      onClose: ({ chapterId }) => {
+        if (chapterId) {
+          this.setData({ lastPlayedChapterId: chapterId });
+        }
+        this.resetPlayingState();
+      },
+      onStop: ({ chapterId }) => {
+        if (chapterId) {
+          this.setData({ lastPlayedChapterId: chapterId });
+        }
+        this.resetPlayingState();
+      },
+      onPlayPause: ({ isPlaying }) => {
+        // 根据实际播放状态更新按钮样式
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
+        const chapterId = app.globalData.playingChapter?._id;
+        this.setData({
+          isCurrentCoursePlaying: isCurrentCourse && isPlaying,
+          isCurrentChapterPlaying: isCurrentCourse && isPlaying,
+          lastPlayedChapterId: !isPlaying && chapterId ? chapterId : this.data.lastPlayedChapterId
+        });
+        // 暂停时保存当前章节到数据库
+        if (!isPlaying && chapterId) {
+          this.saveCourseSettings({ lastPlayedChapterId: chapterId });
+        }
       },
       onChapterChange: ({ chapterId }) => {
         const playingCourseId = app.globalData.playingCourse?._id;
@@ -91,6 +112,25 @@ Page({
     this.syncImageTimes();
     // 同步播放状态
     this.updatePlayingState();
+    // 刷新用户设置（如上次播放章节）
+    this.reloadCourseSettings();
+  },
+
+  reloadCourseSettings() {
+    wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId }
+    }).then(settingsRes => {
+      if (settingsRes.result && settingsRes.result.success) {
+        const { sortOrder, showUnfinishedOnly, lastPlayedChapterId } = settingsRes.result.data;
+        this.setData({
+          sortOrder: sortOrder || 'asc',
+          showUnfinishedOnly: showUnfinishedOnly || false,
+          lastPlayedChapterId: lastPlayedChapterId || null
+        });
+        this.applyFilterAndSort();
+      }
+    });
   },
 
   // 更新当前播放状态
@@ -123,7 +163,9 @@ Page({
 
   resetPlayingState() {
     this.setData({
-      chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false }))
+      chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false })),
+      isCurrentCoursePlaying: false,
+      isCurrentChapterPlaying: false
     });
     this.applyFilterAndSort();
   },
