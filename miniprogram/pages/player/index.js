@@ -302,7 +302,11 @@ Page({
     this.setData({ isPlaying: false });
     this.stopCoverRotation();
   },
-  onEnded() { this.playNext(); },
+  onEnded() {
+    if (this._audioEndedProcessing) return;
+    this._audioEndedProcessing = true;
+    this.playNext();
+  },
 
   // 背景图加载回调
   onBgCoverLoad() {
@@ -437,6 +441,9 @@ Page({
   },
 
   togglePlayPause() {
+    if (this._playPauseLock) return;
+    this._playPauseLock = true;
+    setTimeout(() => { this._playPauseLock = false; }, 300);
     if (this.bgAudioManager.paused) this.bgAudioManager.play();
     else this.bgAudioManager.pause();
   },
@@ -478,15 +485,22 @@ Page({
   },
 
   playNext() {
+    if (this._audioEndedProcessing) return;
+    this._audioEndedProcessing = true;
+
     const { chapters, playMode, sortOrder, currentChapter } = this.data;
     if (playMode === 'single') {
       this.bgAudioManager.seek(0);
       this.bgAudioManager.play();
+      this._audioEndedProcessing = false;
       return;
     }
 
     const currentSeq = currentChapter?.seq;
-    if (!currentSeq) return;
+    if (!currentSeq) {
+      this._audioEndedProcessing = false;
+      return;
+    }
 
     // 根据排序方向计算下一条的 seq
     const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
@@ -503,6 +517,7 @@ Page({
     } else {
       wx.showToast({ title: '已经是最后一条', icon: 'none' });
     }
+    this._audioEndedProcessing = false;
   },
 
   playChapter(index) {
@@ -574,7 +589,7 @@ Page({
       data: {
         type: 'updateChapterProgress',
         chapterId,
-        courseId: this.data.currentChapter.course,
+        courseId: this.data.currentChapter.course || this.data.course._id,
         lastPlayTime: this.bgAudioManager.currentTime,
         finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
         userId: app.globalData.userId
@@ -603,6 +618,7 @@ Page({
     if (chapterId === this.data.currentChapter._id) {
       if (this.data.isPlaying) {
         this.bgAudioManager.pause();
+        this.saveProgress();
       } else {
         this.bgAudioManager.play();
       }
@@ -628,6 +644,7 @@ Page({
     app.globalData.playlistChaptersData = chapters;
 
     if (chapterId === this.data.currentChapter._id) {
+      this.saveProgress();
       const nextIndex = this.data.currentIndex;
       if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
         const nextChapter = chapters[nextIndex];
@@ -647,6 +664,7 @@ Page({
   onPlaylistCollapse() {},
 
   onPlaylistClear() {
+    this.saveProgress();
     this.bgAudioManager.stop();
     this.setData({ isPlaying: false, chapters: [], currentChapter: {}, currentIndex: 0 });
     app.globalData.miniPlayerActive = false;
