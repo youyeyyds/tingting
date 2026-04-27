@@ -41,17 +41,6 @@ Component({
             }
           }
         },
-        onCanplay: (data) => {
-          // 更新duration后重新计算进度
-          const duration = data.duration;
-          const currentTime = this.bgAudioManager.currentTime || 0;
-          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-          this.setData({
-            duration: duration,
-            currentTime: currentTime,
-            progressPercent: progressPercent
-          });
-        },
         onPlay: () => {
           this.setData({ isPlaying: true });
           // 通知章节变化，更新 chapter 页面的高亮样式
@@ -67,16 +56,6 @@ Component({
           if (currentChapter) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
           }
-        },
-        onTimeUpdate: (data) => {
-          const currentTime = data.currentTime;
-          const duration = this.bgAudioManager.duration || 0;
-          const progressPercent = data.progressPercent;
-          this.setData({
-            currentTime: currentTime,
-            duration: duration,
-            progressPercent: progressPercent
-          });
         },
         onEnded: () => this.onAudioEnded(),
         onError: () => {
@@ -107,9 +86,22 @@ Component({
       };
     },
     attached() {
+      // 直接监听 bgAudioManager.onTimeUpdate，不依赖 notifyCallbacks
+      this._onTimeUpdate = () => {
+        const currentTime = this.bgAudioManager.currentTime || 0;
+        const duration = this.bgAudioManager.duration || 0;
+        const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+        this.setData({ currentTime, duration, progressPercent });
+      };
+      this.bgAudioManager.onTimeUpdate(this._onTimeUpdate);
+      // 保留其他事件的回调
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
+      // 注销直接监听
+      if (this._onTimeUpdate) {
+        this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
+      }
       app.unregisterMiniPlayer(this.audioCallback);
     }
   },
@@ -126,29 +118,10 @@ Component({
       }
 
       this.showMiniPlayer(isTabBarPage);
-
-      // Fallback: 直接监听 bgAudioManager 作为主要进度更新机制（更可靠）
-      // 每次 show 时都重新注册，确保覆盖
-      this._registerFallbackListener();
     },
   },
 
   methods: {
-    _registerFallbackListener() {
-      // 使用 setInterval 持续更新进度，不依赖 notifyCallbacks
-      clearInterval(this._fallbackInterval);
-      this._fallbackInterval = setInterval(() => {
-        if (this.data.visible && app.globalData.miniPlayerActive) {
-          const currentTime = this.bgAudioManager.currentTime || 0;
-          const duration = this.bgAudioManager.duration || 0;
-          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
-          this.setData({ currentTime, duration, progressPercent });
-        } else {
-          clearInterval(this._fallbackInterval);
-        }
-      }, 500);
-    },
-
     showMiniPlayer(isTabBarPage) {
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
