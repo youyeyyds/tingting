@@ -263,7 +263,7 @@
 .mode-icon {
   width: 44rpx;
   height: 44rpx;
-  border: 3rpx solid rgba(255, 255, 255, 0.7);
+  border: 4rpx solid rgba(255, 255, 255, 0.7);
   border-radius: 22rpx;
   display: flex;
   align-items: center;
