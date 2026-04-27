@@ -108,9 +108,11 @@ Component({
       };
     },
     attached() {
+      console.log('[mini-player] attached called, registering callback');
       app.registerMiniPlayer(this.audioCallback);
     },
     detached() {
+      console.log('[mini-player] detached called, unregistering callback');
       app.unregisterMiniPlayer(this.audioCallback);
     }
   },
