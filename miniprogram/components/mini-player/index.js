@@ -69,7 +69,7 @@ Component({
           }
         },
         onTimeUpdate: (data) => {
-          console.log('[mini-player] onTimeUpdate:', data);
+          console.log('[mini-player] audioCallback.onTimeUpdate:', data);
           const currentTime = data.currentTime;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = data.progressPercent;
@@ -117,21 +117,25 @@ Component({
 
   pageLifetimes: {
     show() {
+      console.log('[mini-player] pageLifetimes.show, miniPlayerActive:', app.globalData.miniPlayerActive);
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
 
       if (!app.globalData.miniPlayerActive) {
+        console.log('[mini-player] pageLifetimes.show early return, visible=false');
         this.setData({ visible: false, fadeInClass: '' });
         return;
       }
 
-      setTimeout(() => this.showMiniPlayer(isTabBarPage), 100);
+      console.log('[mini-player] calling showMiniPlayer');
+      this.showMiniPlayer(isTabBarPage);
     },
   },
 
   methods: {
     showMiniPlayer(isTabBarPage) {
+      console.log('[mini-player] showMiniPlayer called, miniPlayerActive:', app.globalData.miniPlayerActive);
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
         return;
