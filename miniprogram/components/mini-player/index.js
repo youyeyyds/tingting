@@ -138,6 +138,19 @@ Component({
       console.log('[mini-player] showMiniPlayer, bgAudioManager.paused:', this.bgAudioManager.paused, 'currentTime:', this.bgAudioManager.currentTime);
       this.showMiniPlayer(isTabBarPage);
       console.log('[mini-player] showMiniPlayer completed, visible:', this.data.visible);
+
+      // Fallback: 如果 onTimeUpdate 回调没有在 2 秒内触发，重新注册 bgAudioManager 的监听
+      clearTimeout(this._fallbackTimer);
+      this._fallbackTimer = setTimeout(() => {
+        console.log('[mini-player] Fallback: re-registering bgAudioManager.onTimeUpdate');
+        this.bgAudioManager.onTimeUpdate(() => {
+          console.log('[mini-player] Fallback onTimeUpdate:', this.bgAudioManager.currentTime);
+          const currentTime = this.bgAudioManager.currentTime;
+          const duration = this.bgAudioManager.duration || 0;
+          const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          this.setData({ currentTime, duration, progressPercent });
+        });
+      }, 2000);
     },
   },
 
