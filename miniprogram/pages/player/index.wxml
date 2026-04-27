@@ -34,12 +34,14 @@
   </view>
 
   <!-- 进度行 -->
-  <view class="progress-row">
-    <text class="time-text">{{currentTimeText}}</text>
+  <view class="progress-section">
     <slider class="progress-slider" min="0" max="100" value="{{progressPercent}}"
       block-size="12" activeColor="#FF6B00" backgroundColor="rgba(255,255,255,0.3)"
       bindchange="onSliderChange" bindchanging="onSliderChanging" />
-    <text class="time-text" bindtap="toggleTimeDisplay">{{remainingTimeText}}</text>
+    <view class="time-row">
+      <text class="time-text left">{{currentTimeText}}</text>
+      <text class="time-text right" bindtap="toggleTimeDisplay">{{remainingTimeText}}</text>
+    </view>
   </view>
 
   <!-- 播放控制按钮 -->

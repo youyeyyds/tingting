@@ -123,43 +123,56 @@
 }
 
 .chapter-title-line .chapter-seq {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #FF6B00;
   font-weight: 500;
   flex-shrink: 0;
 }
 
 .chapter-title-line .chapter-sep {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #FF6B00;
   margin: 0 8rpx;
   flex-shrink: 0;
 }
 
 .chapter-title-line .chapter-name {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #FF6B00;
   font-weight: 500;
   word-break: break-all;
 }
 
-/* 进度行 */
-.progress-row {
+/* 进度区块 */
+.progress-section {
   display: flex;
-  align-items: center;
-  padding: 20rpx 0;
+  flex-direction: column;
+  padding: 20rpx 20rpx;
+}
+
+.progress-slider {
+  width: 100%;
+  margin: 0 !important;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 10rpx 0 0;
 }
 
 .time-text {
   font-size: 26rpx;
   color: #fff;
-  width: 100rpx;
-  text-align: center;
 }
 
-.progress-slider {
-  flex: 1;
-  margin: 0 20rpx;
+.time-text.left {
+  width: 100rpx;
+}
+
+.time-text.right {
+  width: 100rpx;
+  text-align: right;
 }
 
 /* 播放控制按钮 */
@@ -358,24 +371,24 @@
 
 .next-info-label {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
 }
 
 .next-info-seq {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
 }
 
 .next-info-sep {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
   margin: 0 8rpx;
   flex-shrink: 0;
 }
 
 .next-info-title {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
 }

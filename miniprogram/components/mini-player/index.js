@@ -88,10 +88,11 @@ Component({
       };
       // onCanplay 回调
       this._onCanplay = () => {
-        // 只更新 duration，不更新 currentTime（此时 currentTime 可能是0）
+        // 设置默认2倍速，只更新 duration，不更新 currentTime（此时 currentTime 可能是0）
         // 等待 onPlay 时 currentTime 才会正确
+        this.bgAudioManager.playbackRate = 2;
         const duration = this.bgAudioManager.duration || 0;
-        this.setData({ duration });
+        this.setData({ duration, playbackRate: 2 });
       };
     },
     attached() {

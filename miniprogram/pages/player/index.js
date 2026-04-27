@@ -275,15 +275,9 @@ Page({
     this.bgAudioManager.onCanplay(this.audioCallbacks.onCanplay);
   },
 
-  onCanplay() {
-    const duration = this.bgAudioManager.duration;
-    const currentTime = this.bgAudioManager.currentTime;
-    const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-    this.setData({ duration, currentTime, progressPercent });
-    this.updateProgress();
-  },
-
   onTimeUpdate() {
+    // 如果正在同步章节，保持当前设置的进度，不受 bgAudioManager.currentTime 变化影响
+    if (this._syncingChapter) return;
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
     this.setData({
@@ -294,7 +288,16 @@ Page({
     this.updateProgress();
   },
 
+  onCanplay() {
+    // 设置默认2倍速，只更新 duration，不更新 currentTime（等待 onPlay 时再更新）
+    this.bgAudioManager.playbackRate = 2;
+    const duration = this.bgAudioManager.duration;
+    this.setData({ duration, playbackRate: 2 });
+  },
+
   onPlay() {
+    // 清除章节同步标志，允许 onTimeUpdate 更新进度
+    this._syncingChapter = false;
     this.setData({ isPlaying: true });
     this.startCoverRotation();
   },
@@ -530,7 +533,22 @@ Page({
     }
 
     this.saveProgress();
-    this.setData({ currentChapter: chapter, currentIndex: index });
+
+    // 计算新章节的播放进度
+    const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+    const chapterDuration = Number(chapter.duration) || 0;
+    const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
+    // 标记正在同步章节，阻止 onTimeUpdate 更新进度
+    this._syncingChapter = true;
+
+    this.setData({
+      currentChapter: chapter,
+      currentIndex: index,
+      currentTime: lastPlayTime,
+      duration: chapterDuration,
+      progressPercent: progressPercent
+    });
     app.globalData.playingChapter = chapter;
     app.globalData.playingSeq = chapter.seq;
     app.globalData.playingIndex = index;
@@ -627,7 +645,22 @@ Page({
 
     if (chapter?.audioUrl) {
       this.saveProgress();
-      this.setData({ currentChapter: chapter, currentIndex: index });
+
+      // 计算新章节的播放进度
+      const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+      const chapterDuration = Number(chapter.duration) || 0;
+      const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
+      // 标记正在同步章节，阻止 onTimeUpdate 更新进度
+      this._syncingChapter = true;
+
+      this.setData({
+        currentChapter: chapter,
+        currentIndex: index,
+        currentTime: lastPlayTime,
+        duration: chapterDuration,
+        progressPercent: progressPercent
+      });
       app.globalData.playingChapter = chapter;
       app.globalData.playingSeq = chapter.seq;
       app.globalData.playingIndex = index;
@@ -648,10 +681,25 @@ Page({
       const nextIndex = this.data.currentIndex;
       if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
         const nextChapter = chapters[nextIndex];
+
+        // 计算新章节的播放进度
+        const lastPlayTime = Number(nextChapter.lastPlayTime) || 0;
+        const chapterDuration = Number(nextChapter.duration) || 0;
+        const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+
+        // 标记正在同步章节，阻止 onTimeUpdate 更新进度
+        this._syncingChapter = true;
+
         app.globalData.playingChapter = nextChapter;
         app.globalData.playingSeq = nextChapter.seq;
         app.globalData.playingIndex = nextIndex;
-        this.setData({ currentChapter: nextChapter, currentIndex: nextIndex });
+        this.setData({
+          currentChapter: nextChapter,
+          currentIndex: nextIndex,
+          currentTime: lastPlayTime,
+          duration: chapterDuration,
+          progressPercent: progressPercent
+        });
         this.loadAudio(nextChapter);
       } else {
         this.bgAudioManager.stop();
