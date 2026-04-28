@@ -118,7 +118,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="序号" prop="seq">
-          <el-input-number v-model="form.seq" :min="1" style="width: 120px" />
+          <el-input-number v-model="form.seq" :min="0" style="width: 120px" />
         </el-form-item>
         <el-form-item label="章节名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入章节名称" style="width: 280px" />

@@ -43,8 +43,8 @@
     <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap">
       <view class="chapter-info">
         <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 && !item.isPlaying ? 'completed' : ''}}">
-          <text class="chapter-seq">{{item.seq}}</text>
-          <text class="chapter-sep">|</text>
+          <text class="chapter-seq" wx:if="{{item.seq !== 0}}">{{item.seq}}</text>
+          <text class="chapter-sep" wx:if="{{item.seq !== 0}}">|</text>
           <text class="chapter-name">{{item.title}}</text>
         </view>
         <view class="chapter-meta-line">
