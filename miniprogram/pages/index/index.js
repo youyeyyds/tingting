@@ -207,7 +207,6 @@ const MARTIAL_ARTS = [
   { name: "枣核钉", type: "暗器", users: ["裘千尺"] },
   { name: "含沙射影", type: "暗器", users: ["何铁手","韦小宝","袁承志"] },
   { name: "飞燕银梭", type: "暗器", users: ["赵半山"] },
-  { name: "天王补心针", type: "暗器", users: ["何铁手"] },
   { name: "黑血神针", type: "暗器", users: ["曲洋"] },
   { name: "天罡北斗阵", type: "阵法", users: ["全真七子"] },
   { name: "真武七截阵", type: "阵法", users: ["张三丰","武当七侠"] },
