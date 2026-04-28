@@ -221,6 +221,7 @@ App({
       this.playChapter(firstOrLast._id, chapters);
     } else {
       // 顺序播放到最后一条，停止播放并重置状态
+      wx.showToast({ title: '已经是最后一条', icon: 'none' });
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
     }
@@ -254,7 +255,7 @@ App({
       const lastOrFirst = sortOrder === 'asc' ? chapters[chapters.length - 1] : chapters[0];
       this.playChapter(lastOrFirst._id, chapters);
     } else {
-      wx.showToast({ title: '已经是第一条', icon: 'none' });
+      wx.showToast({ title: '这是第一条', icon: 'none' });
     }
   },
 
@@ -358,7 +359,9 @@ App({
     bgAudio.epname = course.title || '';
     bgAudio.coverImgUrl = course.cover || '';
     bgAudio.startTime = startTime;
-    bgAudio.src = src;
+    // URL 需要编码，否则真机无法播放
+    const [baseUrl, query] = src.split('?');
+    bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(src);
   },
 
   // 切换播放/暂停

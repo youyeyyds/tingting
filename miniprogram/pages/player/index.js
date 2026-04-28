@@ -631,7 +631,7 @@ Page({
     }).then(res => {
       if (res.result.success) {
         this.setData({ isFavorite: res.result.data.isFavorite });
-        wx.showToast({ title: res.result.data.isFavorite ? '已收藏' : '已取消收藏', icon: 'success' });
+        wx.showToast({ title: res.result.data.isFavorite ? '已收藏' : '已取消收藏', icon: 'none' });
       }
     }).catch(err => {
       console.error('切换收藏失败:', err);
