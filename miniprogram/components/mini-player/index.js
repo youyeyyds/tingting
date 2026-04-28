@@ -527,7 +527,13 @@ Component({
             app.notifyCallbacks('onChapterChange', { chapterId: targetChapter._id });
           }
         } else {
-          this.setData({ isPlaying: false });
+          // 顺序播放到最后一条，停止播放并重置状态
+          this.bgAudioManager.stop();
+          this.setData({
+            isPlaying: false,
+            currentTime: 0,
+            progressPercent: 0
+          });
         }
         this._audioEndedProcessing = false;
         return;

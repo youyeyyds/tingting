@@ -490,9 +490,6 @@ Page({
   },
 
   playNext() {
-    if (this._audioEndedProcessing) return;
-    this._audioEndedProcessing = true;
-
     const { chapters, playMode, sortOrder, currentChapter } = this.data;
     if (playMode === 'single') {
       this.bgAudioManager.seek(0);
@@ -520,7 +517,14 @@ Page({
       const index = chapters.indexOf(firstOrLast);
       this.playChapter(index);
     } else {
+      // 顺序播放到最后一条，停止播放并重置状态
       wx.showToast({ title: '已经是最后一条', icon: 'none' });
+      this.bgAudioManager.stop();
+      this.setData({
+        isPlaying: false,
+        currentTime: 0,
+        progressPercent: 0
+      });
     }
     this._audioEndedProcessing = false;
   },
