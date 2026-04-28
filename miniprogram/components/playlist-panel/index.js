@@ -119,11 +119,8 @@ Component({
     },
 
     onTogglePlayMode() {
-      const modes = ['sequence', 'loop', 'single'];
-      const currentIdx = modes.indexOf(this.data.playMode);
-      const nextMode = modes[(currentIdx + 1) % modes.length];
+      const nextMode = app.togglePlayMode();
       this.setData({ playMode: nextMode });
-      app.globalData.playMode = nextMode;
       this.triggerEvent('modeChange', { playMode: nextMode });
     },
 

@@ -263,7 +263,7 @@
 .mode-icon {
   width: 44rpx;
   height: 44rpx;
-  border: 4rpx solid rgba(255, 255, 255, 0.7);
+  border: 4rpx solid rgba(255, 255, 255, 0.6);
   border-radius: 22rpx;
   display: flex;
   align-items: center;
@@ -276,11 +276,11 @@
   font-weight: bold;
 }
 
-/* 播放控制面板播放列表图标，gap为8rpx */
+/* 播放控制面板播放列表图标，gap为10rpx */
 .player-container .playlist-icon {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
 .player-container .list-bar {

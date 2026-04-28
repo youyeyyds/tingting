@@ -170,7 +170,7 @@ App({
     });
 
     bgAudio.onEnded(() => {
-      this.notifyCallbacks('onEnded', {});
+      this.onAudioEnded();
     });
 
     bgAudio.onError((err) => {
@@ -181,6 +181,235 @@ App({
     bgAudio.onStop(() => {
       this.notifyCallbacks('onStop', {});
     });
+  },
+
+  // 音频播完处理
+  onAudioEnded() {
+    if (this._audioEndedProcessing) return;
+    this._audioEndedProcessing = true;
+
+    const chapters = this.globalData.playlistChaptersData;
+    const playMode = this.globalData.playMode || 'sequence';
+    const sortOrder = this.globalData.playlistSortOrder || 'asc';
+    const currentChapter = this.globalData.playingChapter;
+
+    if (playMode === 'single') {
+      // 单曲循环模式：从头播放
+      this.bgAudioManager.seek(0);
+      this.bgAudioManager.play();
+      this._audioEndedProcessing = false;
+      return;
+    }
+
+    const currentSeq = currentChapter?.seq;
+    if (!currentSeq || !chapters.length) {
+      this.bgAudioManager.stop();
+      this.notifyCallbacks('onLastChapterEnded', {});
+      this._audioEndedProcessing = false;
+      return;
+    }
+
+    // 根据排序方向计算下一条的 seq
+    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
+    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+
+    if (nextChapter) {
+      this.playChapter(nextChapter._id, chapters);
+    } else if (playMode === 'loop') {
+      // 循环模式：回到第一/最后一条
+      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
+      this.playChapter(firstOrLast._id, chapters);
+    } else {
+      // 顺序播放到最后一条，停止播放并重置状态
+      this.bgAudioManager.stop();
+      this.notifyCallbacks('onLastChapterEnded', {});
+    }
+    this._audioEndedProcessing = false;
+  },
+
+  // 播放上一曲
+  playPrev() {
+    const chapters = this.globalData.playlistChaptersData;
+    const playMode = this.globalData.playMode || 'sequence';
+    const sortOrder = this.globalData.playlistSortOrder || 'asc';
+    const currentChapter = this.globalData.playingChapter;
+
+    if (playMode === 'single') {
+      this.bgAudioManager.seek(0);
+      this.bgAudioManager.play();
+      return;
+    }
+
+    const currentSeq = currentChapter?.seq;
+    if (!currentSeq) return;
+
+    // 根据排序方向计算上一条的 seq
+    const targetSeq = sortOrder === 'asc' ? currentSeq - 1 : currentSeq + 1;
+    const prevChapter = chapters.find(ch => ch.seq === targetSeq);
+
+    if (prevChapter) {
+      this.playChapter(prevChapter._id, chapters);
+    } else if (playMode === 'loop') {
+      // 循环模式：回到最后/第一条
+      const lastOrFirst = sortOrder === 'asc' ? chapters[chapters.length - 1] : chapters[0];
+      this.playChapter(lastOrFirst._id, chapters);
+    } else {
+      wx.showToast({ title: '已经是第一条', icon: 'none' });
+    }
+  },
+
+  // 播放下一曲
+  playNext() {
+    const chapters = this.globalData.playlistChaptersData;
+    const playMode = this.globalData.playMode || 'sequence';
+    const sortOrder = this.globalData.playlistSortOrder || 'asc';
+    const currentChapter = this.globalData.playingChapter;
+
+    if (playMode === 'single') {
+      this.bgAudioManager.seek(0);
+      this.bgAudioManager.play();
+      return;
+    }
+
+    const currentSeq = currentChapter?.seq;
+    if (!currentSeq) return;
+
+    // 根据排序方向计算下一条的 seq
+    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
+    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+
+    if (nextChapter) {
+      this.playChapter(nextChapter._id, chapters);
+    } else if (playMode === 'loop') {
+      // 循环模式：回到第一/最后一条
+      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
+      this.playChapter(firstOrLast._id, chapters);
+    } else {
+      wx.showToast({ title: '已经是最后一条', icon: 'none' });
+    }
+  },
+
+  // 播放指定章节
+  playChapter(chapterId, chapters) {
+    chapters = chapters || this.globalData.playlistChaptersData;
+    const chapter = chapters.find(ch => ch._id === chapterId);
+    if (!chapter || !chapter.audioUrl) {
+      wx.showToast({ title: '暂无音频', icon: 'none' });
+      return;
+    }
+
+    const index = chapters.findIndex(ch => ch._id === chapterId);
+    this.globalData.playingChapter = chapter;
+    this.globalData.playingSeq = chapter.seq;
+    this.globalData.playingIndex = index;
+
+    // 保存到缓存
+    wx.setStorageSync('playingChapter', JSON.stringify(chapter));
+    wx.setStorageSync('playingSeq', chapter.seq);
+    wx.setStorageSync('playingIndex', index);
+
+    // 通知所有组件章节变化
+    this.notifyCallbacks('onChapterChange', {
+      chapterId: chapter._id,
+      chapter: chapter,
+      index: index
+    });
+
+    // 加载并播放音频
+    this.loadAudio(chapter);
+  },
+
+  // 加载音频
+  loadAudio(chapter) {
+    const bgAudio = this.bgAudioManager;
+    const src = chapter?.audioUrl;
+    if (!src) return;
+
+    // 如果音频已结束或播放时间异常，重置为上次保存的播放位置
+    const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+    const duration = Number(chapter.duration) || 0;
+    let startTime = lastPlayTime;
+    if (lastPlayTime >= duration && duration > 0) {
+      startTime = 0;
+    }
+
+    if (src.startsWith('cloud://')) {
+      wx.showLoading({ title: '加载中...', mask: true });
+      wx.cloud.getTempFileURL({ fileList: [src] }).then(res => {
+        wx.hideLoading();
+        const tempUrl = res.fileList?.[0]?.tempFileURL;
+        if (!tempUrl) throw new Error('获取链接失败');
+        this.playAudio(chapter, tempUrl, startTime);
+      }).catch(err => {
+        wx.hideLoading();
+        wx.showToast({ title: '音频加载失败', icon: 'none' });
+      });
+    } else {
+      this.playAudio(chapter, src, startTime);
+    }
+  },
+
+  // 实际播放音频
+  playAudio(chapter, src, startTime) {
+    const bgAudio = this.bgAudioManager;
+    const course = this.globalData.playingCourse || {};
+
+    bgAudio.title = chapter.title || '音频课程';
+    bgAudio.epname = course.title || '';
+    bgAudio.coverImgUrl = course.cover || '';
+    bgAudio.startTime = startTime;
+    bgAudio.src = src;
+  },
+
+  // 切换播放/暂停
+  togglePlayPause() {
+    const bgAudio = this.bgAudioManager;
+    if (bgAudio.paused) {
+      // 如果音频已结束（currentTime >= duration-1）或 duration 异常（0 或 NaN），重新加载当前章节
+      const duration = bgAudio.duration || 0;
+      if (bgAudio.currentTime >= duration - 1 || duration === 0) {
+        const chapter = this.globalData.playingChapter;
+        const chapters = this.globalData.playlistChaptersData;
+        if (chapter && chapters.length) {
+          this.playChapter(chapter._id, chapters);
+          return;
+        }
+      }
+      bgAudio.play();
+    } else {
+      bgAudio.pause();
+    }
+  },
+
+  // 停止播放
+  stop() {
+    this.bgAudioManager.stop();
+    this.notifyCallbacks('onStop', {});
+  },
+
+  // 切换播放模式
+  togglePlayMode() {
+    const modes = ['sequence', 'loop', 'single'];
+    const currentMode = this.globalData.playMode || 'sequence';
+    const currentIdx = modes.indexOf(currentMode);
+    const nextMode = modes[(currentIdx + 1) % modes.length];
+    this.globalData.playMode = nextMode;
+    this.notifyCallbacks('onPlayModeChange', { playMode: nextMode });
+    return nextMode;
+  },
+
+  // 重置播放状态（退出登录时使用）
+  resetPlayState() {
+    this.bgAudioManager.stop();
+    this.globalData.miniPlayerActive = false;
+    this.globalData.miniPlayerIndexFadedIn = false;
+    this.globalData.playingCourse = null;
+    this.globalData.playingChapter = null;
+    this.globalData.playingSeq = null;
+    this.globalData.playingIndex = 0;
+    this.globalData.playlistChaptersData = [];
+    this.globalData.playMode = 'sequence';
+    this.notifyCallbacks('onReset', {});
   },
 
   // 通知所有 mini-player 回调

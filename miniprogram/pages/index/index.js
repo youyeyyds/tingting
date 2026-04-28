@@ -507,16 +507,8 @@ Page({
     this.setData({ logoutConfirmVisible: false });
 
     // 停止播放器并清空播放状态
-    app.bgAudioManager.stop();
-    app.globalData.miniPlayerActive = false;
-    app.globalData.miniPlayerIndexFadedIn = false;
-    app.globalData.playingCourse = null;
-    app.globalData.playingChapter = null;
-    app.globalData.playingSeq = null;
-    app.globalData.playingIndex = 0;
-    app.globalData.playlistChaptersData = [];
+    app.resetPlayState();
     app.globalData.favoriteChapters = [];
-    app.globalData.playMode = 'sequence';
     app.globalData.playlistSortOrder = 'asc';
     app.notifyCallbacks?.('onClose', {});
 

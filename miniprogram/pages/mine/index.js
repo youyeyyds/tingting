@@ -363,15 +363,7 @@ Page({
     this.setData({ logoutConfirmVisible: false });
 
     // 停止播放器并清空播放状态
-    app.bgAudioManager.stop();
-    app.globalData.miniPlayerActive = false;
-    app.globalData.miniPlayerIndexFadedIn = false;
-    app.globalData.playingCourse = null;
-    app.globalData.playingChapter = null;
-    app.globalData.playingSeq = null;
-    app.globalData.playingIndex = 0;
-    app.globalData.playlistChaptersData = [];
-    app.globalData.playMode = 'sequence';
+    app.resetPlayState();
     app.globalData.playlistSortOrder = 'asc';
     // 通知 mini-player 关闭
     app.notifyCallbacks('onClose', {});
