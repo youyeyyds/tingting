@@ -202,7 +202,7 @@ App({
     }
 
     const currentSeq = currentChapter?.seq;
-    if (!currentSeq || !chapters.length) {
+    if ((currentSeq === undefined || currentSeq === null) || !chapters.length) {
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
       this._audioEndedProcessing = false;
@@ -242,7 +242,7 @@ App({
     }
 
     const currentSeq = currentChapter?.seq;
-    if (!currentSeq) return;
+    if (currentSeq === undefined || currentSeq === null) return;
 
     // 根据排序方向计算上一条的 seq
     const targetSeq = sortOrder === 'asc' ? currentSeq - 1 : currentSeq + 1;
@@ -273,7 +273,7 @@ App({
     }
 
     const currentSeq = currentChapter?.seq;
-    if (!currentSeq) return;
+    if (currentSeq === undefined || currentSeq === null) return;
 
     // 根据排序方向计算下一条的 seq
     const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;

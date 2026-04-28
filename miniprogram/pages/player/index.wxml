@@ -27,8 +27,8 @@
     <text class="course-title">{{courseTitle || '未知课程'}}</text>
     <text class="course-author">{{courseAuthor || '未知作者'}}</text>
     <view class="chapter-title-line">
-      <text class="chapter-seq">{{currentChapter.seq}}</text>
-      <text class="chapter-sep">|</text>
+      <text class="chapter-seq" wx:if="{{currentChapter.seq !== 0}}">{{currentChapter.seq}}</text>
+      <text class="chapter-sep" wx:if="{{currentChapter.seq !== 0}}">|</text>
       <text class="chapter-name">{{currentChapter.title}}</text>
     </view>
   </view>
@@ -111,8 +111,8 @@
   <!-- 下一条信息 -->
   <view class="next-info">
     <text class="next-info-label">下一条：</text>
-    <text class="next-info-seq" wx:if="{{nextChapterSeq}}">{{nextChapterSeq}}</text>
-    <text class="next-info-sep" wx:if="{{nextChapterSeq}}">|</text>
+    <text class="next-info-seq" wx:if="{{nextChapterSeq !== 0 && nextChapterSeq}}">{{nextChapterSeq}}</text>
+    <text class="next-info-sep" wx:if="{{nextChapterSeq !== 0 && nextChapterSeq}}">|</text>
     <text class="next-info-title">{{nextChapterTitle}}</text>
   </view>
 </view>

@@ -653,7 +653,7 @@ Page({
     }
 
     const currentSeq = currentChapter?.seq;
-    if (!currentSeq) return;
+    if (currentSeq === undefined || currentSeq === null) return;
 
     // 根据排序方向计算下一条的 seq
     const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
