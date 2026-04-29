@@ -193,7 +193,7 @@ Page({
         app.globalData.loginFlag = true;
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
-        wx.reLaunch({ url: '/pages/index/index' });
+        wx.navigateBack({ delta: 1 });
         return;
       }
       wx.showToast({ title: '手机号或密码错误', icon: 'none' });
