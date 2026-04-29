@@ -80,6 +80,24 @@ Component({
         onStop: () => {
           this.setData({ isPlaying: false });
         },
+        onReset: () => {
+          // 退出登录时重置播放状态，关闭 mini-player（保留淡出效果）
+          this.setData({ fadeInClass: 'fade-out' });
+          setTimeout(() => {
+            this.setData({
+              visible: false,
+              fadeInClass: '',
+              chapters: [],
+              currentChapter: {},
+              currentIndex: 0,
+              course: {},
+              isPlaying: false,
+              currentTime: 0,
+              duration: 0,
+              progressPercent: 0
+            });
+          }, 300);
+        },
         onPlayFromList: (data) => this.playFromList(data),
         onClose: () => {
           // 关闭通知已由 methods.onClose() 处理，这里只记录状态变化

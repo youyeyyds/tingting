@@ -230,7 +230,7 @@
 /* 第一行：序号|章节名称 */
 .chapter-title-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .chapter-seq {
@@ -351,8 +351,7 @@
 .card-actions {
   position: absolute;
   right: 8rpx;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 32rpx;
   display: flex;
   align-items: center;
   gap: 8rpx;

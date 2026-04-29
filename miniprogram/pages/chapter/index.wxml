@@ -103,3 +103,6 @@
     </view>
   </view>
 </view>
+
+<!-- 迷你播放器 -->
+<mini-player id="miniPlayer" initialChapters="{{chapters}}" initialCourse="{{course}}" />
