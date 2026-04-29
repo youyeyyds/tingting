@@ -7,7 +7,22 @@
       <view class="course-title">{{course.title}}</view>
       <view class="course-author">{{course.author}}</view>
       <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
-      <play-btn id="coursePlayBtn" mode="newPlaylist" courseId="{{courseId}}" bind:newplaylist="handleContinuePlay" />
+      <!-- 播放按钮组：两个重叠的按钮 -->
+      <view class="play-btn-group">
+        <!-- play-btn1 (bottom): 只显示三角形，创建完整播放列表（不受筛选影响） -->
+        <view class="play-btn play-btn-1 {{!hasPlaylist ? 'active' : ''}}" bindtap="handleCreatePlaylist">
+          <view class="play-icon"></view>
+          <text class="play-btn-text">继续播放</text>
+        </view>
+        <!-- play-btn2 (top): 播放/暂停切换，与mini-player风格一致 -->
+        <view class="play-btn play-btn-2 {{hasPlaylist ? 'active' : ''}}" bindtap="handleTogglePlay">
+          <view class="play-icon {{isPlaying ? 'pause' : ''}}">
+            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+          </view>
+          <text class="play-btn-text">{{isPlaying ? '暂停播放' : '继续播放'}}</text>
+        </view>
+      </view>
     </view>
   </view>
 

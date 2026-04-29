@@ -103,6 +103,7 @@ App({
     playingChapter: null,
     playingIndex: 0,
     playingSeq: null, // 当前播放章节的seq，用于跨页面同步
+    playingStatus: false, // 统一播放状态：true=正在播放，false=暂停
     miniPlayerActive: false,
     miniPlayerIndexFadedIn: false,
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
@@ -363,6 +364,9 @@ App({
     // URL 需要编码，否则真机无法播放
     const [baseUrl, query] = src.split('?');
     bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(src);
+    // 立即更新播放状态
+    this.globalData.playingStatus = true;
+    this.notifyCallbacks('onPlay', {});
   },
 
   // 切换播放/暂停
@@ -379,14 +383,21 @@ App({
           return;
         }
       }
+      // 先更新状态再播放
+      this.globalData.playingStatus = true;
+      this.notifyCallbacks('onPlay', { isPlaying: true });
       bgAudio.play();
     } else {
+      // 先更新状态再暂停
+      this.globalData.playingStatus = false;
+      this.notifyCallbacks('onPause', { isPlaying: false });
       bgAudio.pause();
     }
   },
 
   // 停止播放
   stop() {
+    this.globalData.playingStatus = false;
     this.bgAudioManager.stop();
     this.notifyCallbacks('onStop', {});
   },
@@ -413,6 +424,7 @@ App({
     this.globalData.playingIndex = 0;
     this.globalData.playlistChaptersData = [];
     this.globalData.playMode = 'sequence';
+    this.globalData.playingStatus = false;
     this.notifyCallbacks('onReset', {});
   },
 

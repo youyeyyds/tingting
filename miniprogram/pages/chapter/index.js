@@ -12,8 +12,8 @@ Page({
     loading: true,
     coverLoadTime: 0,
     playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' },
-    isCurrentCoursePlaying: false, // 当前课程是否正在播放
-    isCurrentChapterPlaying: false // 当前章节是否正在播放
+    hasPlaylist: false, // 当前课程是否有播放列表（用于决定显示哪个按钮）
+    isPlaying: false // 当前是否正在播放
   },
 
   onLoad(options) {
@@ -34,20 +34,20 @@ Page({
         }
         this.resetPlayingState();
       },
-      onPlayPause: ({ isPlaying }) => {
-        // 根据实际播放状态更新按钮样式
+      onPlay: () => {
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
-        const chapterId = app.globalData.playingChapter?._id;
         this.setData({
-          isCurrentCoursePlaying: isCurrentCourse && isPlaying,
-          isCurrentChapterPlaying: isCurrentCourse && isPlaying,
-          lastPlayedChapterId: !isPlaying && chapterId ? chapterId : this.data.lastPlayedChapterId
+          hasPlaylist: isCurrentCourse,
+          isPlaying: isCurrentCourse
         });
-        // 暂停时保存当前章节到数据库
-        if (!isPlaying && chapterId) {
-          this.saveCourseSettings({ lastPlayedChapterId: chapterId });
-        }
+      },
+      onPause: () => {
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
+        this.setData({
+          isPlaying: false
+        });
       },
       onChapterChange: ({ chapterId }) => {
         const playingCourseId = app.globalData.playingCourse?._id;
@@ -57,8 +57,8 @@ Page({
         const isCurrentChapter = isCurrentCourse && chapterId && this.data.chapters.some(ch => ch._id === chapterId);
         this.setData({
           chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
-          isCurrentCoursePlaying: isCurrentCourse && miniPlayerActive,
-          isCurrentChapterPlaying: isCurrentChapter && miniPlayerActive
+          hasPlaylist: isCurrentCourse && miniPlayerActive,
+          isPlaying: isCurrentCourse && miniPlayerActive
         });
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
@@ -114,15 +114,6 @@ Page({
     this.updatePlayingState();
     // 刷新用户设置（如上次播放章节）
     this.reloadCourseSettings();
-    // 刷新 play-btn 组件状态
-    console.log('[chapter] onShow, courseId:', this.data.courseId);
-    const playBtn = this.selectComponent('#coursePlayBtn');
-    console.log('[chapter] onShow, playBtn:', playBtn);
-    if (playBtn && playBtn.refresh) {
-      playBtn.refresh();
-    } else {
-      console.log('[chapter] playBtn or refresh not found');
-    }
   },
 
   reloadCourseSettings() {
@@ -145,13 +136,11 @@ Page({
   // 更新当前播放状态
   updatePlayingState() {
     const playingCourseId = app.globalData.playingCourse?._id;
-    const playingChapterId = app.globalData.playingChapter?._id;
     const isCurrentCourse = playingCourseId === this.data.courseId;
-    const isCurrentChapter = isCurrentCourse && playingChapterId && this.data.chapters.some(ch => ch._id === playingChapterId && ch.isPlaying);
-    const isPlaying = !app.bgAudioManager.paused;
+    const isPlaying = !app.bgAudioManager.paused && isCurrentCourse;
     this.setData({
-      isCurrentCoursePlaying: isCurrentCourse && isPlaying,
-      isCurrentChapterPlaying: isCurrentChapter
+      hasPlaylist: isCurrentCourse && app.globalData.playlistChaptersData?.length > 0,
+      isPlaying: isPlaying
     });
   },
 
@@ -174,8 +163,8 @@ Page({
   resetPlayingState() {
     this.setData({
       chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false })),
-      isCurrentCoursePlaying: false,
-      isCurrentChapterPlaying: false
+      hasPlaylist: false,
+      isPlaying: false
     });
     this.applyFilterAndSort();
   },
@@ -249,38 +238,33 @@ Page({
     };
   },
 
-  handlePausePlay() {
-    const miniPlayer = this.selectComponent('#miniPlayer');
-    if (miniPlayer) {
-      miniPlayer.togglePlayPause();
-    }
+  handleTogglePlay() {
+    // 有播放列表时切换播放/暂停
+    app.togglePlayPause();
   },
 
-  handleContinuePlay() {
-    const { filteredChapters, lastPlayedChapterId, showUnfinishedOnly } = this.data;
-
-    // 如果只看未学完且没有未学完的章节
-    if (showUnfinishedOnly && filteredChapters.length === 0) {
-      return wx.showToast({ title: '所有章节已学完', icon: 'none' });
-    }
-
-    if (!filteredChapters.length) {
+  handleCreatePlaylist() {
+    // 创建完整播放列表（使用全部章节，不受筛选影响）
+    const { courseId, chapters, course } = this.data;
+    if (!courseId || !chapters.length) {
       return wx.showToast({ title: '暂无章节', icon: 'none' });
     }
 
-    let chapterToPlay = null;
+    // 找到第一个未完成的章节
+    let chapterToPlay = chapters.find(ch => ch.progress < 100) || chapters[0];
 
-    // 优先使用上次播放的章节
-    if (lastPlayedChapterId) {
-      chapterToPlay = filteredChapters.find(ch => ch._id === lastPlayedChapterId);
+    // 调用 miniPlayer.play 来显示 mini-player UI 并开始播放
+    const miniPlayer = this.selectComponent('#miniPlayer');
+    if (miniPlayer) {
+      // 传入完整章节列表，播放第一个未完成的章节
+      miniPlayer.play(chapterToPlay._id, chapters, course, 'asc');
     }
 
-    // 如果找不到上次播放的章节（可能被删除了），使用第一个
-    if (!chapterToPlay) {
-      chapterToPlay = filteredChapters[0];
-    }
-
-    this.playChapter(chapterToPlay._id);
+    // 更新按钮状态（回调会进一步更新）
+    this.setData({
+      hasPlaylist: true,
+      isPlaying: true
+    });
   },
 
   onFilterChange(e) {
@@ -327,10 +311,6 @@ Page({
   playChapter(chapterId) {
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
-      const state = { courseId: this.data.courseId, showUnfinishedOnly: this.data.showUnfinishedOnly, sortOrder: this.data.sortOrder };
-      if (state.courseId !== this.data.playlistState.courseId || state.showUnfinishedOnly !== this.data.playlistState.showUnfinishedOnly || state.sortOrder !== this.data.playlistState.sortOrder) {
-        this.setData({ playlistState: state });
-      }
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
     this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
