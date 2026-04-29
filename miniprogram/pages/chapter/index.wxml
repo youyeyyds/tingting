@@ -1,7 +1,19 @@
 <!--chapter.wxml-->
 <view class="page-container">
+  <!-- 骨架屏 -->
+  <view class="skeleton-section" wx:if="{{loading}}">
+    <view class="skeleton-info">
+      <view class="skeleton-cover"></view>
+      <view class="skeleton-details">
+        <view class="skeleton-title"></view>
+        <view class="skeleton-author"></view>
+        <view class="skeleton-meta"></view>
+      </view>
+    </view>
+  </view>
+
   <!-- 课程信息区 -->
-  <view class="course-info-section">
+  <view class="course-info-section" wx:if="{{!loading}}">
     <image class="course-cover" src="{{course.cover}}" mode="aspectFill" />
     <view class="course-details">
       <view class="course-title">{{course.title}}</view>
@@ -40,7 +52,16 @@
 
   <!-- 章节列表 -->
   <view class="chapter-list">
-    <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap">
+    <!-- 骨架屏章节卡片 -->
+    <view class="skeleton-chapter-card" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" wx:if="{{loading}}">
+      <view class="skeleton-chapter-info">
+        <view class="skeleton-chapter-title"></view>
+        <view class="skeleton-chapter-meta"></view>
+      </view>
+      <view class="skeleton-chapter-actions"></view>
+    </view>
+
+    <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap" wx:if="{{!loading}}">
       <view class="chapter-info">
         <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 && !item.isPlaying ? 'completed' : ''}}">
           <text class="chapter-seq" wx:if="{{item.seq !== 0}}">{{item.seq}}</text>
@@ -82,6 +103,3 @@
     </view>
   </view>
 </view>
-
-<!-- 迷你播放器 -->
-<mini-player id="miniPlayer" initialChapters="{{chapters}}" initialCourse="{{course}}" />
