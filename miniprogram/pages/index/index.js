@@ -322,20 +322,27 @@ Page({
 
     this.setData({
       headlines,
-      courses,
-      loading: !courses.length // 有缓存则不显示loading
+      loading: true // 始终显示 loading，等数据加载完成后再决定显示什么
     });
 
     if (!headlines.length) this.loadHeadlines();
     else this.maskCourses();
 
-    if (!courses.length) this.loadCourses();
+    this.loadCourses(); // 始终重新加载课程数据，加载完成后再根据登录状态决定显示
   },
 
   onShow() {
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
+    // 重新检查登录状态，确保显示正确的课程数据
+    if (app.globalData.isLoggedIn !== this.data.isLoggedIn) {
+      this.checkLogin();
+    }
+    // 如果有真实课程数据，重新执行 maskCourses 以更新显示
+    if (this._realCourses && this._realCourses.length) {
+      this.maskCourses();
+    }
   },
 
   syncTimes() {
@@ -447,44 +454,57 @@ Page({
         const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
         app.globalData.indexCourses = courses;
         wx.setStorageSync('indexCourses', courses);
-        this.setData({ courses, loading: false });
-        this.maskCourses();
+        // 先不设置 courses，等 maskCourses 处理后再设置
+        this.maskCourses(courses);
       } else {
         this.setData({ loading: false });
       }
     }).catch(() => this.setData({ loading: false }));
   },
 
-  maskCourses() {
-    const { homeProtect, isLoggedIn, courses, maskedCourses } = this.data;
+  maskCourses(realCourses) {
+    // 如果传入了 realCourses，先保存到 this._realCourses
+    if (realCourses) {
+      this._realCourses = realCourses;
+    }
+
+    const { homeProtect, isLoggedIn } = this.data;
+    // 使用保存的真实课程数据
+    const courses = this._realCourses || [];
+
     if (!homeProtect || isLoggedIn) {
       // 已登录或首页保护关闭，恢复真实课程数据
-      const realCourses = app.globalData.indexCourses || wx.getStorageSync('indexCourses') || [];
-      if (realCourses.length > 0) {
-        this.setData({ courses: realCourses });
-      }
+      this.setData({ courses, loading: false });
       return;
     }
 
-    const newMasked = { ...maskedCourses };
+    // 未登录，显示脱敏数据
+    let maskedCourses = this.data.maskedCourses || {};
     const masked = courses.map(c => {
-      let cached = newMasked[c._id];
+      let cached = maskedCourses[c._id];
       if (!cached) {
         const art = MARTIAL_ARTS[Math.floor(Math.random() * MARTIAL_ARTS.length)];
         const user = art.users[Math.floor(Math.random() * art.users.length)];
         cached = { art, user };
-        newMasked[c._id] = cached;
+        maskedCourses[c._id] = cached;
       }
       return { ...c, title: cached.art.name, author: cached.user, categoryName: cached.art.type };
     });
 
-    app.globalData.homePageMaskedCourses = newMasked;
-    this.setData({ courses: masked, maskedCourses: newMasked });
+    app.globalData.homePageMaskedCourses = maskedCourses;
+    this.setData({ courses: masked, maskedCourses, loading: false });
   },
 
   checkLogin() {
-    this.setData({ isLoggedIn: app.globalData.isLoggedIn || false });
-    this.maskCourses();
+    const prevState = this.data.isLoggedIn;
+    const newState = app.globalData.isLoggedIn || false;
+    if (prevState !== newState) {
+      this.setData({ isLoggedIn: newState });
+      // 登录状态变化时，重新处理课程显示
+      if (this._realCourses && this._realCourses.length) {
+        this.maskCourses();
+      }
+    }
   },
 
   handleLogin() {
