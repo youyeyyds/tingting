@@ -351,7 +351,7 @@
 .card-actions {
   position: absolute;
   right: 8rpx;
-  bottom: 32rpx;
+  bottom: 18rpx;
   display: flex;
   align-items: center;
   gap: 8rpx;

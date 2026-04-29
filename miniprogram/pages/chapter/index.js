@@ -245,19 +245,35 @@ Page({
 
   handleCreatePlaylist() {
     // 创建完整播放列表（使用全部章节，不受筛选影响）
-    const { courseId, chapters, course } = this.data;
+    const { courseId, chapters, course, sortOrder, lastPlayedChapterId } = this.data;
     if (!courseId || !chapters.length) {
       return wx.showToast({ title: '暂无章节', icon: 'none' });
     }
 
-    // 找到第一个未完成的章节
-    let chapterToPlay = chapters.find(ch => ch.progress < 100) || chapters[0];
+    // 按当前排序生成播放列表
+    const sortedChapters = [...chapters].sort((a, b) => {
+      const seqA = a.seq || 0;
+      const seqB = b.seq || 0;
+      return sortOrder === 'asc' ? seqA - seqB : seqB - seqA;
+    });
+
+    // 优先使用上次播放的章节，其次找未完成的章节，最后用第一个
+    let chapterToPlay = null;
+    if (lastPlayedChapterId) {
+      chapterToPlay = sortedChapters.find(ch => ch._id === lastPlayedChapterId);
+    }
+    if (!chapterToPlay) {
+      chapterToPlay = sortedChapters.find(ch => ch.progress < 100);
+    }
+    if (!chapterToPlay) {
+      chapterToPlay = sortedChapters[0];
+    }
 
     // 调用 miniPlayer.play 来显示 mini-player UI 并开始播放
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
-      // 传入完整章节列表，播放第一个未完成的章节
-      miniPlayer.play(chapterToPlay._id, chapters, course, 'asc');
+      // 传入完整章节列表，使用当前排序
+      miniPlayer.play(chapterToPlay._id, sortedChapters, course, sortOrder);
     }
 
     // 更新按钮状态（回调会进一步更新）
