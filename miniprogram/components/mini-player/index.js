@@ -50,9 +50,10 @@ Component({
           // 清除章节同步标志，允许 onTimeUpdate 更新进度
           this._syncingChapter = false;
           this.setData({ isPlaying: true });
-          // 通知章节变化，更新 chapter 页面的高亮样式
+          // 通知播放状态变化，更新 chapter 页面的按钮样式
           const { currentChapter } = this.data;
           if (currentChapter) {
+            app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: true });
             app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id });
           }
         },
@@ -63,6 +64,11 @@ Component({
           if (currentChapter) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
           }
+        },
+        onPlayPause: ({ isPlaying }) => {
+          // 外部（如play-btn）触发的播放/暂停同步
+          console.log('[mini-player] onPlayPause, isPlaying:', isPlaying);
+          this.setData({ isPlaying });
         },
         onEnded: () => {}, // app.js统一处理
         onLastChapterEnded: () => {
@@ -408,6 +414,8 @@ Component({
       const willPlay = this.bgAudioManager.paused;
       app.togglePlayPause();
       this.setData({ isPlaying: willPlay });
+      // 通知所有组件（包括play-btn）播放状态变化
+      app.notifyCallbacks('onPlayPause', { isPlaying: willPlay });
     },
 
     togglePlayPause() {

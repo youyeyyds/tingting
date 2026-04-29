@@ -114,6 +114,15 @@ Page({
     this.updatePlayingState();
     // 刷新用户设置（如上次播放章节）
     this.reloadCourseSettings();
+    // 刷新 play-btn 组件状态
+    console.log('[chapter] onShow, courseId:', this.data.courseId);
+    const playBtn = this.selectComponent('#coursePlayBtn');
+    console.log('[chapter] onShow, playBtn:', playBtn);
+    if (playBtn && playBtn.refresh) {
+      playBtn.refresh();
+    } else {
+      console.log('[chapter] playBtn or refresh not found');
+    }
   },
 
   reloadCourseSettings() {
@@ -139,8 +148,9 @@ Page({
     const playingChapterId = app.globalData.playingChapter?._id;
     const isCurrentCourse = playingCourseId === this.data.courseId;
     const isCurrentChapter = isCurrentCourse && playingChapterId && this.data.chapters.some(ch => ch._id === playingChapterId && ch.isPlaying);
+    const isPlaying = !app.bgAudioManager.paused;
     this.setData({
-      isCurrentCoursePlaying: isCurrentCourse && app.globalData.miniPlayerActive,
+      isCurrentCoursePlaying: isCurrentCourse && isPlaying,
       isCurrentChapterPlaying: isCurrentChapter
     });
   },

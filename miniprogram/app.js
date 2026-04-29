@@ -313,7 +313,8 @@ App({
     this.notifyCallbacks('onChapterChange', {
       chapterId: chapter._id,
       chapter: chapter,
-      index: index
+      index: index,
+      isPlaying: true
     });
 
     // 加载并播放音频

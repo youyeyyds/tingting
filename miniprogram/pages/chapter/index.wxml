@@ -7,22 +7,7 @@
       <view class="course-title">{{course.title}}</view>
       <view class="course-author">{{course.author}}</view>
       <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
-      <view class="play-btn" bindtap="{{isCurrentCoursePlaying ? 'handlePausePlay' : 'handleContinuePlay'}}">
-        <block wx:if="{{isCurrentCoursePlaying}}">
-          <view class="play-icon-wrap">
-            <view class="pause-icon">
-              <view class="pause-bar"></view>
-              <view class="pause-bar"></view>
-            </view>
-          </view>
-        </block>
-        <block wx:else>
-          <view class="play-icon-wrap">
-            <view class="play-triangle"></view>
-          </view>
-        </block>
-        <text class="play-text">{{isCurrentCoursePlaying ? '暂停播放' : '继续播放'}}</text>
-      </view>
+      <play-btn id="coursePlayBtn" mode="newPlaylist" courseId="{{courseId}}" bind:newplaylist="handleContinuePlay" />
     </view>
   </view>
 
