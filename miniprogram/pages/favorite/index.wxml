@@ -19,7 +19,7 @@
 
     <!-- 已登录但无收藏 -->
     <view class="empty-tip" wx:if="{{isLoggedIn && favoriteChapters.length === 0 && !loading}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
-      <text class="empty-text">暂无收藏章节</text>
+      <text class="empty-text">随时随地，学习成长</text>
     </view>
 
     <!-- 收藏列表 -->

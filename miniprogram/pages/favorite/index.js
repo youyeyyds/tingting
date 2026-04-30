@@ -290,6 +290,8 @@ Page({
       if (res.result.success) {
         const favorites = res.result.data.favoriteChapters || [];
         const formattedFavorites = favorites.map(ch => this.formatChapter(ch));
+        // 按收藏时间排序（最新的在前）
+        formattedFavorites.sort((a, b) => (b.favoriteTime || 0) - (a.favoriteTime || 0));
         this.setData({
           favoriteChapters: formattedFavorites,
           loading: false
@@ -308,6 +310,7 @@ Page({
     const userProgress = chapter.userProgress || {};
     const lastPlayTime = Number(userProgress.lastPlayTime) || 0;
     const finished = userProgress.finished === true;
+    const favoriteTime = userProgress.favoriteTime || 0;
 
     // 计算进度
     let progress = 0;
@@ -329,7 +332,8 @@ Page({
       finished,
       progress,
       progressText,
-      durationText: this.formatDuration(duration)
+      durationText: this.formatDuration(duration),
+      favoriteTime
     };
   },
 
