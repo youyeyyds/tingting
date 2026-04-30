@@ -603,24 +603,21 @@ Page({
     const { sortOrder, chapters, currentChapter } = this.data;
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
 
-    // 按 seq 重新排序，生成新的 index
-    const sortedChapters = [...chapters].sort((a, b) => {
-      const diff = (a.seq || 0) - (b.seq || 0);
-      return newOrder === 'asc' ? diff : -diff;
-    }).map((ch, idx) => ({ ...ch, index: idx }));
+    // 直接反转 chapters，保持拖拽后的顺序，只切换显示方向
+    const reversed = [...chapters].reverse().map((ch, idx) => ({ ...ch, index: idx }));
 
     // 找到当前章节在新排序中的位置
     const currentId = currentChapter?._id;
-    const newIndex = sortedChapters.findIndex(ch => ch._id === currentId);
-    const newCurrentChapter = sortedChapters[newIndex];
+    const newIndex = reversed.findIndex(ch => ch._id === currentId);
+    const newCurrentChapter = reversed[newIndex];
 
     app.globalData.playlistSortOrder = newOrder;
-    app.globalData.playlistChaptersData = sortedChapters;
+    app.globalData.playlistChaptersData = reversed;
     app.globalData.playingIndex = newIndex >= 0 ? newIndex : 0;
 
     this.setData({
       sortOrder: newOrder,
-      chapters: sortedChapters,
+      chapters: reversed,
       currentIndex: newIndex >= 0 ? newIndex : 0,
       currentChapter: newCurrentChapter || currentChapter
     }, () => {

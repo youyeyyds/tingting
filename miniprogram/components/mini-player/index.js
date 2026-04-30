@@ -615,6 +615,7 @@ Component({
       this.setData({ chapters: sortedChapters, currentIndex: newIndex });
       app.globalData.playingIndex = newIndex;
       app.globalData.playingSeq = currentChapter?.seq;
+      app.globalData.playlistChaptersData = sortedChapters;
     },
 
     onPlaylistPlay(e) {

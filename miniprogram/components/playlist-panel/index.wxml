@@ -59,7 +59,7 @@
           <!-- 右侧操作区 -->
           <view class="card-actions">
             <!-- 拖拽排序图标 -->
-            <view class="drag-btn" data-index="{{index}}" catchtouchstart="onDragStart" catchtouchmove="onDragMove" catchtouchend="onDragEnd">
+            <view class="drag-btn" data-index="{{index}}" catchtouchstart="onDragStart" catchtouchmove="onDragMove" catchtouchend="onDragEnd" catchtap="preventMove">
               <view class="drag-lines">
                 <view class="drag-line"></view>
                 <view class="drag-line"></view>

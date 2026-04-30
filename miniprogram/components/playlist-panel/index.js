@@ -7,9 +7,25 @@ Component({
       type: Array,
       value: [],
       observer: function(newVal) {
-        // chapters 变化时，重新应用当前排序
+        console.log('[playlist-panel] observer fired, hasInitialized:', this.data.hasInitialized, 'isDragging:', this.data.isDragging, 'newVal length:', newVal ? newVal.length : 0, 'newVal[0].index:', newVal && newVal[0] ? newVal[0].index : 'undefined');
+        // chapters 变化时，更新 sortedChapters
         if (newVal && newVal.length > 0) {
-          this.applySort();
+          if (this.data.isDragging) {
+            // 拖拽进行中：直接用新 chapters 更新 sortedChapters，跳过 applySort
+            const currentId = this.properties.currentChapterId;
+            const updated = newVal.map((ch, idx) => ({ ...ch, index: idx, isPlaying: ch._id === currentId }));
+            this.setData({ sortedChapters: updated });
+          } else if (newVal[0] && newVal[0].index !== undefined) {
+            // chapters 已有 index（拖拽/排序后的正确顺序），直接用，不再重新排序
+            const currentId = this.properties.currentChapterId;
+            const updated = newVal.map((ch, idx) => ({ ...ch, isPlaying: ch._id === currentId }));
+            this.setData({ sortedChapters: updated, hasInitialized: true });
+          } else if (!this.data.hasInitialized) {
+            // 初始状态，没有 index，需要执行 applySort 生成 index
+            this.applySort();
+            this.setData({ hasInitialized: true });
+          }
+          // 如果 hasInitialized=true 且没有 index，不做任何事（防止覆盖已有顺序）
         }
       }
     },
@@ -53,7 +69,10 @@ Component({
     dragIndex: -1,
     startY: 0,
     cardHeight: 60,
-    confirmVisible: false
+    confirmVisible: false,
+    justDragEnded: false, // 标记刚结束拖拽，防止触发 onCardTap
+    isDragging: false, // 标记正在拖拽，防止 observer 重复排序
+    hasInitialized: false // 标记是否已初始化，初始化前由 observer 处理，之后不再重复排序
   },
 
   lifetimes: {
@@ -65,10 +84,19 @@ Component({
 
   methods: {
     show() {
+      const prop = this.properties.chapters;
+      console.log('[playlist-panel] show() called, sortedChapters.length:', this.data.sortedChapters.length, 'hasInitialized:', this.data.hasInitialized, 'chapters prop length:', prop ? prop.length : 0, 'chapters[0].index:', prop && prop[0] ? prop[0].index : 'undefined');
       // 从全局数据同步播放模式和排序状态
       const playMode = app.globalData.playMode || 'sequence';
       const sortOrder = app.globalData.playlistSortOrder || this.properties.initialSortOrder || 'asc';
       this.setData({ playMode, sortOrder });
+      // 如果 sortedChapters 已有数据（说明之前已经排序过），直接用，不再重复排序
+      if (this.data.sortedChapters.length > 0) {
+        this.setData({ visible: true, slideClass: 'slide-up' });
+        setTimeout(() => this.scrollToCurrent(), 350);
+        return;
+      }
+      // 否则执行初始排序
       this.applySort();
       this.setData({ visible: true, slideClass: 'slide-up' });
       setTimeout(() => this.scrollToCurrent(), 350);
@@ -93,6 +121,10 @@ Component({
     },
 
     applySort() {
+      // 如果 chapters 已有 index，说明已经排过序，跳过
+      if (this.properties.chapters && this.properties.chapters.length > 0 && this.properties.chapters[0].index !== undefined) {
+        return;
+      }
       let chapters = [...this.properties.chapters];
       const currentId = this.properties.currentChapterId;
       const sortOrder = this.data.sortOrder || 'asc';
@@ -128,12 +160,18 @@ Component({
 
     onToggleSort() {
       const newOrder = this.data.sortOrder === 'asc' ? 'desc' : 'asc';
-      this.setData({ sortOrder: newOrder });
+      const currentId = this.properties.currentChapterId;
+      // 直接反转 sortedChapters，保持拖拽后的顺序，只切换显示方向
+      const reversed = [...this.data.sortedChapters].reverse().map((ch, idx) => ({
+        ...ch,
+        index: idx,
+        isPlaying: ch._id === currentId
+      }));
+      this.setData({ sortOrder: newOrder, sortedChapters: reversed });
       app.globalData.playlistSortOrder = newOrder;
-      this.applySort();
       // 收藏列表的排序只是视图展示切换，不同步回播放器
       if (!this.properties.isFavoriteList) {
-        this.triggerEvent('syncSort', { chapters: this.data.sortedChapters, sortOrder: newOrder });
+        this.triggerEvent('syncSort', { chapters: reversed, sortOrder: newOrder });
       }
       setTimeout(() => this.scrollToCurrent(), 100);
     },
@@ -152,6 +190,9 @@ Component({
     },
 
     onCardTap(e) {
+      // 如果刚结束拖拽，跳过此次点击
+      if (this.data.justDragEnded) return;
+
       const id = e.currentTarget.dataset.id;
       const index = e.currentTarget.dataset.index;
 
@@ -177,7 +218,7 @@ Component({
     onDragStart(e) {
       const index = e.currentTarget.dataset.index;
       const touch = e.touches[0];
-      this.setData({ dragIndex: index, startY: touch.clientY });
+      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true });
     },
 
     onDragMove(e) {
@@ -189,19 +230,25 @@ Component({
         const chapters = [...this.data.sortedChapters];
         const [removed] = chapters.splice(this.data.dragIndex, 1);
         chapters.splice(newIndex, 0, removed);
-        this.setData({ sortedChapters: chapters, dragIndex: newIndex, startY: touch.clientY });
+        this.setData({ sortedChapters: chapters, dragIndex: newIndex, startY: touch.clientY, isDragging: true });
       }
     },
 
     onDragEnd() {
       const sortedChapters = this.data.sortedChapters;
-      this.setData({ dragIndex: -1 });
+      const sortOrder = this.data.sortOrder;
       // 拖拽后重新生成 index
       const withIndex = sortedChapters.map((ch, idx) => ({ ...ch, index: idx }));
       app.globalData.playlistChapters = withIndex.map(ch => ch._id);
-      this.triggerEvent('syncSort', { chapters: withIndex });
+      app.globalData.playlistChaptersData = withIndex;
+      this.triggerEvent('syncSort', { chapters: withIndex, sortOrder });
+      this.setData({ dragIndex: -1, justDragEnded: true }, () => {
+        this.setData({ isDragging: false, justDragEnded: false });
+      });
     },
 
-    preventMove() {}
+    preventMove() {
+      return true;
+    },
   }
 });
