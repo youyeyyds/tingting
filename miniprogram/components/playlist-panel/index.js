@@ -111,8 +111,10 @@ Component({
         });
       }
 
-      chapters = chapters.map(ch => ({
+      // 生成基于显示顺序的 index（从 0 开始）
+      chapters = chapters.map((ch, idx) => ({
         ...ch,
+        index: idx,
         isPlaying: ch._id === currentId
       }));
       this.setData({ sortedChapters: chapters });
@@ -166,7 +168,9 @@ Component({
     onDeleteTap(e) {
       const id = e.currentTarget.dataset.id;
       const chapters = this.data.sortedChapters.filter(ch => ch._id !== id);
-      this.setData({ sortedChapters: chapters });
+      // 删除后重新生成 index
+      const withIndex = chapters.map((ch, idx) => ({ ...ch, index: idx }));
+      this.setData({ sortedChapters: withIndex });
       this.triggerEvent('delete', { chapterId: id });
     },
 
@@ -192,8 +196,10 @@ Component({
     onDragEnd() {
       const sortedChapters = this.data.sortedChapters;
       this.setData({ dragIndex: -1 });
-      app.globalData.playlistChapters = sortedChapters.map(ch => ch._id);
-      this.triggerEvent('syncSort', { chapters: sortedChapters });
+      // 拖拽后重新生成 index
+      const withIndex = sortedChapters.map((ch, idx) => ({ ...ch, index: idx }));
+      app.globalData.playlistChapters = withIndex.map(ch => ch._id);
+      this.triggerEvent('syncSort', { chapters: withIndex });
     },
 
     preventMove() {}
