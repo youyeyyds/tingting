@@ -27,8 +27,8 @@
     <text class="course-title">{{courseTitle || '未知课程'}}</text>
     <text class="course-author">{{courseAuthor || '未知作者'}}</text>
     <view class="chapter-title-line">
-      <text class="chapter-seq" wx:if="{{currentChapter.seq !== 0}}">{{currentChapter.seq}}</text>
-      <text class="chapter-sep" wx:if="{{currentChapter.seq !== 0}}">|</text>
+      <text class="chapter-seq" wx:if="{{currentChapter.seq > 0}}">{{currentChapter.seq}}</text>
+      <text class="chapter-sep" wx:if="{{currentChapter.seq > 0}}">|</text>
       <text class="chapter-name">{{currentChapter.title}}</text>
     </view>
   </view>

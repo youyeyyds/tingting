@@ -11,7 +11,7 @@
       <view class="chapter-meta">
         <text class="course-name">{{courseName}}</text>
         <text class="dot">·</text>
-        <text class="chapter-seq">第{{currentChapter.seq}}章</text>
+        <text class="chapter-seq" wx:if="{{currentChapter.seq > 0}}">第{{currentChapter.seq}}章</text>
       </view>
     </view>
   </view>

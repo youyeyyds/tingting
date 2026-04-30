@@ -42,8 +42,8 @@
               <view class="audio-bar audio-bar-2"></view>
               <view class="audio-bar audio-bar-3"></view>
             </view>
-            <text class="chapter-seq">{{item.seq}}</text>
-            <text class="chapter-sep">|</text>
+            <text class="chapter-seq" wx:if="{{item.seq > 0}}">{{item.seq}}</text>
+            <text class="chapter-sep" wx:if="{{item.seq > 0}}">|</text>
             <text class="chapter-name">{{item.title}}</text>
           </view>
           <!-- 第二行：课程名称|音频时长|学习进度 -->
