@@ -544,6 +544,13 @@ Page({
     app.globalData.indexCourses = [];
     wx.removeStorageSync('indexCourses');
 
+    // 清理播放状态缓存，确保重新进入时不恢复 mini-player
+    wx.removeStorageSync('playingCourse');
+    wx.removeStorageSync('playingChapter');
+    wx.removeStorageSync('playingSeq');
+    wx.removeStorageSync('playlistSortOrder');
+    wx.removeStorageSync('playMode');
+
     // 恢复脱敏数据（保留 this._realCourses 用于第二次登录恢复）
     const maskedCourses = app.globalData.homePageMaskedCourses || {};
     const courses = Object.values(maskedCourses);
