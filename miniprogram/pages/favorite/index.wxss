@@ -272,3 +272,48 @@
   color: #999;
   line-height: 1;
 }
+
+/* 骨架屏 */
+.skeleton-card {
+  width: 690rpx;
+  display: flex;
+  padding: 20rpx;
+  margin: 0 auto 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-sizing: border-box;
+}
+
+.skeleton-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  background: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.skeleton-info {
+  flex: 1;
+  padding-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.skeleton-title {
+  height: 32rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+}
+
+.skeleton-author {
+  height: 26rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+}
+
+.skeleton-meta {
+  height: 24rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+}

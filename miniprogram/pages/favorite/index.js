@@ -48,14 +48,14 @@ Page({
       coverLoadTime: coverLoadTime,
       headlines: cachedHeadlines,
       favoriteChapters: cachedFavorites,
-      loading: cachedFavorites.length > 0 ? false : true
+      loading: true
     });
     this.checkLoginStatus();
     // 只在首次加载（无缓存）时获取数据
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
     }
-    if (this.data.isLoggedIn && cachedFavorites.length === 0) {
+    if (this.data.isLoggedIn) {
       this.loadFavorites();
     }
 
@@ -126,8 +126,8 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
-    // 切换页面时不重新加载，保持原有数据
-    if (this.data.isLoggedIn && app.globalData.userId && this.data.favoriteChapters.length === 0) {
+    // 每次进入页面都刷新收藏数据
+    if (this.data.isLoggedIn && app.globalData.userId) {
       this.loadFavorites();
     }
     // 同步图片时间戳变化

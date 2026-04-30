@@ -17,6 +17,16 @@
       <button class="login-btn" bindtap="handleLogin">登录</button>
     </view>
 
+    <!-- 已登录但加载中 -->
+    <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this" wx:if="{{isLoggedIn && loading}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
+      <view class="skeleton-image"></view>
+      <view class="skeleton-info">
+        <view class="skeleton-title"></view>
+        <view class="skeleton-author"></view>
+        <view class="skeleton-meta"></view>
+      </view>
+    </view>
+
     <!-- 已登录但无收藏 -->
     <view class="empty-tip" wx:if="{{isLoggedIn && favoriteChapters.length === 0 && !loading}}" style="{{headlines.length > 0 ? 'margin-top: 40rpx;' : ''}}">
       <text class="empty-text">随时随地，学习成长</text>
