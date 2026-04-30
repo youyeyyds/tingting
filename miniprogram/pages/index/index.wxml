@@ -47,7 +47,7 @@
 
       <!-- 空状态提示 -->
       <view class="empty-tip" wx:if="{{!loading && courses.length === 0}}">
-        <text class="empty-text">暂无课程数据</text>
+        <text class="empty-text">飞雪连天射白鹿，笑书神侠倚碧鸳</text>
       </view>
 
       <view class="list-bottom"></view>
