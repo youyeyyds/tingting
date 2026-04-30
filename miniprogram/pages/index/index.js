@@ -501,9 +501,9 @@ Page({
     const newState = app.globalData.isLoggedIn || false;
     if (prevState !== newState) {
       this.setData({ isLoggedIn: newState });
-      // 登录状态变化时，重新处理课程显示
-      if (this._realCourses && this._realCourses.length) {
-        this.maskCourses();
+      if (newState && this._realCourses && this._realCourses.length) {
+        // 登录后直接恢复真实课程
+        this.setData({ courses: this._realCourses, loading: false });
       }
     }
   },
@@ -544,14 +544,11 @@ Page({
     app.globalData.indexCourses = [];
     wx.removeStorageSync('indexCourses');
 
-    // 清空内存中的真实数据引用
-    this._realCourses = null;
-
-    // 直接用已保存的脱敏数据恢复页面显示
+    // 恢复脱敏数据（保留 this._realCourses 用于第二次登录恢复）
     const maskedCourses = app.globalData.homePageMaskedCourses || {};
     const courses = Object.values(maskedCourses);
 
-    this.setData({ isLoggedIn: false, courses, maskedCourses });
+    this.setData({ isLoggedIn: false, courses, maskedCourses, loading: false });
   },
 
   onCourseTap(e) {
