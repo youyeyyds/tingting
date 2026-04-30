@@ -485,10 +485,11 @@ Page({
       if (!cached) {
         const art = MARTIAL_ARTS[Math.floor(Math.random() * MARTIAL_ARTS.length)];
         const user = art.users[Math.floor(Math.random() * art.users.length)];
-        cached = { art, user };
+        // 保存完整课程数据，只是 title/author/categoryName 脱敏
+        cached = { ...c, title: art.name, author: user, categoryName: art.type };
         maskedCourses[c._id] = cached;
       }
-      return { ...c, title: cached.art.name, author: cached.user, categoryName: cached.art.type };
+      return cached;
     });
 
     app.globalData.homePageMaskedCourses = maskedCourses;
@@ -539,12 +540,18 @@ Page({
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
 
-    // 刷新当前页面状态
-    this.setData({ isLoggedIn: false });
-    this.maskCourses();
+    // 清理课程缓存，防止退出后真实数据残留在本地
+    app.globalData.indexCourses = [];
+    wx.removeStorageSync('indexCourses');
 
-    // 显示退出提示（不设置 logoutFlag，避免切回首页时重复显示）
-    setTimeout(() => wx.showToast({ title: '已退出登录', icon: 'success' }), 300);
+    // 清空内存中的真实数据引用
+    this._realCourses = null;
+
+    // 直接用已保存的脱敏数据恢复页面显示
+    const maskedCourses = app.globalData.homePageMaskedCourses || {};
+    const courses = Object.values(maskedCourses);
+
+    this.setData({ isLoggedIn: false, courses, maskedCourses });
   },
 
   onCourseTap(e) {
