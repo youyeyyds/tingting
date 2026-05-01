@@ -365,8 +365,8 @@ Page({
     // 退出登录（通用逻辑）
     app.logout();
 
-    // 跳转到首页（清空页面栈）
-    wx.reLaunch({ url: '/pages/index/index' });
+    // 跳转到首页 tabBar
+    wx.switchTab({ url: '/pages/index/index' });
   },
 
   handleChangeAvatar() {
