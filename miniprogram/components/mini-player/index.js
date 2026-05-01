@@ -50,7 +50,6 @@ Component({
           const { currentChapter, currentIndex } = this.data;
           if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: true });
-            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id, chapter: currentChapter, index: currentIndex });
           }
         },
         onPause: () => {
@@ -58,11 +57,13 @@ Component({
           if (this.data.currentChapter._id) {
             this.saveProgress();
           }
-          this.setData({ isPlaying: false });
-          // 暂停时不触发 onChapterChange，只通知 onPlayPause，保持图标稳定
-          const { currentChapter } = this.data;
-          if (currentChapter._id) {
-            app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+          // 只有音频真正暂停时才更新状态和通知
+          if (this.bgAudioManager.paused) {
+            this.setData({ isPlaying: false });
+            const { currentChapter } = this.data;
+            if (currentChapter._id) {
+              app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+            }
           }
         },
         onPlayPause: ({ isPlaying }) => {
