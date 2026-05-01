@@ -7,18 +7,12 @@ Component({
       type: Array,
       value: [],
       observer: function(newVal) {
-        console.log('[playlist-panel] observer fired, hasInitialized:', this.data.hasInitialized, 'isDragging:', this.data.isDragging, 'newVal length:', newVal ? newVal.length : 0, 'newVal[0].index:', newVal && newVal[0] ? newVal[0].index : 'undefined');
         // chapters 变化时，更新 sortedChapters
         if (newVal && newVal.length > 0) {
-          if (this.data.isDragging) {
-            // 拖拽进行中：直接用新 chapters 更新 sortedChapters，跳过 applySort
+          // 拖拽进行中 或 chapters 已有 index：直接用 newVal 更新，跳过 applySort
+          if (this.data.isDragging || newVal[0].index !== undefined) {
             const currentId = this.properties.currentChapterId;
             const updated = newVal.map((ch, idx) => ({ ...ch, index: idx, isPlaying: ch._id === currentId }));
-            this.setData({ sortedChapters: updated });
-          } else if (newVal[0] && newVal[0].index !== undefined) {
-            // chapters 已有 index（拖拽/排序后的正确顺序），直接用，不再重新排序
-            const currentId = this.properties.currentChapterId;
-            const updated = newVal.map((ch, idx) => ({ ...ch, isPlaying: ch._id === currentId }));
             this.setData({ sortedChapters: updated, hasInitialized: true });
           } else if (!this.data.hasInitialized) {
             // 初始状态，没有 index，需要执行 applySort 生成 index
@@ -84,8 +78,6 @@ Component({
 
   methods: {
     show() {
-      const prop = this.properties.chapters;
-      console.log('[playlist-panel] show() called, sortedChapters.length:', this.data.sortedChapters.length, 'hasInitialized:', this.data.hasInitialized, 'chapters prop length:', prop ? prop.length : 0, 'chapters[0].index:', prop && prop[0] ? prop[0].index : 'undefined');
       // 从全局数据同步播放模式和排序状态
       const playMode = app.globalData.playMode || 'sequence';
       const sortOrder = app.globalData.playlistSortOrder || this.properties.initialSortOrder || 'asc';
