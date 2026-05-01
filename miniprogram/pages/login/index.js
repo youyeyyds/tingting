@@ -151,6 +151,25 @@ Page({
   onPhoneInput(e) { this.setData({ phone: e.detail.value }); },
   onPasswordInput(e) { this.setData({ password: e.detail.value }); },
 
+  // 缓存头像临时URL（登录时调用一次，之后mine页直接用缓存）
+  async cacheAvatarTempUrl(user) {
+    if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
+      try {
+        const res = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
+        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+          app.globalData.cachedAvatarFileID = user.avatarFileID;
+          app.globalData.cachedAvatarTempUrl = res.fileList[0].tempFileURL;
+        }
+      } catch (e) {
+        console.error('缓存头像临时URL失败:', e);
+      }
+    } else {
+      // 非云文件ID，直接用avatarUrl
+      app.globalData.cachedAvatarFileID = null;
+      app.globalData.cachedAvatarTempUrl = user.avatarUrl || '';
+    }
+  },
+
   onKeyboardHeightChange(e) {
     const { height } = e.detail;
     if (height > 0) {
@@ -196,10 +215,12 @@ Page({
         app.globalData.userInfo = user;
         app.globalData.userId = user.userId;
         app.globalData.loginFlag = true;
-        app.globalData.logoutFlag = false; // 清除退出标志，避免 showStatusToast 错误显示
+        app.globalData.logoutFlag = false;
         app.globalData.needRestoreMaskedData = false;
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
+        // 缓存头像临时URL
+        this.cacheAvatarTempUrl(user);
         wx.navigateBack({ delta: 1 });
         return;
       }

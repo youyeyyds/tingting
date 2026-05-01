@@ -426,6 +426,9 @@ App({
     this.globalData.userId = null;
     this.globalData.logoutFlag = true;
     this.globalData.needRestoreMaskedData = true;
+    // 清空头像缓存
+    this.globalData.cachedAvatarFileID = null;
+    this.globalData.cachedAvatarTempUrl = null;
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
   },

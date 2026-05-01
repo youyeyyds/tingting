@@ -63,8 +63,6 @@ Page({
       headlines: cachedHeadlines
     });
     this.checkLoginStatus();
-    // 刷新头像 temp URL（只在 avatarFileID 变化时才更新，避免切换页面时闪烁）
-    this.refreshAvatarTempUrl();
     // 只在首次加载（无缓存）时获取横幅数据
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
@@ -254,8 +252,9 @@ Page({
   },
 
   checkLoginStatus() {
-    const { isLoggedIn, userInfo, userId } = app.globalData;
-    const avatarUrl = userInfo?.avatarUrl || '/icons/svg/avatar.svg';
+    const { isLoggedIn, userInfo, userId, cachedAvatarTempUrl } = app.globalData;
+    // 头像优先用缓存的临时URL
+    const avatarUrl = cachedAvatarTempUrl || userInfo?.avatarUrl || '/icons/svg/avatar.svg';
     const maskedPhone = userInfo?.phone ? this.maskPhone(userInfo.phone) : '';
     this.setData({
       isLoggedIn: isLoggedIn || false,
@@ -275,7 +274,7 @@ Page({
         this.setData({
           isLoggedIn: true,
           userInfo: parsedUserInfo,
-          avatarUrl: parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
+          avatarUrl: cachedAvatarTempUrl || parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
           maskedPhone: this.maskPhone(parsedUserInfo.phone)
         });
       }
