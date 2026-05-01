@@ -416,6 +416,19 @@ App({
     this.notifyCallbacks('onReset', {});
   },
 
+  // 退出登录（通用逻辑）
+  logout() {
+    this.resetPlayState();
+    this.globalData.playlistSortOrder = 'asc';
+    this.globalData.isLoggedIn = false;
+    this.globalData.userInfo = null;
+    this.globalData.userId = null;
+    this.globalData.logoutFlag = true;
+    this.globalData.favoriteChapters = [];
+    wx.removeStorageSync('userId');
+    wx.removeStorageSync('userInfo');
+  },
+
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
     this.miniPlayerCallbacks.forEach(cb => {

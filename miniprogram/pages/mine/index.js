@@ -362,18 +362,8 @@ Page({
   onLogoutConfirm() {
     this.setData({ logoutConfirmVisible: false });
 
-    // 停止播放器并清空播放状态
-    app.resetPlayState();
-    app.globalData.playlistSortOrder = 'asc';
-    // 通知 mini-player 关闭
-    app.notifyCallbacks('onClose', {});
-
-    app.globalData.isLoggedIn = false;
-    app.globalData.userInfo = null;
-    app.globalData.userId = null;
-    app.globalData.logoutFlag = true;
-    wx.removeStorageSync('userId');
-    wx.removeStorageSync('userInfo');
+    // 退出登录（通用逻辑）
+    app.logout();
 
     // 跳转到首页（清空页面栈）
     wx.reLaunch({ url: '/pages/index/index' });

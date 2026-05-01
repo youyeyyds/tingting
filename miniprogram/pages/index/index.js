@@ -531,19 +531,8 @@ Page({
   onLogoutConfirm() {
     this.setData({ logoutConfirmVisible: false });
 
-    // 停止播放器并清空播放状态
-    app.resetPlayState();
-    app.globalData.favoriteChapters = [];
-    app.globalData.playlistSortOrder = 'asc';
-    app.notifyCallbacks?.('onClose', {});
-
-    // 清除登录状态
-    app.globalData.isLoggedIn = false;
-    app.globalData.userInfo = null;
-    app.globalData.userId = null;
-    app.globalData.logoutFlag = true;
-    wx.removeStorageSync('userId');
-    wx.removeStorageSync('userInfo');
+    // 退出登录（通用逻辑）
+    app.logout();
 
     // 清理课程缓存，防止退出后真实数据残留在本地
     app.globalData.indexCourses = [];
