@@ -42,10 +42,6 @@ Component({
             }
           }
         },
-        onPlayModeChange: ({ playMode }) => {
-          // 同步播放模式变化
-          app.globalData.playMode = playMode;
-        },
         onPlay: () => {
           // 清除章节同步标志，允许 onTimeUpdate 更新进度
           this._syncingChapter = false;
@@ -63,11 +59,10 @@ Component({
             this.saveProgress();
           }
           this.setData({ isPlaying: false });
-          // 通知播放暂停状态变化
-          const { currentChapter, currentIndex } = this.data;
+          // 暂停时不触发 onChapterChange，只通知 onPlayPause，保持图标稳定
+          const { currentChapter } = this.data;
           if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
-            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id, chapter: currentChapter, index: currentIndex });
           }
         },
         onPlayPause: ({ isPlaying }) => {
@@ -344,12 +339,11 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示
+      // 设置 mini-player 显示，isPlaying 保持现状由 onPlay/onPause 回调更新
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
-        playerBottom: this.calcPosition(),
-        isPlaying: false
+        playerBottom: this.calcPosition()
       });
     },
 
@@ -419,12 +413,11 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示
+      // 设置 mini-player 显示，isPlaying 保持现状由 onPlay/onPause 回调更新
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
-        playerBottom: this.calcPosition(),
-        isPlaying: false
+        playerBottom: this.calcPosition()
       });
     },
 
