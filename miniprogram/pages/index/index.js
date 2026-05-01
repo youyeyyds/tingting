@@ -260,19 +260,13 @@ Page({
     this.initTimes();
     this.initCache();
     this.checkLogin();
-    app.registerMiniPlayer(this.coverCallback = {
-      onCoverRefresh: ({ coverLoadTime }) => {
-        if (coverLoadTime !== this.data.coverTime) {
-          app.globalData.coverLoadTime = coverLoadTime;
-          this.setData({ coverTime: coverLoadTime });
-          this.syncCoverUrls();
-        }
+    // 注册封面刷新回调
+    app.registerCallback?.('onCoverRefresh', (data) => {
+      if (data?.coverLoadTime) {
+        app.globalData.coverLoadTime = data.coverLoadTime;
+        this.syncCoverUrls();
       }
     });
-  },
-
-  onUnload() {
-    app.unregisterMiniPlayer(this.coverCallback);
   },
 
   initLayout() {
@@ -345,24 +339,53 @@ Page({
   },
 
   onShow() {
+    // 先检查是否需要恢复脱敏数据（在 checkLogin 之前，防止恢复旧课程）
+    // 注意：如果 loginFlag 也为 true，说明用户正在重新登录，不需要恢复脱敏数据
+    if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      console.log('[Index onShow] needRestoreMaskedData branch');
+      app.globalData.needRestoreMaskedData = false;
+      // 清理课程缓存
+      app.globalData.indexCourses = [];
+      wx.removeStorageSync('indexCourses');
+      // 恢复脱敏数据前，先用当前 coverTime 同步封面URL
+      const ct = app.globalData.coverLoadTime;
+      const maskedCourses = { ...app.globalData.homePageMaskedCourses };
+      Object.keys(maskedCourses).forEach(id => {
+        maskedCourses[id] = {
+          ...maskedCourses[id],
+          cover: this.processUrl(maskedCourses[id].cover, ct, 'cover')
+        };
+      });
+      app.globalData.homePageMaskedCourses = maskedCourses;
+      const courses = Object.values(maskedCourses);
+      // 清空 _realCourses，防止第二次登录时 checkLogin 使用旧数据
+      this._realCourses = null;
+      this.setData({ isLoggedIn: false, courses, maskedCourses, loading: false });
+      console.log('[Index onShow] restored masked data, _realCourses set to null');
+      this.showStatusToast();
+      // 恢复脱敏数据后，跳过后续所有处理
+      return;
+    }
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
     // 重新检查登录状态，确保显示正确的课程数据
     if (app.globalData.isLoggedIn !== this.data.isLoggedIn) {
+      console.log('[Index onShow] login state changed, calling checkLogin again');
       this.checkLogin();
+    }
+    // 如果刚登录（从登出变为登录），需要重新加载课程数据
+    // navigateBack 时页面实例复用，_realCourses 可能过期或为 null
+    if (this.data.isLoggedIn && (!this._realCourses || !this._realCourses.length)) {
+      console.log('[Index onShow] re-login detected, calling loadCourses');
+      this.loadCourses();
     }
     // 如果有真实课程数据，重新执行 maskCourses 以更新显示
     if (this._realCourses && this._realCourses.length) {
+      console.log('[Index onShow] calling maskCourses');
       this.maskCourses();
     }
-    // 图片刷新后返回首页，同步课程封面
-    // 注意：必须在 syncTimes 和 maskCourses 之后执行
-    if (app.globalData.coverLoadTime !== this.data.coverTime) {
-      this.setData({ coverTime: app.globalData.coverLoadTime });
-      this.syncCoverUrls();
-    }
-    // 同步课程封面 URL（确保 maskedCourses 的封面也是最新的）
+// 额外调用 syncCoverUrls 确保封面一致性
     this.syncCoverUrls();
   },
 
@@ -384,32 +407,38 @@ Page({
       }));
       this.setData({ coverTime: ct, courses });
       app.globalData.indexCourses = courses; // 同步回全局缓存
-      this.maskCourses();
     }
   },
 
-  // 同步课程封面 URL（图片刷新后其他页面调用）
+// 同步封面URL到所有数据源：courses、_realCourses、maskedCourses、homePageMaskedCourses
   syncCoverUrls() {
-    const courses = this.data.courses.map(c => ({
-      ...c, cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+    const ct = app.globalData.coverLoadTime;
+    if (!ct) return;
+
+    // 更新 courses
+    const courses = (this._realCourses || this.data.courses).map(c => ({
+      ...c, cover: this.processUrl(c.cover, ct, 'cover')
     }));
-    // 同步更新 this._realCourses 和 homePageMaskedCourses 的封面
-    if (this._realCourses && this._realCourses.length) {
-      this._realCourses = this._realCourses.map(c => ({
-        ...c, cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
-      }));
+
+    // 更新 _realCourses
+    if (this._realCourses) {
+      this._realCourses = courses;
     }
-    // 更新 homePageMaskedCourses 中的封面，确保 maskCourses() 重新生成时封面正确
-    const maskedCourses = this.data.maskedCourses || {};
+
+    // 更新 maskedCourses 缓存中的封面
+    const maskedCourses = { ...this.data.maskedCourses };
     Object.keys(maskedCourses).forEach(id => {
-      maskedCourses[id] = {
-        ...maskedCourses[id],
-        cover: this.processUrl(maskedCourses[id].cover, this.data.coverTime, 'cover')
-      };
+      const mc = maskedCourses[id];
+      const realCourse = courses.find(c => c._id === id);
+      if (realCourse) {
+        maskedCourses[id] = { ...mc, cover: realCourse.cover };
+      }
     });
+
+    // 更新全局首页脱敏课程缓存
     app.globalData.homePageMaskedCourses = maskedCourses;
-    this.setData({ courses, maskedCourses });
-    app.globalData.indexCourses = courses;
+
+    this.setData({ coverTime: ct, courses, maskedCourses });
   },
 
   showStatusToast() {

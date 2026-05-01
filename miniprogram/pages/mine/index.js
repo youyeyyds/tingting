@@ -339,13 +339,14 @@ Page({
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
     this.setData({ loadTime: t });
+    // 立即广播事件，确保 index 页面及时响应
+    app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
+    // 异步加载数据
     Promise.all([
       this.loadHeadlines(),
       this.refreshUserInfo(),
       this.loadUserStats()
-    ]).then(() => {
-      app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
-    });
+    ]);
   },
 
   // 点击退出登录，显示确认弹窗

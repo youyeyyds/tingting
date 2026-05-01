@@ -425,6 +425,7 @@ App({
     this.globalData.userInfo = null;
     this.globalData.userId = null;
     this.globalData.logoutFlag = true;
+    this.globalData.needRestoreMaskedData = true;
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
   },
@@ -434,11 +435,22 @@ App({
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
+    // 通知通用回调
+    if (this._callbacks && this._callbacks[event]) {
+      this._callbacks[event].forEach(cb => cb(data));
+    }
   },
 
   // 注册 mini-player 回调
   registerMiniPlayer(callback) {
     this.miniPlayerCallbacks.push(callback);
+  },
+
+  // 注册通用回调
+  registerCallback(event, callback) {
+    if (!this._callbacks) this._callbacks = {};
+    if (!this._callbacks[event]) this._callbacks[event] = [];
+    this._callbacks[event].push(callback);
   },
 
   // 移除 mini-player 回调

@@ -48,6 +48,11 @@ Page({
   },
 
   onShow() {
+    // 已登录则跳转到首页
+    if (app.globalData.isLoggedIn) {
+      wx.switchTab({ url: '/pages/index/index' });
+      return;
+    }
     // 只有banner时间戳变化了才同步（其他页面刷新了）
     const currentBannerTime = app.globalData.bannerLoadTime;
     if (currentBannerTime !== this.data._prevBannerTime && !this.data._loading) {
@@ -191,6 +196,8 @@ Page({
         app.globalData.userInfo = user;
         app.globalData.userId = user.userId;
         app.globalData.loginFlag = true;
+        app.globalData.logoutFlag = false; // 清除退出标志，避免 showStatusToast 错误显示
+        app.globalData.needRestoreMaskedData = false;
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
         wx.navigateBack({ delta: 1 });
