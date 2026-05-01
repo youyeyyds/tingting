@@ -234,7 +234,7 @@
 .chapter-meta-line {
   display: flex;
   align-items: center;
-  margin-top: 12rpx;
+  margin-top: 16rpx;
 }
 
 .chapter-progress {
