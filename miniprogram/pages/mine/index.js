@@ -366,7 +366,14 @@ Page({
     app.logout();
 
     // 跳转到首页 tabBar
-    wx.switchTab({ url: '/pages/index/index' });
+    const pages = getCurrentPages();
+    const indexPage = pages.find(p => p.route === 'pages/index/index');
+    if (indexPage) {
+      const delta = pages.length - pages.indexOf(indexPage) - 1;
+      wx.navigateBack({ delta });
+    } else {
+      wx.switchTab({ url: '/pages/index/index' });
+    }
   },
 
   handleChangeAvatar() {
