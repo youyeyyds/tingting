@@ -560,7 +560,9 @@ Page({
     const maskedCourses = app.globalData.homePageMaskedCourses || {};
     const courses = Object.values(maskedCourses);
 
-    this.setData({ isLoggedIn: false, courses, maskedCourses, loading: false });
+    this.setData({ isLoggedIn: false, courses, maskedCourses, loading: false }, () => {
+      this.showStatusToast();
+    });
   },
 
   onCourseTap(e) {
