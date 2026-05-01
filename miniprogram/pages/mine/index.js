@@ -77,6 +77,8 @@ Page({
       wx.reLaunch({ url: '/pages/index/index' });
       return;
     }
+    // 学习报告每次进入时刷新
+    this.loadUserStats();
     // 同步图片时间戳变化
     this.syncImageTimes();
   },
