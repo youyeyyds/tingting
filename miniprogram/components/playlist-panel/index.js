@@ -63,6 +63,7 @@ Component({
     dragIndex: -1,
     startY: 0,
     cardHeight: 60,
+    dragOffsetY: 0, // 拖拽时卡片的偏移量
     confirmVisible: false,
     justDragEnded: false, // 标记刚结束拖拽，防止触发 onCardTap
     isDragging: false, // 标记正在拖拽，防止 observer 重复排序
@@ -210,7 +211,7 @@ Component({
     onDragStart(e) {
       const index = e.currentTarget.dataset.index;
       const touch = e.touches[0];
-      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true });
+      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true, dragOffsetY: 0 });
     },
 
     onDragMove(e) {
@@ -222,7 +223,16 @@ Component({
         const chapters = [...this.data.sortedChapters];
         const [removed] = chapters.splice(this.data.dragIndex, 1);
         chapters.splice(newIndex, 0, removed);
-        this.setData({ sortedChapters: chapters, dragIndex: newIndex, startY: touch.clientY, isDragging: true });
+        this.setData({
+          sortedChapters: chapters,
+          dragIndex: newIndex,
+          startY: touch.clientY,
+          isDragging: true,
+          dragOffsetY: deltaY / 2 // 转换为 rpx
+        });
+      } else {
+        // 没有换位置时也更新偏移量
+        this.setData({ dragOffsetY: deltaY / 2 });
       }
     },
 
@@ -234,7 +244,7 @@ Component({
       app.globalData.playlistChapters = withIndex.map(ch => ch._id);
       app.globalData.playlistChaptersData = withIndex;
       this.triggerEvent('syncSort', { chapters: withIndex, sortOrder });
-      this.setData({ dragIndex: -1, justDragEnded: true }, () => {
+      this.setData({ dragIndex: -1, dragOffsetY: 0, justDragEnded: true }, () => {
         this.setData({ isDragging: false, justDragEnded: false });
       });
     },

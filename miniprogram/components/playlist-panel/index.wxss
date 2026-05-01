@@ -211,10 +211,10 @@
 }
 
 .chapter-card.dragging {
-  opacity: 0.8;
-  transform: scale(1.02);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  opacity: 0.95;
+  transform: scale(1.03);
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.2);
+  z-index: 100;
 }
 
 /* 分隔线 */
