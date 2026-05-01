@@ -31,7 +31,6 @@
       <view class="chapter-list">
         <view id="card-{{index}}"
               class="chapter-card {{dragIndex === index ? 'dragging' : ''}} {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 ? 'completed' : ''}}"
-              style="{{dragIndex === index ? 'transform: translateY(' + dragOffsetY + 'rpx)' : ''}}"
               wx:for="{{sortedChapters}}" wx:key="_id"
               data-id="{{item._id}}" data-index="{{index}}"
               bindtap="onCardTap">

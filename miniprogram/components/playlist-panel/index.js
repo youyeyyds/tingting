@@ -63,7 +63,6 @@ Component({
     dragIndex: -1,
     startY: 0,
     cardHeight: 60,
-    dragOffsetY: 0, // 拖拽时卡片的偏移量
     confirmVisible: false,
     justDragEnded: false, // 标记刚结束拖拽，防止触发 onCardTap
     isDragging: false, // 标记正在拖拽，防止 observer 重复排序
@@ -211,29 +210,29 @@ Component({
     onDragStart(e) {
       const index = e.currentTarget.dataset.index;
       const touch = e.touches[0];
-      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true, dragOffsetY: 0 });
+      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true });
     },
 
     onDragMove(e) {
       if (this.data.dragIndex === -1) return;
       const touch = e.touches[0];
       const deltaY = touch.clientY - this.data.startY;
-      const newIndex = Math.round(this.data.dragIndex + deltaY / this.data.cardHeight);
-      if (newIndex !== this.data.dragIndex && newIndex >= 0 && newIndex < this.data.sortedChapters.length) {
+      // 计算目标位置（不立即更新列表）
+      const targetIndex = Math.max(0, Math.min(this.data.sortedChapters.length - 1,
+        Math.round(this.data.dragIndex + deltaY / this.data.cardHeight)));
+
+      // 只在目标位置变化时更新列表，避免频繁 setData
+      if (targetIndex !== this.data.dragIndex) {
         const chapters = [...this.data.sortedChapters];
         const [removed] = chapters.splice(this.data.dragIndex, 1);
-        chapters.splice(newIndex, 0, removed);
+        chapters.splice(targetIndex, 0, removed);
         this.setData({
           sortedChapters: chapters,
-          dragIndex: newIndex,
-          startY: touch.clientY,
-          isDragging: true,
-          dragOffsetY: deltaY / 2 // 转换为 rpx
+          dragIndex: targetIndex,
+          startY: touch.clientY
         });
-      } else {
-        // 没有换位置时也更新偏移量
-        this.setData({ dragOffsetY: deltaY / 2 });
       }
+      // 视觉偏移通过 CSS transform 实现，无需 setData
     },
 
     onDragEnd() {
@@ -244,7 +243,7 @@ Component({
       app.globalData.playlistChapters = withIndex.map(ch => ch._id);
       app.globalData.playlistChaptersData = withIndex;
       this.triggerEvent('syncSort', { chapters: withIndex, sortOrder });
-      this.setData({ dragIndex: -1, dragOffsetY: 0, justDragEnded: true }, () => {
+      this.setData({ dragIndex: -1, justDragEnded: true }, () => {
         this.setData({ isDragging: false, justDragEnded: false });
       });
     },
