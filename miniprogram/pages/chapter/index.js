@@ -49,13 +49,11 @@ Page({
           isPlaying: false
         });
       },
-      onChapterChange: ({ chapterId, chapter, index }) => {
-        if (chapterId && chapter) {
-          // 用传入的 chapter 对象（含最新 lastPlayTime）更新 chapters 数组对应位置
-          this.setData({
-            chapters: this.data.chapters.map(ch => ch._id === chapterId ? { ...chapter, isPlaying: true } : { ...ch, isPlaying: false })
-          });
-        }
+      onChapterChange: ({ chapterId }) => {
+        // 直接用 chapterId 查找对应章节并设置样式，不依赖传入的 chapter 对象
+        this.setData({
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
+        });
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
@@ -64,7 +62,6 @@ Page({
           isPlaying: isCurrentCourse && miniPlayerActive
         });
         this.applyFilterAndSort();
-        // 保存最近播放的章节ID
         if (chapterId) {
           this.saveCourseSettings({ lastPlayedChapterId: chapterId });
         }

@@ -51,10 +51,10 @@ Component({
           this._syncingChapter = false;
           this.setData({ isPlaying: true });
           // 通知播放状态变化，更新 chapter 页面的按钮样式
-          const { currentChapter } = this.data;
-          if (currentChapter) {
+          const { currentChapter, currentIndex } = this.data;
+          if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: true });
-            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id });
+            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id, chapter: currentChapter, index: currentIndex });
           }
         },
         onPause: () => {
@@ -64,9 +64,10 @@ Component({
           }
           this.setData({ isPlaying: false });
           // 通知播放暂停状态变化
-          const { currentChapter } = this.data;
-          if (currentChapter) {
+          const { currentChapter, currentIndex } = this.data;
+          if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id, chapter: currentChapter, index: currentIndex });
           }
         },
         onPlayPause: ({ isPlaying }) => {
