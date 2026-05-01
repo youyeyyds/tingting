@@ -331,7 +331,15 @@ Page({
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
-    // 保存最近播放的章节ID（样式由 onChapterChange 回调处理，避免闪烁）
+    // 如果点击的是当前正在播放的章节，保持样式为正在播放，避免视觉闪烁
+    const isCurrentPlaying = this.data.chapters.some(ch => ch._id === chapterId && ch.isPlaying);
+    if (!isCurrentPlaying) {
+      this.setData({
+        chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
+      });
+      this.applyFilterAndSort();
+    }
+    // 保存最近播放的章节ID
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
   },
 
