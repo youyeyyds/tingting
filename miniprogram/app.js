@@ -122,7 +122,8 @@ App({
     mineHeadlines: [], // 我的页横幅缓存
     favoriteChapters: [], // 收藏章节缓存
     cachedAvatarFileID: null, // 头像云文件ID缓存
-    cachedAvatarTempUrl: null // 头像临时URL缓存
+    cachedAvatarTempUrl: null, // 头像临时URL缓存
+    cachedUserStats: null // 用户统计数据缓存
   },
 
   restoreLoginState() {
@@ -429,6 +430,7 @@ App({
     // 清空头像缓存
     this.globalData.cachedAvatarFileID = null;
     this.globalData.cachedAvatarTempUrl = null;
+    this.globalData.cachedUserStats = null;
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
   },

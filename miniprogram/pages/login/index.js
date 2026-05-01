@@ -170,6 +170,21 @@ Page({
     }
   },
 
+  // 缓存用户统计数据（登录时调用一次，之后mine页直接用缓存）
+  async cacheUserStats(userId) {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'userFunctions',
+        data: { type: 'getUserStats', userId }
+      });
+      if (res.result.success) {
+        app.globalData.cachedUserStats = res.result.data;
+      }
+    } catch (e) {
+      console.error('缓存用户统计失败:', e);
+    }
+  },
+
   onKeyboardHeightChange(e) {
     const { height } = e.detail;
     if (height > 0) {
@@ -221,6 +236,8 @@ Page({
         wx.setStorageSync('userInfo', JSON.stringify(user));
         // 缓存头像临时URL
         this.cacheAvatarTempUrl(user);
+        // 缓存用户统计数据
+        this.cacheUserStats(user.userId);
         wx.navigateBack({ delta: 1 });
         return;
       }
