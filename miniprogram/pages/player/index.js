@@ -345,6 +345,10 @@ Page({
     this.startCoverRotation();
   },
   onPause() {
+    // 暂停时保存当前播放进度
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     this.setData({ isPlaying: false });
     this.stopCoverRotation();
   },
@@ -500,10 +504,16 @@ Page({
   },
 
   playPrev() {
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     app.playPrev();
   },
 
   playNext() {
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     app.playNext();
   },
 
@@ -524,17 +534,21 @@ Page({
 
   saveProgress() {
     const chapterId = this.data.currentChapter._id;
-    if (!chapterId || !this.bgAudioManager.currentTime) return;
-    wx.cloud.callFunction({
+    if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
+    const lastPlayTime = this.bgAudioManager.currentTime;
+    const finished = lastPlayTime >= this.bgAudioManager.duration - 10;
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'updateChapterProgress',
         chapterId,
         courseId: this.data.currentChapter.course || this.data.course._id,
-        lastPlayTime: this.bgAudioManager.currentTime,
-        finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
+        lastPlayTime,
+        finished,
         userId: app.globalData.userId
       }
+    }).then(() => {
+      app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
     }).catch(err => console.error('保存进度失败:', err));
   },
 

@@ -58,6 +58,10 @@ Component({
           }
         },
         onPause: () => {
+          // 暂停时保存当前播放进度
+          if (this.data.currentChapter._id) {
+            this.saveProgress();
+          }
           this.setData({ isPlaying: false });
           // 通知播放暂停状态变化
           const { currentChapter } = this.data;
@@ -285,8 +289,8 @@ Component({
       const { index, chapters } = data;
       if (!chapters || chapters.length === 0 || index < 0) return;
 
-      // 保存当前播放进度
-      if (this.data.currentChapter._id && this.data.isPlaying) {
+      // 保存当前播放进度（使用 bgAudioManager 状态判断）
+      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
         this.saveProgress();
       }
 
@@ -349,7 +353,8 @@ Component({
     },
 
     play(chapterId, playlistChapters, courseData, sortOrder) {
-      if (this.data.currentChapter._id && this.data.isPlaying) {
+      // 使用 bgAudioManager 状态判断是否需要保存进度（比 this.data.isPlaying 更可靠）
+      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
         this.saveProgress();
       }
 
@@ -455,46 +460,53 @@ Component({
       this.setData({ fadeInClass: 'fade-out' });
       // 等待动画完成后重置状态
       setTimeout(() => {
-        this.setData({
-          visible: false,
-          fadeInClass: '',
-          chapters: [],
-          currentChapter: {},
-          currentIndex: 0,
-          course: {},
-          isPlaying: false,
-          currentTime: 0,
-          duration: 0,
-          progressPercent: 0
+        // 先保存进度，等待完成后停止播放
+        this.saveProgress().then(() => {
+          app.stop();
+          this.setData({
+            visible: false,
+            fadeInClass: '',
+            chapters: [],
+            currentChapter: {},
+            currentIndex: 0,
+            course: {},
+            isPlaying: false,
+            currentTime: 0,
+            duration: 0,
+            progressPercent: 0
+          });
+          app.globalData.miniPlayerActive = false;
+          app.globalData.miniPlayerIndexFadedIn = false;
+          app.globalData.playingCourse = null;
+          app.globalData.playingChapter = null;
+          app.globalData.playingSeq = null;
+          app.globalData.playingIndex = 0;
+          app.globalData.playlistChaptersData = [];
+          app.globalData.isFavoriteList = false;
+          this.clearPlayStateCache();
+          app.notifyCallbacks('onClose', { chapterId: lastChapterId });
         });
-        this.saveProgress();
-        app.stop();
-        app.globalData.miniPlayerActive = false;
-        app.globalData.miniPlayerIndexFadedIn = false;
-        app.globalData.playingCourse = null;
-        app.globalData.playingChapter = null;
-        app.globalData.playingSeq = null;
-        app.globalData.playingIndex = 0;
-        app.globalData.playlistChaptersData = [];
-        app.globalData.isFavoriteList = false;
-        this.clearPlayStateCache();
-        app.notifyCallbacks('onClose', { chapterId: lastChapterId });
       }, 300);
     },
 
     saveProgress() {
       const chapterId = this.data.currentChapter._id;
-      if (!chapterId || !this.bgAudioManager.currentTime) return;
-      wx.cloud.callFunction({
+      if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
+      const lastPlayTime = this.bgAudioManager.currentTime;
+      const finished = lastPlayTime >= this.bgAudioManager.duration - 10;
+      return wx.cloud.callFunction({
         name: 'courseFunctions',
         data: {
           type: 'updateChapterProgress',
           chapterId: chapterId,
           courseId: this.data.currentChapter.course || this.data.course._id,
-          lastPlayTime: this.bgAudioManager.currentTime,
-          finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
+          lastPlayTime,
+          finished,
           userId: app.globalData.userId
         }
+      }).then(() => {
+        // 通知其他组件（chapter页面）进度已更新
+        app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
       }).catch(err => console.error('保存进度失败:', err));
     },
 
@@ -511,6 +523,8 @@ Component({
           finished: finished,
           userId: app.globalData.userId
         }
+      }).then(() => {
+        app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime: time, finished });
       }).catch(err => console.error('更新进度失败:', err));
     },
 
