@@ -33,7 +33,8 @@ Page({
     nextChapterSeq: '',
     nextChapterTitle: '',
     usingDefaultCover: false,
-    originalCover: ''
+    originalCover: '',
+    isFavoriteList: false
   },
 
   bgAudioManager: null,
@@ -87,25 +88,37 @@ Page({
     const chapters = playlistChaptersData || [];
     const currentChapter = playingChapter || chapters.find(ch => ch.seq === playingSeq) || {};
     const currentIndex = chapters.findIndex(ch => ch._id === currentChapter._id);
+    // 判断是否是收藏列表（第一条章节有 courseTitle 时认为是跨课程收藏列表）
+    const firstChapter = chapters[0];
+    const isFavList = !!(firstChapter?.courseTitle);
+    // 如果是收藏列表跨课程，course 使用第一条章节的课程信息
+    const course = playingCourse?.title && !isFavList ? playingCourse : {
+      _id: firstChapter?.course || playingCourse?._id || '',
+      title: firstChapter?.courseTitle || playingCourse?.title || '',
+      cover: firstChapter?.courseCover || playingCourse?.cover || '',
+      author: firstChapter?.author || playingCourse?.author || '',
+      chapterCount: chapters.length || 0
+    };
 
     this.setData({
       courseCover,
       bgCover,
       originalCover: playingCourse?.cover || '',
-      courseTitle: playingCourse?.title || '',
-      courseAuthor: playingCourse?.author || '',
-      chapterCount: playingCourse?.chapterCount || chapters.length || 0,
+      courseTitle: course.title,
+      courseAuthor: course.author || '',
+      chapterCount: course.chapterCount,
       currentChapter: currentChapter,
       currentIndex: currentIndex >= 0 ? currentIndex : 0,
       chapters: chapters,
-      course: playingCourse || {},
+      course: course,
       sortOrder: playlistSortOrder || 'asc',
       playMode: playMode || 'sequence',
       isPlaying: !this.bgAudioManager.paused,
       currentTime: this.bgAudioManager.currentTime || 0,
       duration: this.bgAudioManager.duration || 0,
       playbackRate: this.bgAudioManager.playbackRate || 2,
-      coverLoadTime
+      coverLoadTime,
+      isFavoriteList: isFavList
     });
 
     this.updateProgress();
@@ -125,16 +138,29 @@ Page({
     // 同步播放状态
     this.syncPlaybackState();
     // 同步播放列表数据（从 globalData 读取最新的播放列表和排序）
-    const { playlistChaptersData, playlistSortOrder, playingChapter } = app.globalData;
+    const { playlistChaptersData, playlistSortOrder, playingChapter, playingCourse } = app.globalData;
     if (playlistChaptersData && playlistChaptersData.length > 0) {
       const currentId = playingChapter?._id || this.data.currentChapter?._id;
       const newIndex = playlistChaptersData.findIndex(ch => ch._id === currentId);
       const newChapter = newIndex >= 0 ? playlistChaptersData[newIndex] : this.data.currentChapter;
+      const firstChapter = playlistChaptersData[0];
+      // 如果是收藏列表跨课程，course 使用第一条章节的课程信息
+      const updatedCourse = playingCourse?.title ? playingCourse : {
+        _id: firstChapter.course,
+        title: firstChapter.courseTitle || playingCourse?.title || '',
+        cover: firstChapter.courseCover || playingCourse?.cover || '',
+        author: firstChapter.author || playingCourse?.author || '',
+        chapterCount: playlistChaptersData.length
+      };
+      // 判断是否是收藏列表（playlistChaptersData 第一条章节有 courseTitle 时认为是跨课程收藏列表）
+      const isFavList = !!(firstChapter.courseTitle);
       this.setData({
         chapters: playlistChaptersData,
         sortOrder: playlistSortOrder || 'asc',
         currentIndex: newIndex >= 0 ? newIndex : this.data.currentIndex,
-        currentChapter: newChapter
+        currentChapter: newChapter,
+        course: updatedCourse,
+        isFavoriteList: isFavList
       });
     }
   },

@@ -48,7 +48,7 @@
           </view>
           <!-- 第二行：课程名称|音频时长|学习进度 -->
           <view class="chapter-meta-line">
-            <text class="meta-text">{{course.title}}</text>
+            <text class="meta-text">{{item.courseTitle || course.title}}</text>
             <text class="meta-sep">|</text>
             <text class="meta-text">{{item.durationText || '--'}}</text>
             <block wx:if="{{item.progress > 0}}">

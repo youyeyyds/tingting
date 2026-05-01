@@ -118,5 +118,5 @@
 </view>
 
 <!-- 播放列表面板 -->
-<playlist-panel id="playerPlaylistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{sortOrder}}" isFavoriteList="{{false}}"
+<playlist-panel id="playerPlaylistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{sortOrder}}" isFavoriteList="{{isFavoriteList}}"
                 bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
