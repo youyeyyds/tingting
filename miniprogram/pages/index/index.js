@@ -260,6 +260,19 @@ Page({
     this.initTimes();
     this.initCache();
     this.checkLogin();
+    app.registerMiniPlayer(this.coverCallback = {
+      onCoverRefresh: ({ coverLoadTime }) => {
+        if (coverLoadTime !== this.data.coverTime) {
+          app.globalData.coverLoadTime = coverLoadTime;
+          this.setData({ coverTime: coverLoadTime });
+          this.syncCoverUrls();
+        }
+      }
+    });
+  },
+
+  onUnload() {
+    app.unregisterMiniPlayer(this.coverCallback);
   },
 
   initLayout() {
@@ -343,6 +356,14 @@ Page({
     if (this._realCourses && this._realCourses.length) {
       this.maskCourses();
     }
+    // 图片刷新后返回首页，同步课程封面
+    // 注意：必须在 syncTimes 和 maskCourses 之后执行
+    if (app.globalData.coverLoadTime !== this.data.coverTime) {
+      this.setData({ coverTime: app.globalData.coverLoadTime });
+      this.syncCoverUrls();
+    }
+    // 同步课程封面 URL（确保 maskedCourses 的封面也是最新的）
+    this.syncCoverUrls();
   },
 
   syncTimes() {
@@ -365,6 +386,30 @@ Page({
       app.globalData.indexCourses = courses; // 同步回全局缓存
       this.maskCourses();
     }
+  },
+
+  // 同步课程封面 URL（图片刷新后其他页面调用）
+  syncCoverUrls() {
+    const courses = this.data.courses.map(c => ({
+      ...c, cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+    }));
+    // 同步更新 this._realCourses 和 homePageMaskedCourses 的封面
+    if (this._realCourses && this._realCourses.length) {
+      this._realCourses = this._realCourses.map(c => ({
+        ...c, cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+      }));
+    }
+    // 更新 homePageMaskedCourses 中的封面，确保 maskCourses() 重新生成时封面正确
+    const maskedCourses = this.data.maskedCourses || {};
+    Object.keys(maskedCourses).forEach(id => {
+      maskedCourses[id] = {
+        ...maskedCourses[id],
+        cover: this.processUrl(maskedCourses[id].cover, this.data.coverTime, 'cover')
+      };
+    });
+    app.globalData.homePageMaskedCourses = maskedCourses;
+    this.setData({ courses, maskedCourses });
+    app.globalData.indexCourses = courses;
   },
 
   showStatusToast() {
