@@ -339,15 +339,6 @@ Page({
   },
 
   playChapter(chapterId) {
-    // 用 currentTime 判断音频是否正在播放（比 playingChapter 更可靠）
-    const currentTime = app.bgAudioManager.currentTime || 0;
-    const isCurrentChapter = app.globalData.playingChapter?._id === chapterId;
-    if (isCurrentChapter && currentTime > 0) {
-      // 当前章节正在播放，点击则暂停
-      app.togglePlayPause();
-      return;
-    }
-
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
