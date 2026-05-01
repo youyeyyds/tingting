@@ -540,21 +540,31 @@ Page({
   onPlaylistDelete(e) {
     const { chapterId } = e.detail;
     const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
-    this.setData({ chapters });
-    app.globalData.playlistChaptersData = chapters;
+    // 删除后重新生成 index
+    const withIndex = chapters.map((ch, idx) => ({ ...ch, index: idx }));
 
-    if (chapterId === this.data.currentChapter._id) {
+    const currentId = this.data.currentChapter?._id;
+    const currentIdx = this.data.currentIndex;
+
+    this.setData({ chapters: withIndex }, () => {
+      this.updateNextChapterInfo();
+    });
+    app.globalData.playlistChaptersData = withIndex;
+
+    if (chapterId === currentId) {
       this.saveProgress();
-      const nextIndex = this.data.currentIndex;
-      if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
-        const nextChapter = chapters[nextIndex];
-        app.playChapter(nextChapter._id, chapters);
+      // 删除当前播放章节，播放 currentIndex 位置（删除后后面的章节移到这里）
+      const nextIndex = currentIdx;
+      if (nextIndex < withIndex.length && withIndex[nextIndex]?.audioUrl) {
+        app.playChapter(withIndex[nextIndex]._id, withIndex);
+      } else if (withIndex.length > 0) {
+        const last = withIndex[withIndex.length - 1];
+        app.playChapter(last._id, withIndex);
       } else {
         app.stop();
         this.setData({ isPlaying: false });
       }
     }
-    this.updateNextChapterInfo();
   },
 
   onPlaylistCollapse() {},

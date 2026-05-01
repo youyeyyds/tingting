@@ -82,14 +82,14 @@ Component({
       const playMode = app.globalData.playMode || 'sequence';
       const sortOrder = app.globalData.playlistSortOrder || this.properties.initialSortOrder || 'asc';
       this.setData({ playMode, sortOrder });
-      // 如果 sortedChapters 已有数据（说明之前已经排序过），直接用，不再重复排序
+      // 如果 sortedChapters 已有数据，直接用，不再重复排序
       if (this.data.sortedChapters.length > 0) {
         this.setData({ visible: true, slideClass: 'slide-up' });
         setTimeout(() => this.scrollToCurrent(), 350);
         return;
       }
-      // 否则执行初始排序
-      this.applySort();
+      // sortedChapters 为空时，不调用 applySort，让 observer 处理
+      // observer 会检测 chapters 是否有 index，没有则调用 applySort
       this.setData({ visible: true, slideClass: 'slide-up' });
       setTimeout(() => this.scrollToCurrent(), 350);
     },

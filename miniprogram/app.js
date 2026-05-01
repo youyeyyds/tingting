@@ -191,8 +191,7 @@ App({
 
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
-    const sortOrder = this.globalData.playlistSortOrder || 'asc';
-    const currentChapter = this.globalData.playingChapter;
+    const currentIndex = this.globalData.playingIndex;
 
     if (playMode === 'single') {
       // 单曲循环模式：从头播放
@@ -202,24 +201,21 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if ((currentSeq === undefined || currentSeq === null) || !chapters.length) {
+    if (currentIndex === undefined || currentIndex === null || !chapters.length) {
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
       this._audioEndedProcessing = false;
       return;
     }
 
-    // 根据排序方向计算下一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
-    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+    // 始终播 currentIndex + 1
+    const targetIndex = currentIndex + 1;
 
-    if (nextChapter) {
-      this.playChapter(nextChapter._id, chapters);
+    if (targetIndex < chapters.length) {
+      this.playChapter(chapters[targetIndex]._id, chapters);
     } else if (playMode === 'loop') {
-      // 循环模式：回到第一/最后一条
-      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
-      this.playChapter(firstOrLast._id, chapters);
+      // 循环模式：回到第一条
+      this.playChapter(chapters[0]._id, chapters);
     } else {
       // 顺序播放到最后一条，停止播放并重置状态
       wx.showToast({ title: '已经是最后一条', icon: 'none' });
