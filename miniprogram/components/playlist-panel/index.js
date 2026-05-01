@@ -63,6 +63,8 @@ Component({
     dragIndex: -1,
     startY: 0,
     cardHeight: 60,
+    dragOffsetY: 0, // 拖拽时卡片的视觉偏移量
+    targetIndex: -1, // 拖拽时的目标位置
     confirmVisible: false,
     justDragEnded: false, // 标记刚结束拖拽，防止触发 onCardTap
     isDragging: false, // 标记正在拖拽，防止 observer 重复排序
@@ -210,42 +212,52 @@ Component({
     onDragStart(e) {
       const index = e.currentTarget.dataset.index;
       const touch = e.touches[0];
-      this.setData({ dragIndex: index, startY: touch.clientY, isDragging: true });
+      this.setData({
+        dragIndex: index,
+        startY: touch.clientY,
+        isDragging: true,
+        dragOffsetY: 0,
+        targetIndex: index
+      });
     },
 
     onDragMove(e) {
       if (this.data.dragIndex === -1) return;
       const touch = e.touches[0];
       const deltaY = touch.clientY - this.data.startY;
-      // 计算目标位置（不立即更新列表）
-      const targetIndex = Math.max(0, Math.min(this.data.sortedChapters.length - 1,
-        Math.round(this.data.dragIndex + deltaY / this.data.cardHeight)));
+      // 只更新视觉偏移，让被拖卡片跟随手指（不更新列表顺序）
+      this.setData({ dragOffsetY: deltaY });
 
-      // 只在目标位置变化时更新列表，避免频繁 setData
-      if (targetIndex !== this.data.dragIndex) {
-        const chapters = [...this.data.sortedChapters];
-        const [removed] = chapters.splice(this.data.dragIndex, 1);
-        chapters.splice(targetIndex, 0, removed);
-        this.setData({
-          sortedChapters: chapters,
-          dragIndex: targetIndex,
-          startY: touch.clientY
-        });
+      // 计算目标位置（用于最终放置）
+      const newTargetIndex = Math.max(0, Math.min(this.data.sortedChapters.length - 1,
+        Math.round(this.data.dragIndex + deltaY / this.data.cardHeight)));
+      if (newTargetIndex !== this.data.targetIndex) {
+        this.setData({ targetIndex: newTargetIndex });
       }
-      // 视觉偏移通过 CSS transform 实现，无需 setData
     },
 
     onDragEnd() {
-      const sortedChapters = this.data.sortedChapters;
-      const sortOrder = this.data.sortOrder;
-      // 拖拽后重新生成 index
-      const withIndex = sortedChapters.map((ch, idx) => ({ ...ch, index: idx }));
-      app.globalData.playlistChapters = withIndex.map(ch => ch._id);
-      app.globalData.playlistChaptersData = withIndex;
-      this.triggerEvent('syncSort', { chapters: withIndex, sortOrder });
-      this.setData({ dragIndex: -1, justDragEnded: true }, () => {
-        this.setData({ isDragging: false, justDragEnded: false });
-      });
+      const { dragIndex, targetIndex, sortedChapters } = this.data;
+      if (dragIndex === -1 || targetIndex === -1) return;
+
+      // 拖拽结束时，才更新列表的实际顺序
+      if (targetIndex !== dragIndex) {
+        const chapters = [...sortedChapters];
+        const [removed] = chapters.splice(dragIndex, 1);
+        chapters.splice(targetIndex, 0, removed);
+        const withIndex = chapters.map((ch, idx) => ({ ...ch, index: idx }));
+
+        app.globalData.playlistChapters = withIndex.map(ch => ch._id);
+        app.globalData.playlistChaptersData = withIndex;
+        this.triggerEvent('syncSort', { chapters: withIndex, sortOrder: this.data.sortOrder });
+        this.setData({ dragIndex: -1, dragOffsetY: 0, targetIndex: -1, justDragEnded: true, sortedChapters: withIndex }, () => {
+          this.setData({ isDragging: false, justDragEnded: false });
+        });
+      } else {
+        this.setData({ dragIndex: -1, dragOffsetY: 0, targetIndex: -1, justDragEnded: true }, () => {
+          this.setData({ isDragging: false, justDragEnded: false });
+        });
+      }
     },
 
     preventMove() {
