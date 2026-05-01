@@ -339,11 +339,11 @@ Page({
   },
 
   playChapter(chapterId) {
-    // 检查是否是当前正在播放的章节，避免重复点击导致进度丢失
+    // 用 currentTime 判断音频是否正在播放（比 playingChapter 更可靠）
+    const currentTime = app.bgAudioManager.currentTime || 0;
     const isCurrentChapter = app.globalData.playingChapter?._id === chapterId;
-    const isPlaying = !app.bgAudioManager.paused;
-    if (isCurrentChapter && isPlaying) {
-      // 当前章节正在播放，点击则切换暂停/继续
+    if (isCurrentChapter && currentTime > 0) {
+      // 当前章节正在播放，点击则暂停
       app.togglePlayPause();
       return;
     }
