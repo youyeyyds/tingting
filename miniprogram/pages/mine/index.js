@@ -371,6 +371,7 @@ Page({
     app.globalData.isLoggedIn = false;
     app.globalData.userInfo = null;
     app.globalData.userId = null;
+    app.globalData.logoutFlag = true;
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
 
