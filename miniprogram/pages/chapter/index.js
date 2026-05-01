@@ -49,17 +49,31 @@ Page({
           isPlaying: false
         });
       },
-      onChapterChange: ({ chapterId }) => {
+      onChapterChange: ({ chapterId, chapter, index }) => {
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
         // 检查 chapterId 是否属于当前课程
-        const isCurrentChapter = isCurrentCourse && chapterId && this.data.chapters.some(ch => ch._id === chapterId);
-        this.setData({
-          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
-          hasPlaylist: isCurrentCourse && miniPlayerActive,
-          isPlaying: isCurrentCourse && miniPlayerActive
-        });
+        const chapters = this.data.chapters;
+        const newChapter = chapter || (chapterId ? chapters.find(ch => ch._id === chapterId) : null);
+        const newIndex = index >= 0 ? index : (chapterId ? chapters.findIndex(ch => ch._id === chapterId) : -1);
+        const isCurrentChapter = isCurrentCourse && chapterId && chapters.some(ch => ch._id === chapterId);
+        if (newChapter && newIndex >= 0) {
+          // 更新 chapters 数组中对应章节的数据（包含最新 lastPlayTime），同时更新 isPlaying
+          const updatedChapters = [...chapters];
+          updatedChapters[newIndex] = { ...newChapter, isPlaying: true };
+          this.setData({
+            chapters: updatedChapters,
+            hasPlaylist: isCurrentCourse && miniPlayerActive,
+            isPlaying: isCurrentCourse && miniPlayerActive
+          });
+        } else {
+          this.setData({
+            chapters: chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
+            hasPlaylist: isCurrentCourse && miniPlayerActive,
+            isPlaying: isCurrentCourse && miniPlayerActive
+          });
+        }
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
         this.saveCourseSettings({ lastPlayedChapterId: chapterId });
@@ -325,6 +339,15 @@ Page({
   },
 
   playChapter(chapterId) {
+    // 检查是否是当前正在播放的章节，避免重复点击导致进度丢失
+    const isCurrentChapter = app.globalData.playingChapter?._id === chapterId;
+    const isPlaying = !app.bgAudioManager.paused;
+    if (isCurrentChapter && isPlaying) {
+      // 当前章节正在播放，点击则切换暂停/继续
+      app.togglePlayPause();
+      return;
+    }
+
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
