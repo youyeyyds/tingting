@@ -50,33 +50,24 @@ Page({
         });
       },
       onChapterChange: ({ chapterId, chapter, index }) => {
+        if (chapterId && chapter) {
+          // 用传入的 chapter 对象（含最新 lastPlayTime）更新 chapters 数组对应位置
+          this.setData({
+            chapters: this.data.chapters.map(ch => ch._id === chapterId ? { ...chapter, isPlaying: true } : { ...ch, isPlaying: false })
+          });
+        }
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
-        // 检查 chapterId 是否属于当前课程
-        const chapters = this.data.chapters;
-        const newChapter = chapter || (chapterId ? chapters.find(ch => ch._id === chapterId) : null);
-        const newIndex = index >= 0 ? index : (chapterId ? chapters.findIndex(ch => ch._id === chapterId) : -1);
-        const isCurrentChapter = isCurrentCourse && chapterId && chapters.some(ch => ch._id === chapterId);
-        if (newChapter && newIndex >= 0) {
-          // 更新 chapters 数组中对应章节的数据（包含最新 lastPlayTime），同时更新 isPlaying
-          const updatedChapters = [...chapters];
-          updatedChapters[newIndex] = { ...newChapter, isPlaying: true };
-          this.setData({
-            chapters: updatedChapters,
-            hasPlaylist: isCurrentCourse && miniPlayerActive,
-            isPlaying: isCurrentCourse && miniPlayerActive
-          });
-        } else {
-          this.setData({
-            chapters: chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
-            hasPlaylist: isCurrentCourse && miniPlayerActive,
-            isPlaying: isCurrentCourse && miniPlayerActive
-          });
-        }
+        this.setData({
+          hasPlaylist: isCurrentCourse && miniPlayerActive,
+          isPlaying: isCurrentCourse && miniPlayerActive
+        });
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
-        this.saveCourseSettings({ lastPlayedChapterId: chapterId });
+        if (chapterId) {
+          this.saveCourseSettings({ lastPlayedChapterId: chapterId });
+        }
       },
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
         const chapters = this.data.chapters.map(ch => {
@@ -343,9 +334,7 @@ Page({
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
-    this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
-    this.applyFilterAndSort();
-    // 保存最近播放的章节ID
+    // 保存最近播放的章节ID（样式由 onChapterChange 回调处理，避免闪烁）
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
   },
 
