@@ -135,10 +135,8 @@ Component({
         });
       }
 
-      // 生成基于显示顺序的 index（从 0 开始）
-      chapters = chapters.map((ch, idx) => ({
+      chapters = chapters.map(ch => ({
         ...ch,
-        index: idx,
         isPlaying: ch._id === currentId
       }));
       this.setData({ sortedChapters: chapters });
@@ -201,9 +199,7 @@ Component({
     onDeleteTap(e) {
       const id = e.currentTarget.dataset.id;
       const chapters = this.data.sortedChapters.filter(ch => ch._id !== id);
-      // 删除后重新生成 index
-      const withIndex = chapters.map((ch, idx) => ({ ...ch, index: idx }));
-      this.setData({ sortedChapters: withIndex });
+      this.setData({ sortedChapters: chapters });
       this.triggerEvent('delete', { chapterId: id });
     },
 

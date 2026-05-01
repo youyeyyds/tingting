@@ -540,31 +540,21 @@ Page({
   onPlaylistDelete(e) {
     const { chapterId } = e.detail;
     const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
-    // 删除后重新生成 index
-    const withIndex = chapters.map((ch, idx) => ({ ...ch, index: idx }));
+    this.setData({ chapters });
+    app.globalData.playlistChaptersData = chapters;
 
-    const currentId = this.data.currentChapter?._id;
-    const currentIdx = this.data.currentIndex;
-
-    this.setData({ chapters: withIndex }, () => {
-      this.updateNextChapterInfo();
-    });
-    app.globalData.playlistChaptersData = withIndex;
-
-    if (chapterId === currentId) {
+    if (chapterId === this.data.currentChapter._id) {
       this.saveProgress();
-      // 删除当前播放章节，播放 currentIndex 位置（删除后后面的章节移到这里）
-      const nextIndex = currentIdx;
-      if (nextIndex < withIndex.length && withIndex[nextIndex]?.audioUrl) {
-        app.playChapter(withIndex[nextIndex]._id, withIndex);
-      } else if (withIndex.length > 0) {
-        const last = withIndex[withIndex.length - 1];
-        app.playChapter(last._id, withIndex);
+      const nextIndex = this.data.currentIndex;
+      if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
+        const nextChapter = chapters[nextIndex];
+        app.playChapter(nextChapter._id, chapters);
       } else {
         app.stop();
         this.setData({ isPlaying: false });
       }
     }
+    this.updateNextChapterInfo();
   },
 
   onPlaylistCollapse() {},
@@ -647,31 +637,31 @@ Page({
     });
   },
 
-  // 更新下一条信息（next-info 始终显示 currentIndex + 1）
+  // 更新下一条信息
   updateNextChapterInfo() {
-    const { chapters, playMode, currentIndex } = this.data;
+    const { chapters, playMode, sortOrder, currentChapter } = this.data;
     if (!chapters || chapters.length === 0) {
       this.setData({ nextChapterSeq: '', nextChapterTitle: '' });
       return;
     }
-
-    if (currentIndex === undefined || currentIndex === null) return;
-
     // 单曲循环模式：下一条就是当前条
     if (playMode === 'single') {
-      const nextChapter = chapters[currentIndex];
-      this.setData({ nextChapterSeq: nextChapter?.seq || '', nextChapterTitle: nextChapter?.title || '' });
+      this.setData({ nextChapterSeq: currentChapter.seq, nextChapterTitle: currentChapter.title });
       return;
     }
 
-    // next-info 始终显示 currentIndex + 1 的位置
-    const targetIndex = currentIndex + 1;
+    const currentSeq = currentChapter?.seq;
+    if (currentSeq === undefined || currentSeq === null) return;
 
-    if (targetIndex < chapters.length) {
-      this.setData({ nextChapterSeq: chapters[targetIndex].seq, nextChapterTitle: chapters[targetIndex].title });
+    // 根据排序方向计算下一条的 seq
+    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
+    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+
+    if (nextChapter) {
+      this.setData({ nextChapterSeq: nextChapter.seq, nextChapterTitle: nextChapter.title });
     } else if (playMode === 'loop') {
-      // 循环模式下显示第一条
-      this.setData({ nextChapterSeq: chapters[0].seq, nextChapterTitle: chapters[0].title });
+      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
+      this.setData({ nextChapterSeq: firstOrLast.seq, nextChapterTitle: firstOrLast.title });
     } else {
       this.setData({ nextChapterSeq: '', nextChapterTitle: '已经是最后一条' });
     }
