@@ -54,7 +54,12 @@ Page({
         const foundChapter = chapter || chapters.find(ch => ch._id === chapterId);
         const foundIndex = index >= 0 ? index : chapters.findIndex(ch => ch._id === chapterId);
         if (foundIndex >= 0 && foundChapter) {
-          this.setData({ currentChapter: foundChapter, currentIndex: foundIndex }, () => {
+          this.setData({
+            currentChapter: foundChapter,
+            currentIndex: foundIndex,
+            courseTitle: foundChapter.courseTitle || this.data.courseTitle,
+            courseAuthor: foundChapter.author || this.data.courseAuthor
+          }, () => {
             this.updateNextChapterInfo();
           });
         }
