@@ -43,13 +43,7 @@ Page({
         });
       },
       onPause: () => {
-        const playingCourseId = app.globalData.playingCourse?._id;
-        const isCurrentCourse = playingCourseId === this.data.courseId;
-        const isCurrentChapter = app.globalData.playingChapter?._id && this.data.chapters.some(ch => ch._id === app.globalData.playingChapter._id);
-        // 只有当前课程且当前章节时才设置暂停状态
-        if (isCurrentCourse && isCurrentChapter) {
-          this.setData({ isPlaying: false });
-        }
+        this.setData({ isPlaying: false });
       },
       onChapterChange: ({ chapterId }) => {
         // 直接用 chapterId 查找对应章节并设置样式，不依赖传入的 chapter 对象
@@ -333,14 +327,8 @@ Page({
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
-    // 如果点击的是当前正在播放的章节，保持样式为正在播放，避免视觉闪烁
-    const isCurrentPlaying = this.data.chapters.some(ch => ch._id === chapterId && ch.isPlaying);
-    if (!isCurrentPlaying) {
-      this.setData({
-        chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }))
-      });
-      this.applyFilterAndSort();
-    }
+    this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
+    this.applyFilterAndSort();
     // 保存最近播放的章节ID
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
   },

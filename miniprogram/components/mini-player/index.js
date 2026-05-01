@@ -63,10 +63,11 @@ Component({
             this.saveProgress();
           }
           this.setData({ isPlaying: false });
-          // 通知播放暂停状态变化（不触发 onChapterChange，避免样式闪烁）
-          const { currentChapter } = this.data;
+          // 通知播放暂停状态变化
+          const { currentChapter, currentIndex } = this.data;
           if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id, chapter: currentChapter, index: currentIndex });
           }
         },
         onPlayPause: ({ isPlaying }) => {
@@ -353,12 +354,6 @@ Component({
     },
 
     play(chapterId, playlistChapters, courseData, sortOrder) {
-      // 如果点击的是当前正在播放的章节，切换播放/暂停状态
-      if (chapterId === this.data.currentChapter._id && this.data.currentChapter._id) {
-        this.onPlayPause();
-        return;
-      }
-
       // 使用 bgAudioManager 状态判断是否需要保存进度（比 this.data.isPlaying 更可靠）
       if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
         this.saveProgress();
