@@ -372,8 +372,12 @@ Page({
       app.globalData.loginFlag = false;
       setTimeout(() => wx.showToast({ title: '已登录', icon: 'success' }), 500);
     } else if (app.globalData.logoutFlag) {
-      app.globalData.logoutFlag = false;
-      setTimeout(() => wx.showToast({ title: '已退出登录', icon: 'success' }), 500);
+      setTimeout(() => {
+        if (app.globalData.logoutFlag) {
+          app.globalData.logoutFlag = false;
+          wx.showToast({ title: '已退出登录', icon: 'success' });
+        }
+      }, 500);
     }
   },
 
