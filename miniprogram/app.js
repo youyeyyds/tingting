@@ -233,7 +233,6 @@ App({
   playPrev() {
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
-    const sortOrder = this.globalData.playlistSortOrder || 'asc';
     const currentChapter = this.globalData.playingChapter;
 
     if (playMode === 'single') {
@@ -242,19 +241,16 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if (currentSeq === undefined || currentSeq === null) return;
+    const currentIndex = chapters.findIndex(ch => ch._id === currentChapter?._id);
+    if (currentIndex === -1) return;
 
-    // 根据排序方向计算上一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq - 1 : currentSeq + 1;
-    const prevChapter = chapters.find(ch => ch.seq === targetSeq);
-
-    if (prevChapter) {
-      this.playChapter(prevChapter._id, chapters);
+    // 用 index 导航，而非 seq
+    const prevIndex = currentIndex - 1;
+    if (prevIndex >= 0) {
+      this.playChapter(chapters[prevIndex]._id, chapters);
     } else if (playMode === 'loop') {
       // 循环模式：回到最后/第一条
-      const lastOrFirst = sortOrder === 'asc' ? chapters[chapters.length - 1] : chapters[0];
-      this.playChapter(lastOrFirst._id, chapters);
+      this.playChapter(chapters[chapters.length - 1]._id, chapters);
     } else {
       wx.showToast({ title: '这是第一条', icon: 'none' });
     }
@@ -264,7 +260,6 @@ App({
   playNext() {
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
-    const sortOrder = this.globalData.playlistSortOrder || 'asc';
     const currentChapter = this.globalData.playingChapter;
 
     if (playMode === 'single') {
@@ -273,19 +268,16 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if (currentSeq === undefined || currentSeq === null) return;
+    const currentIndex = chapters.findIndex(ch => ch._id === currentChapter?._id);
+    if (currentIndex === -1) return;
 
-    // 根据排序方向计算下一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
-    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
-
-    if (nextChapter) {
-      this.playChapter(nextChapter._id, chapters);
+    // 用 index 导航，而非 seq
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < chapters.length) {
+      this.playChapter(chapters[nextIndex]._id, chapters);
     } else if (playMode === 'loop') {
       // 循环模式：回到第一/最后一条
-      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
-      this.playChapter(firstOrLast._id, chapters);
+      this.playChapter(chapters[0]._id, chapters);
     } else {
       wx.showToast({ title: '已经是最后一条', icon: 'none' });
     }

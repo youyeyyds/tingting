@@ -14,12 +14,12 @@ Component({
             const currentId = this.properties.currentChapterId;
             const updated = newVal.map((ch, idx) => ({ ...ch, index: idx, isPlaying: ch._id === currentId }));
             this.setData({ sortedChapters: updated, hasInitialized: true });
-          } else if (!this.data.hasInitialized) {
-            // 初始状态，没有 index，需要执行 applySort 生成 index
+          } else {
+            // chapters 没有 index 时（来自 chapter 页的fresh数据），始终重新排序
+            // 这样关闭播放器再点击章节卡片时，列表会重置为原始顺序
             this.applySort();
             this.setData({ hasInitialized: true });
           }
-          // 如果 hasInitialized=true 且没有 index，不做任何事（防止覆盖已有顺序）
         }
       }
     },

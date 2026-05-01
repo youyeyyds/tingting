@@ -639,7 +639,7 @@ Page({
 
   // 更新下一条信息
   updateNextChapterInfo() {
-    const { chapters, playMode, sortOrder, currentChapter } = this.data;
+    const { chapters, playMode, currentChapter } = this.data;
     if (!chapters || chapters.length === 0) {
       this.setData({ nextChapterSeq: '', nextChapterTitle: '' });
       return;
@@ -650,18 +650,15 @@ Page({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if (currentSeq === undefined || currentSeq === null) return;
-
-    // 根据排序方向计算下一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
-    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
-
-    if (nextChapter) {
-      this.setData({ nextChapterSeq: nextChapter.seq, nextChapterTitle: nextChapter.title });
+    // 先计算当前章节在数组中的 index，再用 index 找下一条
+    const currentIdx = chapters.findIndex(ch => ch._id === currentChapter?._id);
+    const nextIndex = currentIdx + 1;
+    if (nextIndex < chapters.length) {
+      const nextCh = chapters[nextIndex];
+      this.setData({ nextChapterSeq: nextCh.seq, nextChapterTitle: nextCh.title });
     } else if (playMode === 'loop') {
-      const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
-      this.setData({ nextChapterSeq: firstOrLast.seq, nextChapterTitle: firstOrLast.title });
+      const firstCh = chapters[0];
+      this.setData({ nextChapterSeq: firstCh.seq, nextChapterTitle: firstCh.title });
     } else {
       this.setData({ nextChapterSeq: '', nextChapterTitle: '已经是最后一条' });
     }
