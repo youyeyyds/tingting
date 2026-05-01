@@ -420,11 +420,11 @@ App({
   logout() {
     this.resetPlayState();
     this.globalData.playlistSortOrder = 'asc';
+    this.globalData.favoriteChapters = [];
     this.globalData.isLoggedIn = false;
     this.globalData.userInfo = null;
     this.globalData.userId = null;
     this.globalData.logoutFlag = true;
-    this.globalData.favoriteChapters = [];
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
   },
