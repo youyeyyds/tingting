@@ -45,9 +45,11 @@ Page({
       onPause: () => {
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
-        this.setData({
-          isPlaying: false
-        });
+        const isCurrentChapter = app.globalData.playingChapter?._id && this.data.chapters.some(ch => ch._id === app.globalData.playingChapter._id);
+        // 只有当前课程且当前章节时才设置暂停状态
+        if (isCurrentCourse && isCurrentChapter) {
+          this.setData({ isPlaying: false });
+        }
       },
       onChapterChange: ({ chapterId }) => {
         // 直接用 chapterId 查找对应章节并设置样式，不依赖传入的 chapter 对象
