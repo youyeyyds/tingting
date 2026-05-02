@@ -162,6 +162,12 @@ Component({
       this.showMiniPlayer(isTabBarPage);
       this._setupAudioListeners();
     },
+    hide() {
+      // 页面隐藏时，如果miniPlayerActive为false，隐藏mini-player
+      if (!app.globalData.miniPlayerActive) {
+        this.setData({ visible: false, fadeInClass: '' });
+      }
+    },
   },
 
   methods: {

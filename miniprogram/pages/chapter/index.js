@@ -244,9 +244,14 @@ const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === ch
     };
   },
 
-  handleTogglePlay() {
-    // 有播放列表时切换播放/暂停
-    app.togglePlayPause();
+  handlePlayBtnTap() {
+    if (this.data.hasPlaylist) {
+      // 有播放列表时切换播放/暂停
+      app.togglePlayPause();
+    } else {
+      // 无播放列表时创建
+      this.handleCreatePlaylist();
+    }
   },
 
   handleCreatePlaylist() {

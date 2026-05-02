@@ -26,6 +26,9 @@ App({
     // 尝试恢复登录状态
     this.restoreLoginState();
 
+    // 重置mini-player状态，确保重新进入小程序时关闭
+    this.globalData.miniPlayerActive = false;
+
     // 尝试恢复播放状态
     this.restorePlayState();
 
@@ -74,7 +77,7 @@ App({
   },
 
   restorePlayState() {
-    // 从缓存恢复播放状态（只要有缓存数据就恢复）
+    // 从缓存恢复播放状态（不自动恢复miniPlayerActive，由页面onShow决定是否显示）
     const playingCourseStr = wx.getStorageSync('playingCourse');
     const playingChapterStr = wx.getStorageSync('playingChapter');
     const playingSeq = wx.getStorageSync('playingSeq');
@@ -88,7 +91,8 @@ App({
         this.globalData.playingSeq = playingSeq || null;
         this.globalData.playlistSortOrder = playlistSortOrder || 'asc';
         this.globalData.playMode = playMode || 'sequence';
-        this.globalData.miniPlayerActive = true;
+        // 不自动恢复miniPlayerActive，确保重新进入小程序时关闭
+        this.globalData.miniPlayerActive = false;
       } catch (e) {
         console.error('恢复播放状态失败:', e);
       }
