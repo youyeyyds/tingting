@@ -319,7 +319,7 @@ Page({
   },
 
   onTimeUpdate() {
-    // 如果正在同步章节或拖动滑块，跳过更新
+// 如果正在同步章节或拖动滑块，跳过更新
     if (this._syncingChapter || this._sliderDragging) return;
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
@@ -481,7 +481,7 @@ Page({
   },
 
   onSliderChanging(e) {
-    this._sliderDragging = true;
+this._sliderDragging = true;
     const duration = this.bgAudioManager.duration;
     this.setData({ currentTime: (e.detail.value / 100) * duration });
     this.updateProgress();
