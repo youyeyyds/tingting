@@ -139,8 +139,8 @@ Page({
   },
 
   // 刷新头像临时URL（仅在 avatarFileID 变化时更新），在 onLoad 中调用一次
-  async refreshAvatarTempUrl() {
-    const user = app.globalData.userInfo;
+  async refreshAvatarTempUrl(userParam) {
+    const user = userParam || app.globalData.userInfo;
     if (!user) return;
     if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
       const cachedFileID = app.globalData.cachedAvatarFileID;
@@ -298,6 +298,10 @@ Page({
           avatarUrl: cachedAvatarTempUrl || parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
           maskedPhone: this.maskPhone(parsedUserInfo.phone)
         });
+        // 如果没有缓存的临时URL，重新获取
+        if (!cachedAvatarTempUrl && parsedUserInfo.avatarFileID) {
+          this.refreshAvatarTempUrl(parsedUserInfo);
+        }
       }
     }
   },
