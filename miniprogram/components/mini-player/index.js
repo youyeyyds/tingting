@@ -340,7 +340,7 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示，isPlaying 保持现状由 onPlay/onPause 回调更新
+// 设置 mini-player 显示（不设置isPlaying，由onPlay回调统一管理）
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
@@ -414,7 +414,7 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示，isPlaying 保持现状由 onPlay/onPause 回调更新
+// 设置 mini-player 显示（不设置isPlaying，由onPlay回调统一管理）
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',

@@ -294,6 +294,19 @@ App({
     this.globalData.playingSeq = chapter.seq;
     this.globalData.playingIndex = index;
 
+    // 更新playingCourse
+    if (chapter.course) {
+      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course._id;
+      if (!this.globalData.playingCourse || this.globalData.playingCourse._id !== courseId) {
+        this.globalData.playingCourse = {
+          _id: courseId,
+          title: chapter.courseTitle || this.globalData.playingCourse?.title || '',
+          cover: chapter.courseCover || this.globalData.playingCourse?.cover || '',
+          author: chapter.author || this.globalData.playingCourse?.author || ''
+        };
+      }
+    }
+
     // 保存到缓存
     wx.setStorageSync('playingChapter', JSON.stringify(chapter));
     wx.setStorageSync('playingSeq', chapter.seq);
