@@ -111,7 +111,9 @@
         </el-table-column>
                 <el-table-column prop="description" label="描述" min-width="300">
           <template #default="{ row }">
-            <span class="desc-text">{{ row.description }}</span>
+            <el-tooltip :content="row.description || ''" placement="left" :disabled="!row.description" popper-class="desc-tooltip" transition="" :show-after="0" :hide-after="0">
+              <span class="desc-text">{{ row.description }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -785,5 +787,19 @@ watch(activeNovelTab, () => {
 
 :deep(.el-table .cell) {
   overflow: visible;
+}
+</style>
+
+<style>
+.desc-tooltip.el-popper {
+  max-width: 500px !important;
+  font-size: 14px !important;
+}
+
+.desc-tooltip.el-popper .el-tooltip__inner {
+  max-width: 500px !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  font-size: 14px !important;
 }
 </style>
