@@ -799,7 +799,7 @@ watch(activeNovelTab, () => {
 .desc-tooltip.el-popper .el-tooltip__inner {
   max-width: 500px !important;
   word-wrap: break-word !important;
-  white-space: normal !important;
+  white-space: pre-wrap !important;
   font-size: 14px !important;
 }
 </style>

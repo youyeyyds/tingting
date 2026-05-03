@@ -98,7 +98,9 @@
       <text class="martial-art-novel">{{currentMartialArt.novel}}</text>
     </view>
     <view class="martial-art-body">
-      <text class="martial-art-desc">{{currentMartialArt.description || '暂无描述'}}</text>
+      <block wx:for="{{currentMartialArt.description ? currentMartialArt.description.split('\n') : ['暂无描述']}}" wx:key="*this">
+        <text class="martial-art-desc">{{item}}</text>
+      </block>
       <text class="martial-art-signature">— 飞雪连天射白鹿，笑书神侠倚碧鸳 —</text>
     </view>
   </view>
