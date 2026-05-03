@@ -226,12 +226,15 @@ Page({
 
       if (res.result.success) {
         const user = res.result.data;
+        console.log('[Login] login success, setting isLoggedIn = true');
         app.globalData.isLoggedIn = true;
         app.globalData.userInfo = user;
         app.globalData.userId = user.userId;
         app.globalData.loginFlag = true;
         app.globalData.logoutFlag = false;
         app.globalData.needRestoreMaskedData = false;
+        console.log('[Login] globalData.isLoggedIn now:', app.globalData.isLoggedIn);
+        console.log('[Login] globalData.loginFlag now:', app.globalData.loginFlag);
         wx.setStorageSync('userId', user.userId);
         wx.setStorageSync('userInfo', JSON.stringify(user));
         // 缓存头像临时URL

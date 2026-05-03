@@ -112,7 +112,14 @@ Page({
   },
 
   onShow() {
-    console.log('[Index onShow] start, globalData.isLoggedIn:', app.globalData.isLoggedIn, ', data.isLoggedIn:', this.data.isLoggedIn, ', _realCourses:', this._realCourses?.length);
+    console.log('[Index onShow] start');
+    console.log('[Index onShow] globalData.isLoggedIn:', app.globalData.isLoggedIn);
+    console.log('[Index onShow] globalData.loginFlag:', app.globalData.loginFlag);
+    console.log('[Index onShow] globalData.needRestoreMaskedData:', app.globalData.needRestoreMaskedData);
+    console.log('[Index onShow] globalData.logoutFlag:', app.globalData.logoutFlag);
+    console.log('[Index onShow] data.isLoggedIn:', this.data.isLoggedIn);
+    console.log('[Index onShow] _realCourses:', this._realCourses?.length);
+    console.log('[Index onShow] data.courses:', this.data.courses.length);
     // 先检查是否需要恢复脱敏数据（在 checkLogin 之前，防止恢复旧课程）
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       console.log('[Index onShow] needRestoreMaskedData branch');
