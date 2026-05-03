@@ -549,4 +549,137 @@ export async function deleteDefaultCover() {
   return response.data
 }
 
+// ========== 武功 API ==========
+
+/**
+ * 获取武功列表（支持分页、筛选、搜索）
+ * @param {object} params 参数 { page, pageSize, typeId, factionId, novelId, keyword }
+ */
+export async function getMartialArts(params = {}) {
+  const response = await api.get('/martial-arts', { params })
+  return response.data
+}
+
+/**
+ * 获取所有类型（用于下拉选择）
+ */
+export async function getMartialArtTypes(novelId) {
+  const params = novelId ? { novelId } : {}
+  const response = await api.get('/martial-arts/types-by-novel', { params })
+  return response.data
+}
+
+/**
+ * 获取所有门派（用于下拉选择）
+ */
+export async function getMartialArtFactions(novelId) {
+  const params = novelId ? { novelId } : {}
+  const response = await api.get('/martial-arts/factions-by-novel', { params })
+  return response.data
+}
+
+/**
+ * 获取所有小说（用于下拉选择）
+ */
+export async function getMartialArtNovels() {
+  const response = await api.get('/martial-arts/novels')
+  return response.data
+}
+
+/**
+ * 获取所有人物（用于下拉选择）
+ */
+export async function getMartialArtCharacters() {
+  const response = await api.get('/martial-arts/characters')
+  return response.data
+}
+
+// 类型 CRUD
+export async function createMartialArtType(data) {
+  const response = await api.post('/martial-arts/types', data)
+  return response.data
+}
+export async function updateMartialArtType(id, data) {
+  const response = await api.put(`/martial-arts/types/${id}`, data)
+  return response.data
+}
+export async function deleteMartialArtType(id) {
+  const response = await api.delete(`/martial-arts/types/${id}`)
+  return response.data
+}
+
+// 门派 CRUD
+export async function createMartialArtFaction(data) {
+  const response = await api.post('/martial-arts/factions', data)
+  return response.data
+}
+export async function updateMartialArtFaction(id, data) {
+  const response = await api.put(`/martial-arts/factions/${id}`, data)
+  return response.data
+}
+export async function deleteMartialArtFaction(id) {
+  const response = await api.delete(`/martial-arts/factions/${id}`)
+  return response.data
+}
+
+// 小说 CRUD
+export async function createMartialArtNovel(data) {
+  const response = await api.post('/martial-arts/novels', data)
+  return response.data
+}
+export async function updateMartialArtNovel(id, data) {
+  const response = await api.put(`/martial-arts/novels/${id}`, data)
+  return response.data
+}
+export async function deleteMartialArtNovel(id) {
+  const response = await api.delete(`/martial-arts/novels/${id}`)
+  return response.data
+}
+
+// 人物 CRUD
+export async function createMartialArtCharacter(data) {
+  const response = await api.post('/martial-arts/characters', data)
+  return response.data
+}
+export async function updateMartialArtCharacter(id, data) {
+  const response = await api.put(`/martial-arts/characters/${id}`, data)
+  return response.data
+}
+export async function deleteMartialArtCharacter(id) {
+  const response = await api.delete(`/martial-arts/characters/${id}`)
+  return response.data
+}
+
+/**
+ * 获取单个武功详情
+ */
+export async function getMartialArt(id) {
+  const response = await api.get(`/martial-arts/${id}`)
+  return response.data
+}
+
+/**
+ * 创建武功
+ */
+export async function createMartialArt(data) {
+  const response = await api.post('/martial-arts', data)
+  return response.data
+}
+
+/**
+ * 更新武功
+ */
+export async function updateMartialArt(id, data) {
+  const response = await api.put(`/martial-arts/${id}`, data)
+  return response.data
+}
+
+/**
+ * 删除武功
+ */
+export async function deleteMartialArt(id) {
+  const response = await api.delete(`/martial-arts/${id}`)
+  return response.data
+}
+
 export default api

@@ -237,13 +237,14 @@ const menuLabels = {
   audios: '音频管理',
   headlines: '首尾管理',
   categories: '分类管理',
+  'martial-arts': '武功管理',
   versions: '版本管理',
   users: '用户管理',
   roles: '角色管理',
   system: '系统配置'
 }
 
-const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'martial-arts', 'versions', 'users', 'roles', 'system'])
 
 const form = reactive({
   envId: '',

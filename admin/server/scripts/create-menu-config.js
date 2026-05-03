@@ -11,7 +11,7 @@ const db = app.database();
 
 async function createMenuConfig() {
   try {
-    const newMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
+    const newMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'martial-arts', 'users', 'roles', 'system'];
     
     // 直接添加，如果表不存在会自动创建
     const result = await db.collection('system_config').add({
