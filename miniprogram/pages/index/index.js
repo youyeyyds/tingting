@@ -399,13 +399,13 @@ Page({
 
     const { homeProtect } = this.data;
     const isLoggedIn = app.globalData.isLoggedIn || false; // 使用全局状态而非 this.data（避免 setData 异步问题）
-    console.log('[maskCourses] homeProtect:', homeProtect, ', isLoggedIn:', isLoggedIn, ', _realCourses:', this._realCourses?.length);
+    console.log('[maskCourses] homeProtect:', homeProtect, ', isLoggedIn:', isLoggedIn, ', _realCourses:', this._realCourses?.length, ', realCourses:', realCourses?.length);
     // 使用保存的真实课程数据
     const courses = this._realCourses || [];
 
     if (!homeProtect || isLoggedIn) {
       // 已登录或首页保护关闭，恢复真实课程数据
-      console.log('[maskCourses] showing real courses');
+      console.log('[maskCourses] showing REAL courses, courses count:', courses.length);
       this.setData({ courses, loading: false });
       return;
     }
