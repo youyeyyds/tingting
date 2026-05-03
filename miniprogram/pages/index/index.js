@@ -425,8 +425,8 @@ Page({
     if (prevState !== newState) {
       this.setData({ isLoggedIn: newState });
       if (newState && this._realCourses && this._realCourses.length) {
-        // 登录后直接恢复真实课程
-        this.setData({ courses: this._realCourses, loading: false });
+        // 登录后通过 maskCourses 处理，确保正确显示
+        this.maskCourses();
       }
     }
   },

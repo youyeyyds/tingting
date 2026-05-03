@@ -343,6 +343,8 @@ const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === ch
 
   playChapter(chapterId) {
     const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }));
+    // 保持当前排序顺序
+    chapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
     this.setData({ chapters, filteredChapters: chapters });
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
