@@ -23,6 +23,7 @@ Page({
     martialArtsVisible: false, // 武功详情弹窗
     isClosing: false, // 是否正在关闭动画
     currentMartialArt: null, // 当前武功详情
+    currentMartialArtLines: [], // 当前武功描述行（用于换行渲染）
     displayedMartialArts: [], // 已显示的武功列表（用于随机不重复）
     martialArtsPool: [] // 武功池（用于随机选择）
   },
@@ -481,25 +482,20 @@ Page({
       if (maskedCourse) {
         // 从武功池中找到完整的武功信息
         const martialArt = this._martialArtsPool?.find(m => m.name === maskedCourse.title);
-        if (martialArt) {
-          this.setData({
-            martialArtsVisible: true,
-            currentMartialArt: martialArt
-          });
-        } else {
-          // 如果找不到，显示基本信息
-          this.setData({
-            martialArtsVisible: true,
-            currentMartialArt: {
-              name: maskedCourse.title,
-              description: '暂无描述',
-              novel: maskedCourse.categoryName || '',
-              users: maskedCourse.author ? [maskedCourse.author] : []
-            }
-          });
-        }
+        const description = martialArt ? martialArt.description : '暂无描述';
+        const lines = description.split('\n').filter(l => l.trim());
+        this.setData({
+          martialArtsVisible: true,
+          currentMartialArt: martialArt || {
+            name: maskedCourse.title,
+            description: description,
+            novel: maskedCourse.categoryName || '',
+            users: maskedCourse.author ? [maskedCourse.author] : []
+          },
+          currentMartialArtLines: lines.length > 0 ? lines : ['暂无描述']
+        });
+        return;
       }
-      return;
     }
     wx.navigateTo({ url: `/pages/chapter/index?id=${e.currentTarget.dataset.id}` });
   },
@@ -508,7 +504,7 @@ Page({
   onCloseMartialArt() {
     this.setData({ isClosing: true });
     setTimeout(() => {
-      this.setData({ martialArtsVisible: false, isClosing: false, currentMartialArt: null });
+      this.setData({ martialArtsVisible: false, isClosing: false, currentMartialArt: null, currentMartialArtLines: [] });
     }, 300);
   },
 
