@@ -113,14 +113,11 @@ Page({
 
   onShow() {
     // 先检查是否需要恢复脱敏数据（在 checkLogin 之前，防止恢复旧课程）
-    // 注意：如果 loginFlag 也为 true，说明用户正在重新登录，不需要恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       console.log('[Index onShow] needRestoreMaskedData branch');
       app.globalData.needRestoreMaskedData = false;
-      // 清理课程缓存
       app.globalData.indexCourses = [];
       wx.removeStorageSync('indexCourses');
-      // 恢复脱敏数据前，先用当前 coverTime 同步封面URL
       const ct = app.globalData.coverLoadTime;
       const maskedCourses = { ...app.globalData.homePageMaskedCourses };
       Object.keys(maskedCourses).forEach(id => {
@@ -131,27 +128,34 @@ Page({
       });
       app.globalData.homePageMaskedCourses = maskedCourses;
       const courses = Object.values(maskedCourses);
-      // 清空 _realCourses，防止第二次登录时 checkLogin 使用旧数据
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses, maskedCourses, loading: false });
       console.log('[Index onShow] restored masked data, _realCourses set to null');
       this.showStatusToast();
-      // 恢复脱敏数据后，跳过后续所有处理
       return;
     }
-    this.checkLogin();
+
+    // 更新登录状态
+    const wasLoggedIn = this.data.isLoggedIn;
+    const isLoggedIn = app.globalData.isLoggedIn || false;
+    if (wasLoggedIn !== isLoggedIn) {
+      this.setData({ isLoggedIn });
+    }
+
+    // 根据登录状态显示正确数据
+    if (isLoggedIn) {
+      if (this._realCourses && this._realCourses.length) {
+        // 有真实课程，直接用 maskCourses 处理
+        this.maskCourses();
+      } else if (this.data.courses.length) {
+        // 有缓存课程但没有_realCourses，重新加载
+        console.log('[Index onShow] re-login detected, calling loadCourses');
+        this.loadCourses();
+      }
+    }
+
     this.syncTimes();
     this.showStatusToast();
-    // 始终调用 maskCourses 确保根据登录状态显示正确数据
-    if (this._realCourses && this._realCourses.length) {
-      console.log('[Index onShow] calling maskCourses');
-      this.maskCourses();
-    } else if (this.data.courses.length && app.globalData.isLoggedIn) {
-      // 有课程数据但没有_realCourses且已登录，重新加载
-      console.log('[Index onShow] re-login detected, calling loadCourses');
-      this.loadCourses();
-    }
-    // 额外调用 syncCoverUrls 确保封面一致性
     this.syncCoverUrls();
   },
 
@@ -382,7 +386,8 @@ Page({
       this._realCourses = realCourses;
     }
 
-    const { homeProtect, isLoggedIn } = this.data;
+    const { homeProtect } = this.data;
+    const isLoggedIn = app.globalData.isLoggedIn || false; // 使用全局状态而非 this.data（避免 setData 异步问题）
     // 使用保存的真实课程数据
     const courses = this._realCourses || [];
 
