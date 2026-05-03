@@ -142,23 +142,16 @@ Page({
     this.checkLogin();
     this.syncTimes();
     this.showStatusToast();
-    // 重新检查登录状态，确保显示正确的课程数据
-    if (app.globalData.isLoggedIn !== this.data.isLoggedIn) {
-      console.log('[Index onShow] login state changed, calling checkLogin again');
-      this.checkLogin();
-    }
-    // 如果刚登录（从登出变为登录），需要重新加载课程数据
-    // navigateBack 时页面实例复用，_realCourses 可能过期或为 null
-    if (this.data.isLoggedIn && (!this._realCourses || !this._realCourses.length)) {
-      console.log('[Index onShow] re-login detected, calling loadCourses');
-      this.loadCourses();
-    }
-    // 如果有真实课程数据，重新执行 maskCourses 以更新显示
+    // 始终调用 maskCourses 确保根据登录状态显示正确数据
     if (this._realCourses && this._realCourses.length) {
       console.log('[Index onShow] calling maskCourses');
       this.maskCourses();
+    } else if (this.data.courses.length && app.globalData.isLoggedIn) {
+      // 有课程数据但没有_realCourses且已登录，重新加载
+      console.log('[Index onShow] re-login detected, calling loadCourses');
+      this.loadCourses();
     }
-// 额外调用 syncCoverUrls 确保封面一致性
+    // 额外调用 syncCoverUrls 确保封面一致性
     this.syncCoverUrls();
   },
 

@@ -348,7 +348,7 @@ const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === ch
     this.setData({ chapters, filteredChapters: chapters });
     const miniPlayer = this.selectComponent('#miniPlayer');
     if (miniPlayer) {
-      miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
+      miniPlayer.play(chapterId, chapters, this.data.course, this.data.sortOrder);
     }
     // 保存最近播放的章节ID
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
