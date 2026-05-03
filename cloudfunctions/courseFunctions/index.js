@@ -710,6 +710,89 @@ const updateCourseSettings = async (event) => {
 };
 
 // 云函数入口函数
+
+// 获取武功列表（用于首页脱敏）
+const getMartialArts = async (event) => {
+  try {
+    const { limit = 50 } = event;
+    console.log('[getMartialArts] limit:', limit);
+    // 获取武功列表，随机排序
+    const martialArtsRes = await db.collection("martialArts")
+      .aggregate()
+      .sample({ size: parseInt(limit) })
+      .end();
+
+    const martialArts = martialArtsRes.list || [];
+    console.log('[getMartialArts] martialArts count:', martialArts.length);
+
+    if (martialArts.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // 获取所有关联的类型、门派、小说
+    const typeIds = martialArts.map(m => m.typeId).filter(Boolean);
+    const factionIds = martialArts.map(m => m.factionId).filter(Boolean);
+    const novelIds = martialArts.map(m => m.novelId).filter(Boolean);
+
+    const [typesRes, factionsRes, novelsRes, relationsRes] = await Promise.all([
+      typeIds.length > 0 ? db.collection("martialArtTypes").where({ _id: db.command.in(typeIds) }).get() : { data: [] },
+      factionIds.length > 0 ? db.collection("martialArtFactions").where({ _id: db.command.in(factionIds) }).get() : { data: [] },
+      novelIds.length > 0 ? db.collection("martialArtNovels").where({ _id: db.command.in(novelIds) }).get() : { data: [] },
+      db.collection("martialArtCharacterRelations").where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).get()
+    ]);
+
+    // 构建映射
+    const typeMap = {};
+    typesRes.data.forEach(t => { typeMap[t._id] = t.name; });
+    const factionMap = {};
+    factionsRes.data.forEach(f => { factionMap[f._id] = f.name; });
+    const novelMap = {};
+    novelsRes.data.forEach(n => { novelMap[n._id] = n.name; });
+
+    // 获取人物详情
+    const characterIds = relationsRes.data.map(r => r.characterId).filter(Boolean);
+    const charactersDetailRes = characterIds.length > 0
+      ? await db.collection("martialArtCharacters").where({ _id: db.command.in(characterIds) }).get()
+      : { data: [] };
+    const characterMap = {};
+    charactersDetailRes.data.forEach(c => { characterMap[c._id] = c.name; });
+
+    // 关联人物
+    const characterRelationMap = {};
+    relationsRes.data.forEach(rel => {
+      if (!characterRelationMap[rel.martialArtId]) {
+        characterRelationMap[rel.martialArtId] = [];
+      }
+      if (characterMap[rel.characterId]) {
+        characterRelationMap[rel.martialArtId].push(characterMap[rel.characterId]);
+      }
+    });
+
+    // 组装数据
+    const data = martialArts.map(m => ({
+      _id: m._id,
+      name: m.name,
+      description: m.description || '',
+      type: typeMap[m.typeId] || '',
+      faction: factionMap[m.factionId] || '',
+      novel: novelMap[m.novelId] || '',
+      users: characterRelationMap[m._id] || []
+    }));
+
+    console.log('[getMartialArts] returning data count:', data.length);
+    return {
+      success: true,
+      data
+    };
+  } catch (e) {
+    console.error('[getMartialArts] error:', e);
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 exports.main = async (event, context) => {
   switch (event.type) {
     case "getOpenId":
@@ -743,6 +826,8 @@ exports.main = async (event, context) => {
       return await getCourseSettings(event);
     case "updateCourseSettings":
       return await updateCourseSettings(event);
+    case "getMartialArts":
+      return await getMartialArts(event);
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }

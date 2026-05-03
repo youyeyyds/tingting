@@ -85,3 +85,21 @@
     </view>
   </view>
 </view>
+
+<!-- 武功详情半屏弹窗 -->
+<view class="martial-art-modal" wx:if="{{martialArtsVisible || isClosing}}">
+  <view class="martial-art-mask" catchtap="onCloseMartialArt"></view>
+  <view class="martial-art-content {{isClosing ? 'hide' : (martialArtsVisible ? 'show' : '')}}">
+    <view class="martial-art-header">
+      <view class="martial-art-collapse" catchtap="onCloseMartialArt">
+        <text class="collapse-icon">›</text>
+      </view>
+      <text class="martial-art-title">{{currentMartialArt.name}}</text>
+      <text class="martial-art-novel">{{currentMartialArt.novel}}</text>
+    </view>
+    <view class="martial-art-body">
+      <text class="martial-art-desc">{{currentMartialArt.description || '暂无描述'}}</text>
+      <text class="martial-art-signature">— 飞雪连天射白鹿，笑书神侠倚碧鸳 —</text>
+    </view>
+  </view>
+</view>
