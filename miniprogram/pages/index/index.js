@@ -112,6 +112,7 @@ Page({
   },
 
   onShow() {
+    console.log('[Index onShow] start, globalData.isLoggedIn:', app.globalData.isLoggedIn, ', data.isLoggedIn:', this.data.isLoggedIn, ', _realCourses:', this._realCourses?.length);
     // 先检查是否需要恢复脱敏数据（在 checkLogin 之前，防止恢复旧课程）
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       console.log('[Index onShow] needRestoreMaskedData branch');
@@ -138,19 +139,29 @@ Page({
     // 更新登录状态
     const wasLoggedIn = this.data.isLoggedIn;
     const isLoggedIn = app.globalData.isLoggedIn || false;
+    console.log('[Index onShow] wasLoggedIn:', wasLoggedIn, ', isLoggedIn:', isLoggedIn);
     if (wasLoggedIn !== isLoggedIn) {
+      console.log('[Index onShow] login state changed, setData');
       this.setData({ isLoggedIn });
     }
 
     // 根据登录状态显示正确数据
     if (isLoggedIn) {
       if (this._realCourses && this._realCourses.length) {
-        // 有真实课程，直接用 maskCourses 处理
+        console.log('[Index onShow] calling maskCourses with _realCourses, length:', this._realCourses.length);
         this.maskCourses();
       } else if (this.data.courses.length) {
-        // 有缓存课程但没有_realCourses，重新加载
         console.log('[Index onShow] re-login detected, calling loadCourses');
         this.loadCourses();
+      } else {
+        console.log('[Index onShow] no _realCourses and no courses, calling loadCourses');
+        this.loadCourses();
+      }
+    } else {
+      // 未登录，显示脱敏数据
+      if (this._realCourses && this._realCourses.length) {
+        console.log('[Index onShow] calling maskCourses for masked display');
+        this.maskCourses();
       }
     }
 
@@ -388,11 +399,13 @@ Page({
 
     const { homeProtect } = this.data;
     const isLoggedIn = app.globalData.isLoggedIn || false; // 使用全局状态而非 this.data（避免 setData 异步问题）
+    console.log('[maskCourses] homeProtect:', homeProtect, ', isLoggedIn:', isLoggedIn, ', _realCourses:', this._realCourses?.length);
     // 使用保存的真实课程数据
     const courses = this._realCourses || [];
 
     if (!homeProtect || isLoggedIn) {
       // 已登录或首页保护关闭，恢复真实课程数据
+      console.log('[maskCourses] showing real courses');
       this.setData({ courses, loading: false });
       return;
     }
