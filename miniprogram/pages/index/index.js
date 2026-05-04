@@ -501,7 +501,8 @@ Page({
         // 从武功池中找到完整的武功信息
         const martialArt = this._martialArtsPool?.find(m => m.name === maskedCourse.title);
         const description = martialArt ? martialArt.description : '暂无描述';
-        const lines = description.split('\n').filter(l => l.trim());
+        // 处理换行：支持 \r\n、\n 以及 literal \n 字符串
+        const lines = description.split(/\r?\n|\\n/).filter(l => l.trim());
         this.setData({
           martialArtsVisible: true,
           currentMartialArt: martialArt || {

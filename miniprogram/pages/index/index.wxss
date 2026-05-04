@@ -405,9 +405,11 @@
   font-size: 28rpx;
   color: #666;
   line-height: 1.6;
-  text-align: center;
+  text-align: left;
   white-space: pre-wrap;
   word-wrap: break-word;
+  display: block;
+  margin-bottom: 20rpx;
 }
 
 .martial-art-signature {
