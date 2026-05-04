@@ -569,10 +569,12 @@ async function loadOptions() {
       getMartialArtNovels(),
       getMartialArtCharacters()
     ])
+    console.log('[loadOptions] typesRes:', typesRes)
     if (typesRes.success) types.value = typesRes.data
     if (factionsRes.success) factions.value = factionsRes.data
     if (novelsRes.success) novels.value = novelsRes.data
     if (charactersRes.success) characters.value = charactersRes.data
+    console.log('[loadOptions] types.value:', types.value)
   } catch (err) {
     console.error('加载选项失败:', err)
   }
