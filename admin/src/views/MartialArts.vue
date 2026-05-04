@@ -708,6 +708,18 @@ watch([baseTypeSearch, baseCharacterSearch, baseFactionSearch], () => {
   baseCurrentPage.value = 1
 })
 
+watch(() => types.value, (newVal) => {
+  console.log('[watch types.value changed, length:', newVal?.length)
+}, { immediate: true })
+
+watch(() => filteredTypes.value, (newVal) => {
+  console.log('[watch filteredTypes.value changed, length:', newVal?.length)
+})
+
+watch(() => paginatedTypes.value, (newVal) => {
+  console.log('[watch paginatedTypes.value changed, length:', newVal?.length)
+})
+
 // 切换小说 tab 时重置页码
 watch(activeNovelTab, () => {
   currentPage.value = 1
