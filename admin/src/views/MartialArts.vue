@@ -51,11 +51,11 @@
               新增武功
             </el-button>
             <el-button @click="handleExport" style="margin-left: 10px">
-              <el-icon><Download /></el-icon>
+              <el-icon><Upload /></el-icon>
               导出
             </el-button>
             <el-button @click="triggerImport">
-              <el-icon><Upload /></el-icon>
+              <el-icon><Download /></el-icon>
               导入
             </el-button>
             <input type="file" ref="importInput" accept=".json" style="display: none" @change="handleImportFile" />

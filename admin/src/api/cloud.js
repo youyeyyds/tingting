@@ -686,7 +686,7 @@ export async function deleteMartialArt(id) {
  * 导出武功列表
  */
 export async function exportMartialArts(novelId) {
-  const response = await api.get('/martial-arts/export', { params: { novelId } })
+  const response = await api.get('/martial-arts/export-list', { params: { novelId } })
   return response.data
 }
 
