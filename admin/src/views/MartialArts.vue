@@ -125,6 +125,11 @@
             </el-tooltip>
           </template>
         </el-table-column>
+        <el-table-column v-if="activeNovelTab === ''" prop="novelName" label="小说" width="120">
+          <template #default="{ row }">
+            <span>{{ row.novelName || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
