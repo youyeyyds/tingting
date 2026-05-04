@@ -2401,16 +2401,10 @@ app.get('/api/martial-arts', async (req, res) => {
     const countResult = await query.count();
     const total = countResult.total;
 
-    // 分页
+    // 先获取全部数据（不分页），再按小说顺序+拼音排序，最后分页
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
-    const result = await query
-      .orderBy('seq', 'asc')
-      .skip(offset)
-      .limit(parseInt(pageSize))
-      .get();
-
-    // 获取关联数据
-    const martialArts = result.data;
+    const allData = await query.get();
+    const martialArts = allData.data;
 
     // 构建小说顺序映射
     const NOVEL_ORDER = [
@@ -2480,7 +2474,7 @@ app.get('/api/martial-arts', async (req, res) => {
     });
 
     res.json(success({
-      list: data,
+      list: data.slice(offset, offset + parseInt(pageSize)),
       total,
       page: parseInt(page),
       pageSize: parseInt(pageSize),
@@ -2772,9 +2766,11 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
     // 获取关联数据
     const typeIds = [...new Set(martialArts.map(m => m.typeId).filter(Boolean))];
     const factionIds = [...new Set(martialArts.map(m => m.factionId).filter(Boolean))];
-    const [typesRes, factionsRes, relationsRes] = await Promise.all([
+    const novelIds = [...new Set(martialArts.map(m => m.novelId).filter(Boolean))];
+    const [typesRes, factionsRes, novelsRes, relationsRes] = await Promise.all([
       typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).get() : { data: [] },
       factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).get() : { data: [] },
+      novelIds.length > 0 ? db.collection('martialArtNovels').where({ _id: db.command.in(novelIds) }).get() : { data: [] },
       db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).get()
     ]);
 
@@ -2782,6 +2778,8 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
     typesRes.data.forEach(t => { typeMap[t._id] = t; });
     const factionMap = {};
     factionsRes.data.forEach(f => { factionMap[f._id] = f; });
+    const novelMap = {};
+    novelsRes.data.forEach(n => { novelMap[n._id] = n; });
 
     const characterIds = [...new Set(relationsRes.data.map(r => r.characterId).filter(Boolean))];
     const charactersDetailRes = characterIds.length > 0
@@ -2809,7 +2807,7 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
       typeId: m.typeId || '',
       factionName: factionMap[m.factionId]?.name || '',
       factionId: m.factionId || '',
-      novelName: m.novelName || '',
+      novelName: novelMap[m.novelId]?.name || '',
       novelId: m.novelId || '',
       characters: (characterRelationMap[m._id] || []).map(c => c.name),
       description: m.description || '',

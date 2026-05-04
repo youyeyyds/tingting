@@ -63,7 +63,7 @@
         </div>
       </template>
 
-      <el-tabs v-model="activeNovelTab" @tab-change="loadMartialArts">
+      <el-tabs v-model="activeNovelTab">
         <el-tab-pane label="飞狐外传" name="飞狐外传" />
         <el-tab-pane label="雪山飞狐" name="雪山飞狐" />
         <el-tab-pane label="连城诀" name="连城诀" />
@@ -857,9 +857,15 @@ watch([baseTypeSearch, baseCharacterSearch, baseFactionSearch], () => {
   baseCurrentPage.value = 1
 })
 
-// 切换小说 tab 时重置页码
+// 切换小说 tab 时重置页码并重新加载
 watch(activeNovelTab, () => {
   currentPage.value = 1
+  loadMartialArts()
+})
+
+// 切换武功数据 tab 时重置页码
+watch(activeBaseTab, () => {
+  baseCurrentPage.value = 1
 })
 </script>
 
