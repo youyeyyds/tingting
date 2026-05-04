@@ -270,7 +270,7 @@
         <el-form-item label="类型" prop="typeId">
           <el-select v-model="form.typeId" placeholder="请选择类型" clearable style="width: 200px">
             <el-option
-              v-for="type in availableTypes"
+              v-for="type in types"
               :key="type._id"
               :label="type.name"
               :value="type._id"
@@ -280,7 +280,7 @@
         <el-form-item label="门派" prop="factionId">
           <el-select v-model="form.factionId" placeholder="请选择门派" clearable style="width: 200px">
             <el-option
-              v-for="faction in availableFactions"
+              v-for="faction in factions"
               :key="faction._id"
               :label="faction.name"
               :value="faction._id"
@@ -456,6 +456,7 @@ const baseTypeLabels = { type: '类型', faction: '门派', character: '人物' 
 const baseForm = reactive({ name: '' })
 const baseSubmitLoading = ref(false)
 const activeBaseTab = ref('type')
+let baseEditId = ''
 
 function openBaseAddDialog(type) {
   baseType.value = type
@@ -468,6 +469,7 @@ function openBaseEditDialog(type, row) {
   baseType.value = type
   baseDialogMode.value = 'edit'
   baseForm.name = row.name
+  baseEditId = row._id
   baseDialogVisible.value = true
 }
 
@@ -486,34 +488,12 @@ async function handleBaseSubmit() {
         case 'character': res = await createMartialArtCharacter({ name: baseForm.name }); break
       }
     } else {
-      // 获取当前编辑行的ID - 需要通过名称查找
-      let id = ''
+      // 编辑模式直接使用保存的ID
+      let id = baseEditId
       switch (baseType.value) {
-        case 'type': {
-          const item = types.value.find(t => t.name === baseForm.name)
-          if (item) id = item._id
-          else {
-            const current = types.value.find(t => t._id === form.typeId)
-            if (current) id = current._id
-          }
-          if (id) res = await updateMartialArtType(id, { name: baseForm.name })
-          break
-        }
-        case 'faction': {
-          const item = factions.value.find(f => f.name === baseForm.name)
-          if (item) id = item._id
-          else {
-            const current = factions.value.find(f => f._id === form.factionId)
-            if (current) id = current._id
-          }
-          if (id) res = await updateMartialArtFaction(id, { name: baseForm.name })
-          break
-        }
-        case 'character': {
-          res = await createMartialArtCharacter({ name: baseForm.name })
-          if (res.success) baseDialogMode.value = 'add' // 人物新建后默认新建模式
-          break
-        }
+        case 'type': res = await updateMartialArtType(id, { name: baseForm.name }); break
+        case 'faction': res = await updateMartialArtFaction(id, { name: baseForm.name }); break
+        case 'character': res = await updateMartialArtCharacter(id, { name: baseForm.name }); break
       }
     }
     if (res && res.success) {
@@ -791,15 +771,22 @@ watch(activeNovelTab, () => {
 </style>
 
 <style>
-.desc-tooltip.el-popper {
+.desc-tooltip {
   max-width: 500px !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
+  white-space: pre-wrap !important;
 }
 
-.desc-tooltip.el-popper .el-tooltip__inner {
+.desc-tooltip .el-popper__inner,
+.desc-tooltip .el-tooltip__inner,
+.desc-tooltip div,
+.desc-tooltip span,
+.desc-tooltip p {
   max-width: 500px !important;
   word-wrap: break-word !important;
   white-space: pre-wrap !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
+  text-align: left !important;
+  line-height: 1.5 !important;
 }
 </style>

@@ -406,6 +406,8 @@
   color: #666;
   line-height: 1.6;
   text-align: center;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .martial-art-signature {
