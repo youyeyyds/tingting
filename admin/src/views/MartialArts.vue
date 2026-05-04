@@ -569,12 +569,10 @@ async function loadOptions() {
       getMartialArtNovels(),
       getMartialArtCharacters()
     ])
-    console.log('[loadOptions] typesRes:', typesRes)
     if (typesRes.success) types.value = typesRes.data
     if (factionsRes.success) factions.value = factionsRes.data
     if (novelsRes.success) novels.value = novelsRes.data
     if (charactersRes.success) characters.value = charactersRes.data
-    console.log('[loadOptions] types.value:', types.value)
   } catch (err) {
     console.error('加载选项失败:', err)
   }
@@ -706,18 +704,6 @@ onMounted(() => {
 // 武功数据搜索时重置页码
 watch([baseTypeSearch, baseCharacterSearch, baseFactionSearch], () => {
   baseCurrentPage.value = 1
-})
-
-watch(() => types.value, (newVal) => {
-  console.log('[watch types.value changed, length:', newVal?.length)
-}, { immediate: true })
-
-watch(() => filteredTypes.value, (newVal) => {
-  console.log('[watch filteredTypes.value changed, length:', newVal?.length)
-})
-
-watch(() => paginatedTypes.value, (newVal) => {
-  console.log('[watch paginatedTypes.value changed, length:', newVal?.length)
 })
 
 // 切换小说 tab 时重置页码
