@@ -2793,12 +2793,16 @@ app.get('/api/martial-arts/export', async (req, res) => {
     const db = tcb.database();
     const { novelId } = req.query;
 
+    console.log('[export] novelId:', novelId);
+
     // 构建查询条件
     let condition = {};
     if (novelId) {
       const objectIdPattern = /^[a-fA-F0-9]{24}$/;
       if (!objectIdPattern.test(novelId)) {
+        // 如果不是 ObjectId，作为小说名称查询
         const novelResult = await db.collection('martialArtNovels').where({ name: novelId }).limit(1).get();
+        console.log('[export] novelResult:', novelResult.data);
         if (novelResult.data.length === 0) return res.json(success([]));
         condition.novelId = novelResult.data[0]._id;
       } else {
@@ -2806,7 +2810,10 @@ app.get('/api/martial-arts/export', async (req, res) => {
       }
     }
 
+    console.log('[export] condition:', condition);
+
     const result = await db.collection('martialArts').where(condition).orderBy('seq', 'asc').get();
+    console.log('[export] martialArts count:', result.data.length);
     const martialArts = result.data;
 
     if (martialArts.length === 0) {
