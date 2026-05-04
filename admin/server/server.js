@@ -2991,6 +2991,84 @@ app.post('/api/martial-arts/import', async (req, res) => {
   }
 });
 
+// 导出武功基础数据
+app.get('/api/martial-arts/base-data/export', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { type } = req.query;
+
+    let collectionName = '';
+    if (type === 'type') collectionName = 'martialArtTypes';
+    else if (type === 'faction') collectionName = 'martialArtFactions';
+    else if (type === 'character') collectionName = 'martialArtCharacters';
+    else return res.json(error('类型参数错误'));
+
+    const result = await db.collection(collectionName).orderBy('seq', 'asc').get();
+    res.json(success(result.data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 导入武功基础数据
+app.post('/api/martial-arts/base-data/import', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { type, items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      return res.json(error('导入数据格式错误'));
+    }
+
+    let collectionName = '';
+    if (type === 'type') collectionName = 'martialArtTypes';
+    else if (type === 'faction') collectionName = 'martialArtFactions';
+    else if (type === 'character') collectionName = 'martialArtCharacters';
+    else return res.json(error('类型参数错误'));
+
+    const results = { created: 0, updated: 0, errors: [] };
+
+    for (const item of items) {
+      if (!item.name) {
+        results.errors.push(`名称为空，跳过`);
+        continue;
+      }
+
+      try {
+        const exist = await db.collection(collectionName).where({ name: item.name }).limit(1).get();
+
+        if (exist.data.length > 0) {
+          // 更新
+          await db.collection(collectionName).doc(exist.data[0]._id).update({
+            seq: item.seq || exist.data[0].seq
+          });
+          results.updated++;
+        } else {
+          // 创建
+          await db.collection(collectionName).add({
+            name: item.name,
+            seq: item.seq || Date.now(),
+            _createTime: new Date()
+          });
+          results.created++;
+        }
+      } catch (itemErr) {
+        results.errors.push(`「${item.name}」处理失败: ${itemErr.message}`);
+      }
+    }
+
+    res.json(success(results));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // 删除武功
 // 创建类型
 app.post('/api/martial-arts/types', async (req, res) => {

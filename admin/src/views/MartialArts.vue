@@ -193,6 +193,15 @@
               <el-icon><Plus /></el-icon>
               新增{{ activeBaseTab === 'type' ? '类型' : activeBaseTab === 'character' ? '人物' : '门派' }}
             </el-button>
+            <el-button @click="handleBaseExport" style="margin-left: 10px">
+              <el-icon><Upload /></el-icon>
+              导出
+            </el-button>
+            <el-button @click="triggerBaseImport">
+              <el-icon><Download /></el-icon>
+              导入
+            </el-button>
+            <input type="file" ref="baseImportInput" accept=".json" style="display: none" @change="handleBaseImportFile" />
           </div>
         </div>
       </template>
@@ -378,7 +387,9 @@ import {
   updateMartialArtCharacter,
   deleteMartialArtCharacter,
   exportMartialArts,
-  importMartialArts
+  importMartialArts,
+  exportMartialArtsBaseData,
+  importMartialArtsBaseData
 } from '@/api/cloud'
 
 const loading = ref(false)
@@ -389,6 +400,7 @@ const currentId = ref('')
 const formRef = ref(null)
 const tableRef = ref(null)
 const importInput = ref(null)
+const baseImportInput = ref(null)
 
 // 分页
 const activeNovelTab = ref('飞狐外传')
@@ -738,6 +750,66 @@ async function handleImportFile(e) {
       }
       ElMessage.success(msg)
       loadMartialArts()
+    } else {
+      ElMessage.error(res.error || '导入失败')
+    }
+  } catch (err) {
+    ElMessage.error('读取文件失败')
+  } finally {
+    e.target.value = ''
+  }
+}
+
+// 导出武功基础数据
+async function handleBaseExport() {
+  try {
+    const res = await exportMartialArtsBaseData(activeBaseTab.value)
+    if (res.success) {
+      const data = res.data
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `martial-arts-${activeBaseTab.value}-${Date.now()}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      ElMessage.success(`导出成功，共 ${data.length} 条`)
+    } else {
+      ElMessage.error(res.error || '导出失败')
+    }
+  } catch (err) {
+    ElMessage.error('导出失败')
+  }
+}
+
+// 触发导入基础数据
+function triggerBaseImport() {
+  baseImportInput.value?.click()
+}
+
+// 导入武功基础数据
+async function handleBaseImportFile(e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const items = JSON.parse(text)
+    if (!Array.isArray(items)) {
+      ElMessage.error('文件格式错误')
+      return
+    }
+
+    const res = await importMartialArtsBaseData({ type: activeBaseTab.value, items })
+    if (res.success) {
+      const { created, updated, errors } = res.data
+      let msg = `导入完成：新建 ${created} 条，更新 ${updated} 条`
+      if (errors && errors.length > 0) {
+        msg += `，${errors.length} 条出错`
+        console.error('导入错误:', errors)
+      }
+      ElMessage.success(msg)
+      await loadOptions()
     } else {
       ElMessage.error(res.error || '导入失败')
     }

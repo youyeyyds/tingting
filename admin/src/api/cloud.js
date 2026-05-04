@@ -698,4 +698,20 @@ export async function importMartialArts(data) {
   return response.data
 }
 
+/**
+ * 导出武功基础数据（类型/门派/人物）
+ */
+export async function exportMartialArtsBaseData(type) {
+  const response = await api.get('/martial-arts/base-data/export', { params: { type } })
+  return response.data
+}
+
+/**
+ * 导入武功基础数据
+ */
+export async function importMartialArtsBaseData(data) {
+  const response = await api.post('/martial-arts/base-data/import', data)
+  return response.data
+}
+
 export default api
