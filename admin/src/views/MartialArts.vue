@@ -714,7 +714,7 @@ async function handleExport() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `martial-arts-${novelId || 'all'}-${Date.now()}.json`
+      link.download = `martial-arts-${novelId || '全集'}-${Date.now()}.json`
       link.click()
       URL.revokeObjectURL(url)
       ElMessage.success(`导出成功，共 ${data.length} 条武功`)
