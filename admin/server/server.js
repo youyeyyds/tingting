@@ -2802,6 +2802,7 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
 
     // 组装导出数据
     const data = martialArts.map(m => ({
+      seq: m.seq || 0,
       name: m.name,
       typeName: typeMap[m.typeId]?.name || '',
       factionName: factionMap[m.factionId]?.name || '',
@@ -2963,7 +2964,7 @@ app.post('/api/martial-arts/import', async (req, res) => {
             typeId: typeDbId,
             factionId: factionDbId,
             novelId: novelDbId,
-            seq: Date.now(),
+            seq: item.seq || Date.now(),
             _createTime: new Date()
           });
 
