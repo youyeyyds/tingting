@@ -2784,6 +2784,257 @@ app.put('/api/martial-arts/:id', async (req, res) => {
   }
 });
 
+// 导出武功列表
+app.get('/api/martial-arts/export', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { novelId } = req.query;
+
+    // 构建查询条件
+    let condition = {};
+    if (novelId) {
+      const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (!objectIdPattern.test(novelId)) {
+        const novelResult = await db.collection('martialArtNovels').where({ name: novelId }).limit(1).get();
+        if (novelResult.data.length === 0) return res.json(success([]));
+        condition.novelId = novelResult.data[0]._id;
+      } else {
+        condition.novelId = novelId;
+      }
+    }
+
+    const result = await db.collection('martialArts').where(condition).orderBy('seq', 'asc').get();
+    const martialArts = result.data;
+
+    if (martialArts.length === 0) {
+      return res.json(success([]));
+    }
+
+    // 获取关联数据
+    const typeIds = [...new Set(martialArts.map(m => m.typeId).filter(Boolean))];
+    const factionIds = [...new Set(martialArts.map(m => m.factionId).filter(Boolean))];
+    const [typesRes, factionsRes, relationsRes] = await Promise.all([
+      typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).get() : { data: [] },
+      factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).get() : { data: [] },
+      db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).get()
+    ]);
+
+    const typeMap = {};
+    typesRes.data.forEach(t => { typeMap[t._id] = t; });
+    const factionMap = {};
+    factionsRes.data.forEach(f => { factionMap[f._id] = f; });
+
+    const characterIds = [...new Set(relationsRes.data.map(r => r.characterId).filter(Boolean))];
+    const charactersDetailRes = characterIds.length > 0
+      ? await db.collection('martialArtCharacters').where({ _id: db.command.in(characterIds) }).get()
+      : { data: [] };
+    const characterMap = {};
+    charactersDetailRes.data.forEach(c => { characterMap[c._id] = c; });
+
+    const characterRelationMap = {};
+    relationsRes.data.forEach(rel => {
+      if (!characterRelationMap[rel.martialArtId]) {
+        characterRelationMap[rel.martialArtId] = [];
+      }
+      if (characterMap[rel.characterId]) {
+        characterRelationMap[rel.martialArtId].push(characterMap[rel.characterId]);
+      }
+    });
+
+    // 组装导出数据
+    const data = martialArts.map(m => ({
+      name: m.name,
+      typeName: typeMap[m.typeId]?.name || '',
+      factionName: factionMap[m.factionId]?.name || '',
+      characters: (characterRelationMap[m._id] || []).map(c => c.name),
+      description: m.description || ''
+    }));
+
+    res.json(success(data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 导入武功
+app.post('/api/martial-arts/import', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const { novelId, items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      return res.json(error('导入数据格式错误'));
+    }
+
+    // 获取或创建小说
+    let novelDbId = '';
+    if (novelId) {
+      const objectIdPattern = /^[a-fA-F0-9]{24}$/;
+      if (!objectIdPattern.test(novelId)) {
+        const novelResult = await db.collection('martialArtNovels').where({ name: novelId }).limit(1).get();
+        if (novelResult.data.length > 0) {
+          novelDbId = novelResult.data[0]._id;
+        } else {
+          const newNovel = await db.collection('martialArtNovels').add({
+            name: novelId,
+            seq: Date.now(),
+            _createTime: new Date()
+          });
+          novelDbId = newNovel.id;
+        }
+      } else {
+        novelDbId = novelId;
+      }
+    }
+
+    // 获取所有类型、门派、人物
+    const [allTypes, allFactions, allCharacters] = await Promise.all([
+      db.collection('martialArtTypes').get(),
+      db.collection('martialArtFactions').get(),
+      db.collection('martialArtCharacters').get()
+    ]);
+
+    const typeMap = {};
+    allTypes.data.forEach(t => { typeMap[t.name] = t; });
+    const factionMap = {};
+    allFactions.data.forEach(f => { factionMap[f.name] = f; });
+    const characterMap = {};
+    allCharacters.data.forEach(c => { characterMap[c.name] = c; });
+
+    const results = { created: 0, updated: 0, errors: [] };
+
+    for (const item of items) {
+      if (!item.name) {
+        results.errors.push(`武功名称为空，跳过`);
+        continue;
+      }
+
+      try {
+        // 查找同名武功
+        let condition = { name: item.name };
+        if (novelDbId) condition.novelId = novelDbId;
+
+        const existResult = await db.collection('martialArts').where(condition).limit(1).get();
+
+        // 获取或创建类型
+        let typeDbId = '';
+        if (item.typeName) {
+          if (typeMap[item.typeName]) {
+            typeDbId = typeMap[item.typeName]._id;
+          } else {
+            const newType = await db.collection('martialArtTypes').add({
+              name: item.typeName,
+              seq: Date.now(),
+              _createTime: new Date()
+            });
+            typeDbId = newType.id;
+            typeMap[item.typeName] = { _id: newType.id, name: item.typeName };
+          }
+        }
+
+        // 获取或创建门派
+        let factionDbId = '';
+        if (item.factionName) {
+          if (factionMap[item.factionName]) {
+            factionDbId = factionMap[item.factionName]._id;
+          } else {
+            const newFaction = await db.collection('martialArtFactions').add({
+              name: item.factionName,
+              seq: Date.now(),
+              _createTime: new Date()
+            });
+            factionDbId = newFaction.id;
+            factionMap[item.factionName] = { _id: newFaction.id, name: item.factionName };
+          }
+        }
+
+        // 获取或创建人物
+        const characterDbIds = [];
+        if (item.characters && Array.isArray(item.characters)) {
+          for (const charName of item.characters) {
+            if (charName) {
+              if (characterMap[charName]) {
+                characterDbIds.push(characterMap[charName]._id);
+              } else {
+                const newChar = await db.collection('martialArtCharacters').add({
+                  name: charName,
+                  _createTime: new Date()
+                });
+                characterDbIds.push(newChar.id);
+                characterMap[charName] = { _id: newChar.id, name: charName };
+              }
+            }
+          }
+        }
+
+        if (existResult.data.length > 0) {
+          // 更新
+          const martialArtId = existResult.data[0]._id;
+          await db.collection('martialArts').doc(martialArtId).update({
+            name: item.name,
+            description: item.description || '',
+            typeId: typeDbId,
+            factionId: factionDbId
+          });
+
+          // 删除旧的人物关联
+          const oldRelations = await db.collection('martialArtCharacterRelations').where({ martialArtId }).get();
+          for (const rel of oldRelations.data) {
+            await db.collection('martialArtCharacterRelations').doc(rel._id).remove();
+          }
+
+          // 添加新的人物关联
+          for (const charId of characterDbIds) {
+            await db.collection('martialArtCharacterRelations').add({
+              martialArtId,
+              characterId: charId,
+              _createTime: new Date()
+            });
+          }
+
+          results.updated++;
+        } else {
+          // 创建
+          const newMartialArt = await db.collection('martialArts').add({
+            name: item.name,
+            description: item.description || '',
+            typeId: typeDbId,
+            factionId: factionDbId,
+            novelId: novelDbId,
+            seq: Date.now(),
+            _createTime: new Date()
+          });
+
+          const martialArtId = newMartialArt.id;
+
+          // 添加人物关联
+          for (const charId of characterDbIds) {
+            await db.collection('martialArtCharacterRelations').add({
+              martialArtId,
+              characterId: charId,
+              _createTime: new Date()
+            });
+          }
+
+          results.created++;
+        }
+      } catch (itemErr) {
+        results.errors.push(`武功「${item.name}」处理失败: ${itemErr.message}`);
+      }
+    }
+
+    res.json(success(results));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // 删除武功
 // 创建类型
 app.post('/api/martial-arts/types', async (req, res) => {

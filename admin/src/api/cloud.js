@@ -682,4 +682,20 @@ export async function deleteMartialArt(id) {
   return response.data
 }
 
+/**
+ * 导出武功列表
+ */
+export async function exportMartialArts(novelId) {
+  const response = await api.get('/martial-arts/export', { params: { novelId } })
+  return response.data
+}
+
+/**
+ * 导入武功
+ */
+export async function importMartialArts(data) {
+  const response = await api.post('/martial-arts/import', data)
+  return response.data
+}
+
 export default api

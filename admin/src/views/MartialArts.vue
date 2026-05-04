@@ -50,6 +50,15 @@
               <el-icon><Plus /></el-icon>
               新增武功
             </el-button>
+            <el-button @click="handleExport" style="margin-left: 10px">
+              <el-icon><Download /></el-icon>
+              导出
+            </el-button>
+            <el-button @click="triggerImport">
+              <el-icon><Upload /></el-icon>
+              导入
+            </el-button>
+            <input type="file" ref="importInput" accept=".json" style="display: none" @change="handleImportFile" />
           </div>
         </div>
       </template>
@@ -345,7 +354,7 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, Download, Upload } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
 import {
   getMartialArts,
@@ -367,7 +376,9 @@ import {
   deleteMartialArtNovel,
   createMartialArtCharacter,
   updateMartialArtCharacter,
-  deleteMartialArtCharacter
+  deleteMartialArtCharacter,
+  exportMartialArts,
+  importMartialArts
 } from '@/api/cloud'
 
 const loading = ref(false)
@@ -377,6 +388,7 @@ const isEdit = ref(false)
 const currentId = ref('')
 const formRef = ref(null)
 const tableRef = ref(null)
+const importInput = ref(null)
 
 // 分页
 const activeNovelTab = ref('飞狐外传')
@@ -671,6 +683,68 @@ async function handleDelete(row) {
     }
   } catch {
     // 取消
+  }
+}
+
+// 导出武功
+async function handleExport() {
+  try {
+    const novelId = activeNovelTab.value || undefined
+    const res = await exportMartialArts(novelId)
+    if (res.success) {
+      const data = res.data
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `martial-arts-${novelId || 'all'}-${Date.now()}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      ElMessage.success(`导出成功，共 ${data.length} 条武功`)
+    } else {
+      ElMessage.error(res.error || '导出失败')
+    }
+  } catch (err) {
+    ElMessage.error('导出失败')
+  }
+}
+
+// 触发导入
+function triggerImport() {
+  importInput.value?.click()
+}
+
+// 导入武功
+async function handleImportFile(e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const items = JSON.parse(text)
+    if (!Array.isArray(items)) {
+      ElMessage.error('文件格式错误')
+      return
+    }
+
+    const novelId = activeNovelTab.value || undefined
+    const res = await importMartialArts({ novelId, items })
+    if (res.success) {
+      const { created, updated, errors } = res.data
+      let msg = `导入完成：新建 ${created} 条，更新 ${updated} 条`
+      if (errors && errors.length > 0) {
+        msg += `，${errors.length} 条出错`
+        console.error('导入错误:', errors)
+      }
+      ElMessage.success(msg)
+      loadMartialArts()
+    } else {
+      ElMessage.error(res.error || '导入失败')
+    }
+  } catch (err) {
+    ElMessage.error('读取文件失败')
+  } finally {
+    e.target.value = ''
   }
 }
 
