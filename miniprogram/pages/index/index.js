@@ -104,14 +104,16 @@ Page({
   onShow() {
     // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      console.log('[onShow] restore, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length, 'homePageMasked:', Object.keys(app.globalData.homePageMaskedCourses || {}).length);
       app.globalData.needRestoreMaskedData = false;
       app.globalData.homePageCourses = [];
       wx.removeStorageSync('indexCourses');
 
       // 优先使用缓存的脱敏数据（保持武功不变）
       const masked = this.getMaskedCoursesFromCache();
+      console.log('[onShow] masked from cache:', Object.keys(masked).length);
       if (Object.keys(masked).length > 0) {
-        console.log('[onShow] using cached masked courses, count:', Object.keys(masked).length);
+        console.log('[onShow] using cached masked courses');
         this._realCourses = null;
         this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
         this.showStatusToast();
@@ -119,7 +121,9 @@ Page({
       }
 
       // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+      console.log('[onShow] no masked cache, check real courses');
       if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
+        console.log('[onShow] generating masked courses');
         this.maskCourses();
         this._realCourses = null;
         this.setData({ isLoggedIn: false });
@@ -127,6 +131,7 @@ Page({
         return;
       }
 
+      console.log('[onShow] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses: [], loading: false });
       this.showStatusToast();
@@ -373,6 +378,7 @@ Page({
 
   // 确认退出登录
   onLogoutConfirm() {
+    console.log('[logoutConfirm] start, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length, 'homePageMasked:', Object.keys(app.globalData.homePageMaskedCourses || {}).length);
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
@@ -385,6 +391,7 @@ Page({
 
     // 优先使用缓存的脱敏数据（保持武功不变）
     const masked = this.getMaskedCoursesFromCache();
+    console.log('[logoutConfirm] masked from cache:', Object.keys(masked).length);
     if (Object.keys(masked).length > 0) {
       console.log('[logoutConfirm] using cached masked courses');
       this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
@@ -393,13 +400,16 @@ Page({
     }
 
     // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+    console.log('[logoutConfirm] no masked cache, check real courses');
     if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
+      console.log('[logoutConfirm] generating masked courses');
       this.maskCourses();
       this.setData({ isLoggedIn: false });
       this.showStatusToast();
       return;
     }
 
+    console.log('[logoutConfirm] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
     this.setData({ isLoggedIn: false, courses: [], loading: false });
     this.showStatusToast();
   },
