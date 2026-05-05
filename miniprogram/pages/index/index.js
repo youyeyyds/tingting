@@ -108,8 +108,8 @@ Page({
       app.globalData.homePageMaskedCourses = {};
       wx.removeStorageSync('indexCourses');
 
-      // 武功池为空或脱敏缓存为空时，先加载武功池再生成脱敏数据
-      if (!app.globalData.martialArtsPool?.length || !app.globalData.homePageMaskedCourses?.length) {
+      // 武功池为空时先加载，不为空则直接生成脱敏数据
+      if (!app.globalData.martialArtsPool?.length) {
         if (this._realCourses?.length) {
           this.loadMartialArts().then(() => {
             this.maskCourses();
@@ -118,9 +118,16 @@ Page({
           });
           return;
         }
+      } else if (this._realCourses?.length) {
+        // 武功池有数据，直接生成脱敏数据
+        this.maskCourses();
+        this._realCourses = null;
+        this.setData({ isLoggedIn: false });
+        this.showStatusToast();
+        return;
       }
 
-      // 使用缓存数据
+      // 极端情况：使用后备数据
       const maskedCourses = this.getMaskedCoursesFromCache();
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
@@ -377,8 +384,8 @@ Page({
     wx.removeStorageSync('playingChapter');
     wx.removeStorageSync('playingSeq');
 
-    // 武功池为空或脱敏缓存为空时，先加载武功池再生成脱敏数据
-    if (!app.globalData.martialArtsPool?.length || !app.globalData.homePageMaskedCourses?.length) {
+    // 武功池为空时先加载，不为空则直接生成脱敏数据
+    if (!app.globalData.martialArtsPool?.length) {
       if (this._realCourses?.length) {
         this.loadMartialArts().then(() => {
           this.maskCourses();
@@ -387,9 +394,15 @@ Page({
         });
         return;
       }
+    } else if (this._realCourses?.length) {
+      // 武功池有数据，直接生成脱敏数据
+      this.maskCourses();
+      this.setData({ isLoggedIn: false });
+      this.showStatusToast();
+      return;
     }
 
-    // 武功池和脱敏缓存都正常时，使用缓存数据
+    // 极端情况：使用后备数据
     const masked = this.getMaskedCoursesFromCache();
     this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
     this.showStatusToast();
