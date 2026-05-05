@@ -1,8 +1,6 @@
 // app.js
 App({
   onLaunch() {
-    wx.setStorageSync('lastAppShowTime', Date.now());
-
     if (!wx.cloud) {
       console.error("请使用 2.2.3 或以上的基础库以使用云能力");
     } else {
@@ -43,7 +41,7 @@ App({
     const lastShowTime = wx.getStorageSync('lastAppShowTime') || 0;
     const timeSinceLastShow = now - lastShowTime;
 
-    // 从后台切回且超过30秒才刷新武功
+    // 从后台切回且超过1小时才标记热启动
     if (this.globalData.wasInBackground && timeSinceLastShow > 3600000) {
       this.globalData.isHotStart = true;
     } else {
@@ -58,7 +56,6 @@ App({
     this.globalData.wasInBackground = true;
   },
 
-  
   // 加载默认封面
   loadDefaultCover() {
     // 优先从本地缓存读取
@@ -134,6 +131,7 @@ App({
     miniPlayerActive: false,
     miniPlayerIndexFadedIn: false,
     wasInBackground: false, // 是否从后台切回
+    isHotStart: false, // 是否热启动（切后台超过1小时）
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
     playlistSortOrder: 'asc', // 'asc' | 'desc'

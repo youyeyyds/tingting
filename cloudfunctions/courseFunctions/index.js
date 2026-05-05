@@ -174,17 +174,17 @@ const getCourses = async (event) => {
   }
 };
 
-// 查询课程列表（仅返回基本字段，不关联用户数据，用于未登录状态）
+// 获取最小课程信息（仅返回基本字段，用于未登录状态）
 const getMinimalCourses = async (event) => {
   try {
     const { limit = 20 } = event;
 
-    // 只查询已发布状态的课程，按 seq 排序
+    // 只查询已发布状态的课程，按 seq 排序，只返回基本字段
     const coursesRes = await db.collection("courses")
       .where({ status: 'published' })
       .orderBy("seq", "asc")
-      .limit(limit)
       .field({ _id: true, cover: true })
+      .limit(limit)
       .get();
 
     // 获取章节数
@@ -749,10 +749,12 @@ const updateCourseSettings = async (event) => {
 // 获取武功列表（用于首页脱敏）
 const getMartialArts = async (event) => {
   try {
-    // 获取武功列表，随机取样，每次返回不同的武功
+    const { limit = 50 } = event;
+    console.log('[getMartialArts] limit:', limit);
+    // 获取武功列表，随机排序
     const martialArtsRes = await db.collection("martialArts")
       .aggregate()
-      .sample({ size: 50 })
+      .sample({ size: parseInt(limit) })
       .end();
 
     const martialArts = martialArtsRes.list || [];
@@ -762,7 +764,7 @@ const getMartialArts = async (event) => {
       return { success: true, data: [] };
     }
 
-    // 获取武功关联的类型、门派、小说
+    // 获取所有关联的类型、门派、小说
     const typeIds = martialArts.map(m => m.typeId).filter(Boolean);
     const factionIds = martialArts.map(m => m.factionId).filter(Boolean);
     const novelIds = martialArts.map(m => m.novelId).filter(Boolean);
@@ -841,9 +843,6 @@ exports.main = async (event, context) => {
       return await getVersions();
     case "getCourses":
       return await getCourses(event);
-
-    case "getMinimalCourses":
-      return await getMinimalCourses(event);
     case "getHeadlines":
       return await getHeadlines(event);
     case "getCourseDetail":
@@ -864,6 +863,8 @@ exports.main = async (event, context) => {
       return await updateCourseSettings(event);
     case "getMartialArts":
       return await getMartialArts(event);
+    case "getMinimalCourses":
+      return await getMinimalCourses(event);
     default:
       return { success: false, errMsg: "未知的操作类型" };
   }

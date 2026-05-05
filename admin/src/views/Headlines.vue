@@ -503,11 +503,6 @@ onMounted(() => {
   gap: 8px;
 }
 
-.protect-label {
-  font-size: 14px;
-  color: #666;
-}
-
 .speed-label {
   font-size: 14px;
   color: #666;

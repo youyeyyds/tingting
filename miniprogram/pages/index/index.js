@@ -42,7 +42,7 @@ Page({
     const menu = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
+    const tabH = 100 * windowWidth / 750; // 100rpx 转 px
 
     this.setData({
       statusBarHeight,
@@ -121,7 +121,7 @@ Page({
       this.setData({ isLoggedIn });
       // 登录状态变化：从未登录变登录，需要重新加载真实课程
       if (isLoggedIn) {
-        this._realCourses = null;  // 清空旧的 minimal courses
+        this._realCourses = null;
         this.loadCourses();
         this.showStatusToast();
         return;
@@ -156,15 +156,7 @@ Page({
     }
   },
 
-  // 处理未登录状态（武功池已就绪）
-  _onShowUnauthenticated() {
-    if (this._realCourses?.length) {
-      this.maskCourses();
-    }
-    this.syncCoverUrls();
-    this.showStatusToast();
-  },
-  // 同步封面URL（只更新封面字段，保留其他数据）
+// 同步封面URL（只更新封面字段，保留其他数据）
   syncCoverUrls() {
     const ct = app.globalData.coverLoadTime;
     if (!ct) return;
@@ -195,15 +187,18 @@ Page({
     if (!url || url.includes('seed/fixed_')) return url;
     const t = time || this.data[type === 'banner' ? 'bannerTime' : 'coverTime'];
 
+    // 已有时间戳格式，更新时间戳
     const m1 = url.match(/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
     if (m1 && m1[1] != t) {
       return url.replace(/seed\/\d+_(banner|cover)_/, `seed/${t}_${type}_`);
     }
     if (m1) return url;
 
+    // seed格式（非时间戳），添加时间戳
     const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
     if (m2) return `https://picsum.photos/seed/${t}_${type}_${m2[1]}/${m2[2]}`;
 
+    // 无seed格式
     const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
     if (m3) {
       const r = url.match(/random=(\d+)/)?.[1] || '0';
@@ -222,22 +217,16 @@ Page({
     app.globalData.indexHeadlines = [];
     app.globalData.indexCourses = [];
 
-    // 重新生成脱敏数据
-    const newMasked = {};
-    this.data.courses.forEach(c => {
-      const art = this.getNextMartialArt();
-      if (art) {
-        const user = this.getMartialArtAuthor(art);
-        newMasked[c._id] = { ...c, title: art.name, author: user, categoryName: art.type };
-      }
-    });
+    // 重新加载武功池和脱敏数据
+    app.globalData.martialArtsPool = [];
+    this._martialArtsPool = null;
+    app.globalData.homePageMaskedCourses = {};
 
-    app.globalData.homePageMaskedCourses = newMasked;
     app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
 
     this.setData({ refreshing: true, bannerTime: t, coverTime: t, headlines: [], courses: [] });
 
-    Promise.all([this.loadHeadlines(), this.loadCourses()]).then(() => {
+    Promise.all([this.loadHeadlines(), this.loadMinimalCourses()]).then(() => {
       this.setData({ refreshing: false });
     });
   },
@@ -256,10 +245,9 @@ Page({
           bannerSpeed: (res.result.speed || 5) * 1000
         });
       }
-    });
+    }).catch(e => console.error('获取头条失败', e));
   },
 
-  // 加载完整课程（已登录用户）
   loadCourses() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
@@ -277,43 +265,16 @@ Page({
     }).catch(() => this.setData({ loading: false }));
   },
 
-  // 加载最小课程信息（未登录用户）
-  loadMinimalCourses() {
-    // 先确保武功池已加载
-    const martialArtsPromise = (app.globalData.martialArtsPool?.length > 0)
-      ? Promise.resolve()
-      : this.loadMartialArts();
-
-    return martialArtsPromise.then(() => {
-      return wx.cloud.callFunction({
-        name: 'courseFunctions',
-        data: { type: 'getMinimalCourses', limit: 20 }
-      }).then(res => {
-        if (res.result.success) {
-          const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
-          // 不缓存到 indexCourses（因为不是完整数据）
-          this._realCourses = courses;
-          this.maskCourses(courses);
-        } else {
-          this.setData({ loading: false });
-        }
-      }).catch(() => this.setData({ loading: false }));
-    });
-  },
-
-  // 加载武功数据（每次都从数据库读取，确保随机）
+  // 加载武功数据（每次都从数据库读取，云函数已随机）
   loadMartialArts() {
-    console.log('[loadMartialArts] calling cloud function');
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getMartialArts' }
     }).then(res => {
-      console.log('[loadMartialArts] result:', res.result?.success, ', count:', res.result?.data?.length);
       if (res.result && res.result.success && res.result.data) {
         this._martialArtsPool = res.result.data;
         app.globalData.martialArtsPool = res.result.data;
         this._martialArtIndex = 0;
-        console.log('[loadMartialArts] pool reloaded, count:', res.result.data.length);
       }
     });
   },
@@ -350,6 +311,38 @@ Page({
       masked[id] = { ...masked[id], cover: this.processUrl(masked[id].cover, ct, 'cover') };
     });
     return masked;
+  },
+
+  // 加载最小课程信息（未登录用户）
+  loadMinimalCourses() {
+    // 先确保武功池已加载
+    const martialArtsPromise = (app.globalData.martialArtsPool?.length > 0)
+      ? Promise.resolve()
+      : this.loadMartialArts();
+
+    return martialArtsPromise.then(() => {
+      return wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: { type: 'getMinimalCourses', limit: 20 }
+      }).then(res => {
+        if (res.result.success) {
+          const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
+          this._realCourses = courses;
+          this.maskCourses();
+        } else {
+          this.setData({ loading: false });
+        }
+      }).catch(() => this.setData({ loading: false }));
+    });
+  },
+
+  // 处理未登录状态（武功池已就绪）
+  _onShowUnauthenticated() {
+    if (this._realCourses?.length) {
+      this.maskCourses();
+    }
+    this.syncCoverUrls();
+    this.showStatusToast();
   },
 
   // 脱敏课程（用武功替换 title/author/categoryName）
@@ -408,10 +401,12 @@ Page({
     }
   },
 
+  // 取消退出登录
   onLogoutCancel() {
     this.setData({ logoutConfirmVisible: false });
   },
 
+  // 确认退出登录
   onLogoutConfirm() {
     this.setData({ logoutConfirmVisible: false });
     app.logout();
@@ -460,6 +455,7 @@ Page({
     wx.navigateTo({ url: `/pages/chapter/index?id=${e.currentTarget.dataset.id}` });
   },
 
+  // 关闭武功详情弹窗
   onCloseMartialArt() {
     this.setData({ isClosing: true });
     setTimeout(() => {
@@ -467,6 +463,7 @@ Page({
     }, ANIMATION_DURATION);
   },
 
+  // 阻止弹窗触摸穿透
   preventModalMove() {
     return true;
   },
