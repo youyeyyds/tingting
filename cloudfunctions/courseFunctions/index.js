@@ -752,12 +752,10 @@ const updateCourseSettings = async (event) => {
 // 获取武功列表（用于首页脱敏）
 const getMartialArts = async (event) => {
   try {
-    // 获取武功列表，按_id排序后返回（不再sample，由前端打乱）
-    // aggregate 的 limit 默认可以超过 100 条
+    // 获取武功列表，随机取样，每次返回不同的武功
     const martialArtsRes = await db.collection("martialArts")
       .aggregate()
-      .sort({ _id: 1 })
-      .limit(1000)
+      .sample({ size: 50 })
       .end();
 
     const martialArts = martialArtsRes.list || [];
@@ -767,7 +765,7 @@ const getMartialArts = async (event) => {
       return { success: true, data: [] };
     }
 
-    // 获取所有关联的类型、门派、小说
+    // 获取武功关联的类型、门派、小说
     const typeIds = martialArts.map(m => m.typeId).filter(Boolean);
     const factionIds = martialArts.map(m => m.factionId).filter(Boolean);
     const novelIds = martialArts.map(m => m.novelId).filter(Boolean);
@@ -817,7 +815,7 @@ const getMartialArts = async (event) => {
       users: characterRelationMap[m._id] || []
     }));
 
-    console.log('[getMartialArts] returning data count:', data.length, ', first 3:', data.slice(0, 3).map(d => d.name).join(', '));
+    console.log('[getMartialArts] returning data count:', data.length);
     return {
       success: true,
       data

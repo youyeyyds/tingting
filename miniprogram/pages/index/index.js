@@ -307,10 +307,9 @@ Page({
       if (res.result && res.result.success && res.result.data) {
         this._martialArtsPool = res.result.data;
         app.globalData.martialArtsPool = res.result.data;
-        // 重置已显示的武功，重新洗牌
+        // 重置已显示的武功
         this._displayedIds = new Set();
-        this.shuffleMartialArts();
-        console.log('[loadMartialArts] pool reloaded and shuffled');
+        console.log('[loadMartialArts] pool reloaded, count:', res.result.data.length);
       }
     });
   },
@@ -416,6 +415,7 @@ Page({
     if (this.data.isLoggedIn) {
       this.setData({ logoutConfirmVisible: true });
     } else {
+      app.globalData.wasInBackground = false;
       wx.navigateTo({ url: '/pages/login/index' });
     }
   },
@@ -487,6 +487,7 @@ Page({
     const idx = e.currentTarget.dataset.index;
     if (idx == 0) return;
     if (!app.globalData.isLoggedIn) {
+      app.globalData.wasInBackground = false;
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }

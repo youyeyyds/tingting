@@ -1,7 +1,6 @@
 // app.js
 App({
   onLaunch() {
-    // 初始化
     wx.setStorageSync('lastAppShowTime', Date.now());
 
     if (!wx.cloud) {
@@ -44,14 +43,19 @@ App({
     const lastShowTime = wx.getStorageSync('lastAppShowTime') || 0;
     const timeSinceLastShow = now - lastShowTime;
 
-    // 热启动判断：距上次显示超过 30 秒
-    if (timeSinceLastShow > 30000) {
+    // 从后台切回且超过30秒才刷新武功
+    if (this.globalData.wasInBackground && timeSinceLastShow > 3600000) {
       this.globalData.isHotStart = true;
     } else {
       this.globalData.isHotStart = false;
     }
+    this.globalData.wasInBackground = false;
 
     wx.setStorageSync('lastAppShowTime', now);
+  },
+
+  onHide() {
+    this.globalData.wasInBackground = true;
   },
 
   
@@ -129,6 +133,7 @@ App({
     playingStatus: false, // 统一播放状态：true=正在播放，false=暂停
     miniPlayerActive: false,
     miniPlayerIndexFadedIn: false,
+    wasInBackground: false, // 是否从后台切回
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
     playlistSortOrder: 'asc', // 'asc' | 'desc'
