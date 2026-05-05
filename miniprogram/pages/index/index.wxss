@@ -201,6 +201,10 @@
   box-sizing: border-box;
 }
 
+.skeleton-card.first-card {
+  margin-top: 20rpx;
+}
+
 .skeleton-image {
   width: 160rpx;
   height: 160rpx;
