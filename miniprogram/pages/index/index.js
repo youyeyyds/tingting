@@ -120,15 +120,27 @@ Page({
         return;
       }
 
-      // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+      // 没有缓存时，如果有真实课程，先加载武功池再生成脱敏数据
       console.log('[onShow] no masked cache, check real courses');
-      if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
-        console.log('[onShow] generating masked courses');
-        this.maskCourses();
-        this._realCourses = null;
-        this.setData({ isLoggedIn: false });
-        this.showStatusToast();
-        return;
+      if (this._realCourses?.length) {
+        if (!app.globalData.martialArtsPool?.length) {
+          console.log('[onShow] martial pool empty, loading...');
+          this.loadMartialArts().then(() => {
+            this.maskCourses();
+            this._realCourses = null;
+            this.setData({ isLoggedIn: false });
+            this.showStatusToast();
+          });
+          return;
+        }
+        if (app.globalData.martialArtsPool?.length) {
+          console.log('[onShow] generating masked courses');
+          this.maskCourses();
+          this._realCourses = null;
+          this.setData({ isLoggedIn: false });
+          this.showStatusToast();
+          return;
+        }
       }
 
       console.log('[onShow] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
@@ -399,17 +411,28 @@ Page({
       return;
     }
 
-    // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+    // 没有缓存时，如果有真实课程，先加载武功池再生成脱敏数据
     console.log('[logoutConfirm] no masked cache, check real courses');
-    if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
-      console.log('[logoutConfirm] generating masked courses');
-      this.maskCourses();
-      this.setData({ isLoggedIn: false });
-      this.showStatusToast();
-      return;
+    if (this._realCourses?.length) {
+      if (!app.globalData.martialArtsPool?.length) {
+        console.log('[logoutConfirm] martial pool empty, loading...');
+        this.loadMartialArts().then(() => {
+          this.maskCourses();
+          this.setData({ isLoggedIn: false });
+          this.showStatusToast();
+        });
+        return;
+      }
+      if (app.globalData.martialArtsPool?.length) {
+        console.log('[logoutConfirm] generating masked courses');
+        this.maskCourses();
+        this.setData({ isLoggedIn: false });
+        this.showStatusToast();
+        return;
+      }
     }
 
-    console.log('[logoutConfirm] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
+    console.log('[logoutConfirm] fallback');
     this.setData({ isLoggedIn: false, courses: [], loading: false });
     this.showStatusToast();
   },
