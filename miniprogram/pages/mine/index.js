@@ -367,7 +367,7 @@ Page({
     app.globalData.homePageCourses = [];
     this.setData({ loadTime: t });
     // 立即广播事件，确保 index 页面及时响应
-    app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
+    app.notifyCallbacks?.('onCoverRefresh', { bannerLoadTime: t, coverLoadTime: t });
     // 异步加载数据
     Promise.all([
       this.loadHeadlines(),

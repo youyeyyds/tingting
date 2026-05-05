@@ -32,7 +32,23 @@ Page({
     app.registerCallback?.('onCoverRefresh', (data) => {
       if (data?.coverLoadTime) {
         app.globalData.coverLoadTime = data.coverLoadTime;
-        this.syncCoverUrls();
+        app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
+        // 清空缓存，重新加载数据
+        app.globalData.homePageHeadlines = [];
+        app.globalData.homePageCourses = [];
+        this.setData({
+          bannerTime: app.globalData.bannerLoadTime,
+          coverTime: app.globalData.coverLoadTime,
+          headlines: [],
+          courses: []
+        }, () => {
+          this.loadHeadlines();
+          if (app.globalData.isLoggedIn) {
+            this.loadCourses();
+          } else {
+            this.loadMinimalCourses();
+          }
+        });
       }
     });
   },
