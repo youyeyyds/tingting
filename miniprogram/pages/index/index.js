@@ -222,16 +222,13 @@ Page({
     app.globalData.indexHeadlines = [];
     app.globalData.indexCourses = [];
 
-    // 重新随机武功池
-    this.shuffleMartialArts();
-
     // 重新生成脱敏数据
     const newMasked = {};
     this.data.courses.forEach(c => {
       const art = this.getNextMartialArt();
       if (art) {
         const user = this.getMartialArtAuthor(art);
-        newMasked[c._id] = { ...c, title: art.name, author: user, categoryName: art.type || art.novel || '江湖' };
+        newMasked[c._id] = { ...c, title: art.name, author: user, categoryName: art.type };
       }
     });
 
@@ -315,44 +312,27 @@ Page({
       if (res.result && res.result.success && res.result.data) {
         this._martialArtsPool = res.result.data;
         app.globalData.martialArtsPool = res.result.data;
-        // 重置已显示的武功
-        this._displayedIds = new Set();
+        this._martialArtIndex = 0;
         console.log('[loadMartialArts] pool reloaded, count:', res.result.data.length);
       }
     });
   },
 
-  // 打乱武功池
-  shuffleMartialArts() {
-    const pool = app.globalData.martialArtsPool;
-    if (!pool?.length) return;
-    const arr = [...pool];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    app.globalData.martialArtsPool = arr;
-    this._martialArtsPool = arr;
-    this._displayedIds = new Set();
-  },
-
-  // 获取下一个随机武功
+  // 获取下一个武功
   getNextMartialArt() {
     const pool = app.globalData.martialArtsPool;
     if (!pool?.length) return null;
-    if (!this._displayedIds) {
-      this._displayedIds = new Set();
+    if (!this._martialArtIndex) {
+      this._martialArtIndex = 0;
     }
-    if (this._displayedIds.size >= pool.length) {
-      this.shuffleMartialArts();
+    if (this._martialArtIndex >= pool.length) {
+      // 武功池用完，清空后下次会自动重新加载
+      app.globalData.martialArtsPool = [];
+      this._martialArtsPool = null;
+      this._martialArtIndex = 0;
+      return null;
     }
-    for (const art of pool) {
-      if (!this._displayedIds.has(art._id)) {
-        this._displayedIds.add(art._id);
-        return art;
-      }
-    }
-    return null;
+    return pool[this._martialArtIndex++];
   },
 
   // 获取武功作者（人物/门派）
@@ -405,7 +385,7 @@ Page({
             ...c,
             title: art.name,
             author: this.getMartialArtAuthor(art),
-            categoryName: art.type || art.novel || '江湖'
+            categoryName: art.type
           };
         } else {
           cached = { ...c, title: '未知武功', author: '江湖', categoryName: '' };
