@@ -37,7 +37,10 @@ Page({
       // 清空缓存，重新加载
       app.globalData.homePageHeadlines = [];
       app.globalData.homePageCourses = [];
-      app.globalData.homePageMaskedCourses = {};
+      // 只有未登录时才清空脱敏缓存（登录状态用真实课程不受影响）
+      if (!app.globalData.isLoggedIn) {
+        app.globalData.homePageMaskedCourses = {};
+      }
       this.setData({
         bannerTime: app.globalData.bannerLoadTime,
         coverTime: app.globalData.coverLoadTime,
