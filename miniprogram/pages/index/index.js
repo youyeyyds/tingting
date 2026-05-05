@@ -36,6 +36,7 @@ Page({
       // 清空缓存，重新加载
       app.globalData.homePageHeadlines = [];
       app.globalData.homePageCourses = [];
+      app.globalData.homePageMaskedCourses = {};
       this.setData({
         bannerTime: app.globalData.bannerLoadTime,
         coverTime: app.globalData.coverLoadTime,

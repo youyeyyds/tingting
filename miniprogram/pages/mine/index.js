@@ -365,6 +365,7 @@ Page({
     // 清空带时间戳的首页缓存，下次加载会重新获取
     app.globalData.homePageHeadlines = [];
     app.globalData.homePageCourses = [];
+    app.globalData.homePageMaskedCourses = {};
     this.setData({ loadTime: t });
     // 立即广播事件，确保 index 页面及时响应
     app.notifyCallbacks?.('onCoverRefresh', { bannerLoadTime: t, coverLoadTime: t });

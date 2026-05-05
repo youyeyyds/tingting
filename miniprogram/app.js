@@ -26,6 +26,7 @@ App({
     // 冷启动时清空带时间戳的首页缓存
     this.globalData.homePageHeadlines = [];
     this.globalData.homePageCourses = [];
+    this.globalData.homePageMaskedCourses = {};
 
     // 尝试恢复登录状态
     this.restoreLoginState();
@@ -51,6 +52,7 @@ App({
       // 热启动时清空带时间戳的首页缓存，下次加载会重新获取
       this.globalData.homePageHeadlines = [];
       this.globalData.homePageCourses = [];
+      this.globalData.homePageMaskedCourses = {};
     } else {
       this.globalData.isHotStart = false;
     }
