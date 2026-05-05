@@ -103,12 +103,25 @@ Page({
   onShow() {
     // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
-      // 先获取数据再清空缓存
-      const maskedCourses = this.getMaskedCoursesFromCache();
       app.globalData.needRestoreMaskedData = false;
       app.globalData.homePageCourses = [];
       app.globalData.homePageMaskedCourses = {};
       wx.removeStorageSync('indexCourses');
+
+      // 武功池为空或脱敏缓存为空时，先加载武功池再生成脱敏数据
+      if (!app.globalData.martialArtsPool?.length || !app.globalData.homePageMaskedCourses?.length) {
+        if (this._realCourses?.length) {
+          this.loadMartialArts().then(() => {
+            this.maskCourses();
+            this.setData({ isLoggedIn: false });
+            this.showStatusToast();
+          });
+          return;
+        }
+      }
+
+      // 使用缓存数据
+      const maskedCourses = this.getMaskedCoursesFromCache();
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
       this.showStatusToast();
@@ -356,19 +369,6 @@ Page({
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
-    // 武功池为空时，先加载再生成脱敏数据
-    if (!app.globalData.martialArtsPool?.length && this._realCourses?.length) {
-      this.loadMartialArts().then(() => {
-        this.maskCourses();
-        this.setData({ isLoggedIn: false });
-        this.showStatusToast();
-      });
-      return;
-    }
-
-    // 先获取数据再清空缓存
-    const masked = this.getMaskedCoursesFromCache();
-
     // 清理缓存
     app.globalData.homePageCourses = [];
     app.globalData.homePageMaskedCourses = {};
@@ -377,6 +377,20 @@ Page({
     wx.removeStorageSync('playingChapter');
     wx.removeStorageSync('playingSeq');
 
+    // 武功池为空或脱敏缓存为空时，先加载武功池再生成脱敏数据
+    if (!app.globalData.martialArtsPool?.length || !app.globalData.homePageMaskedCourses?.length) {
+      if (this._realCourses?.length) {
+        this.loadMartialArts().then(() => {
+          this.maskCourses();
+          this.setData({ isLoggedIn: false });
+          this.showStatusToast();
+        });
+        return;
+      }
+    }
+
+    // 武功池和脱敏缓存都正常时，使用缓存数据
+    const masked = this.getMaskedCoursesFromCache();
     this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
     this.showStatusToast();
   },
