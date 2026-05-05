@@ -378,10 +378,11 @@ Page({
             ...c,
             title: art.name,
             author: this.getMartialArtAuthor(art),
-            categoryName: art.type
+            categoryName: art.type,
+            progress: 0
           };
         } else {
-          cached = { ...c, title: '未知武功', author: '江湖', categoryName: '' };
+          cached = { ...c, title: '未知武功', author: '江湖', categoryName: '', progress: 0 };
         }
         maskedCourses[c._id] = cached;
       }
