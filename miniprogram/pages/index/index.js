@@ -271,7 +271,12 @@ Page({
 
   // 获取缓存的脱敏课程
   getMaskedCoursesFromCache() {
-    const masked = app.globalData.homePageMaskedCourses || {};
+    let masked = app.globalData.homePageMaskedCourses || {};
+    // 脱敏缓存为空但有真实课程缓存，用它作为后备
+    if (Object.keys(masked).length === 0 && app.globalData.homePageCourses?.length) {
+      masked = {};
+      app.globalData.homePageCourses.forEach(c => { masked[c._id] = c; });
+    }
     const ct = this.data.coverTime;
     Object.keys(masked).forEach(id => {
       masked[id] = { ...masked[id], cover: this.processUrl(masked[id].cover, ct, 'cover') };
@@ -349,15 +354,27 @@ Page({
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
+    // 武功池为空时，先加载再生成脱敏数据
+    if (!app.globalData.martialArtsPool?.length && this._realCourses?.length) {
+      this.loadMartialArts().then(() => {
+        this.maskCourses();
+        this.setData({ isLoggedIn: false });
+        this.showStatusToast();
+      });
+      return;
+    }
+
+    // 先获取数据再清空缓存
+    const masked = this.getMaskedCoursesFromCache();
+
     // 清理缓存
     app.globalData.homePageCourses = [];
+    app.globalData.homePageMaskedCourses = {};
     wx.removeStorageSync('indexCourses');
     wx.removeStorageSync('playingCourse');
     wx.removeStorageSync('playingChapter');
     wx.removeStorageSync('playingSeq');
 
-    // 显示脱敏数据
-    const masked = this.getMaskedCoursesFromCache();
     this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
     this.showStatusToast();
   },

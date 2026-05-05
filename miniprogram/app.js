@@ -473,6 +473,7 @@ App({
     this.globalData.isLoggedIn = false;
     this.globalData.userInfo = null;
     this.globalData.userId = null;
+    this.globalData.loginFlag = false;
     this.globalData.logoutFlag = true;
     this.globalData.needRestoreMaskedData = true;
     // 清空头像缓存
