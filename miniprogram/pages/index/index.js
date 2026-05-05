@@ -103,10 +103,12 @@ Page({
   onShow() {
     // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      // 先获取数据再清空缓存
+      const maskedCourses = this.getMaskedCoursesFromCache();
       app.globalData.needRestoreMaskedData = false;
       app.globalData.homePageCourses = [];
+      app.globalData.homePageMaskedCourses = {};
       wx.removeStorageSync('indexCourses');
-      const maskedCourses = this.getMaskedCoursesFromCache();
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
       this.showStatusToast();
