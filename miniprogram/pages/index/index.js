@@ -1,5 +1,6 @@
 // index.js
 const app = getApp();
+const ANIMATION_DURATION = 300;
 
 Page({
   data: {
@@ -524,7 +525,7 @@ Page({
     this.setData({ isClosing: true });
     setTimeout(() => {
       this.setData({ martialArtsVisible: false, isClosing: false, currentMartialArt: null, currentMartialArtLines: [] });
-    }, 300);
+    }, ANIMATION_DURATION);
   },
 
   // 阻止弹窗触摸穿透
