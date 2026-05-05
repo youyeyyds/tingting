@@ -116,8 +116,16 @@ Page({
 
     // 更新登录状态
     const isLoggedIn = app.globalData.isLoggedIn || false;
-    if (this.data.isLoggedIn !== isLoggedIn) {
+    const wasLoggedIn = this.data.isLoggedIn;
+    if (wasLoggedIn !== isLoggedIn) {
       this.setData({ isLoggedIn });
+      // 登录状态变化：从未登录变登录，需要重新加载真实课程
+      if (isLoggedIn) {
+        this._realCourses = null;  // 清空旧的 minimal courses
+        this.loadCourses();
+        this.showStatusToast();
+        return;
+      }
     }
 
     // 已登录：加载或显示课程
