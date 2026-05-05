@@ -88,8 +88,8 @@
 
 <!-- 武功详情半屏弹窗 -->
 <view class="martial-art-modal" wx:if="{{martialArtsVisible || isClosing}}">
-  <view class="martial-art-mask" catchtap="onCloseMartialArt"></view>
-  <view class="martial-art-content {{isClosing ? 'hide' : (martialArtsVisible ? 'show' : '')}}">
+  <view class="martial-art-mask" catchtap="onCloseMartialArt" catchtouchmove="preventModalMove"></view>
+  <view class="martial-art-content {{isClosing ? 'hide' : (martialArtsVisible ? 'show' : '')}}" catchtouchmove="preventModalMove">
     <view class="martial-art-header">
       <view class="martial-art-collapse" catchtap="onCloseMartialArt">
         <text class="collapse-icon">›</text>
@@ -97,11 +97,11 @@
       <text class="martial-art-title">{{currentMartialArt.name}}</text>
       <text class="martial-art-novel">{{currentMartialArt.novel}}</text>
     </view>
-    <view class="martial-art-body">
+    <scroll-view class="martial-art-body" scroll-y="true">
       <block wx:for="{{currentMartialArtLines}}" wx:key="*this">
         <text class="martial-art-desc">{{item}}</text>
       </block>
       <text class="martial-art-signature">— 飞雪连天射白鹿，笑书神侠倚碧鸳 —</text>
-    </view>
+    </scroll-view>
   </view>
 </view>

@@ -397,8 +397,8 @@
 
 .martial-art-body {
   padding: 32rpx 48rpx;
-  flex: 1;
-  overflow-y: auto;
+  height: calc(50vh - 150rpx);
+  box-sizing: border-box;
 }
 
 .martial-art-desc {

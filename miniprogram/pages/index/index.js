@@ -527,6 +527,11 @@ Page({
     }, 300);
   },
 
+  // 阻止弹窗触摸穿透
+  preventModalMove() {
+    return true;
+  },
+
   onTabChange(e) {
     const idx = e.currentTarget.dataset.index;
     if (idx == 0) return;
