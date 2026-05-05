@@ -1,6 +1,9 @@
 // app.js
 App({
   onLaunch() {
+    // 初始化
+    wx.setStorageSync('lastAppShowTime', Date.now());
+
     if (!wx.cloud) {
       console.error("请使用 2.2.3 或以上的基础库以使用云能力");
     } else {
@@ -36,6 +39,22 @@ App({
     this.loadDefaultCover();
   },
 
+  onShow() {
+    const now = Date.now();
+    const lastShowTime = wx.getStorageSync('lastAppShowTime') || 0;
+    const timeSinceLastShow = now - lastShowTime;
+
+    // 热启动判断：距上次显示超过 30 秒
+    if (timeSinceLastShow > 30000) {
+      this.globalData.isHotStart = true;
+    } else {
+      this.globalData.isHotStart = false;
+    }
+
+    wx.setStorageSync('lastAppShowTime', now);
+  },
+
+  
   // 加载默认封面
   loadDefaultCover() {
     // 优先从本地缓存读取

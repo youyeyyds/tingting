@@ -174,6 +174,44 @@ const getCourses = async (event) => {
   }
 };
 
+// 查询课程列表（仅返回基本字段，不关联用户数据，用于未登录状态）
+const getMinimalCourses = async (event) => {
+  try {
+    const { limit = 20 } = event;
+
+    // 只查询已发布状态的课程，按 seq 排序
+    const coursesRes = await db.collection("courses")
+      .where({ status: 'published' })
+      .orderBy("seq", "asc")
+      .limit(limit)
+      .field({ _id: true, cover: true })
+      .get();
+
+    // 获取章节数
+    const chaptersRes = await db.collection("chapters").get();
+
+    // 关联章节数到课程
+    const courses = coursesRes.data.map(course => {
+      const courseChapters = chaptersRes.data.filter(ch => ch.course === course._id);
+      return {
+        _id: course._id,
+        cover: course.cover,
+        chapterCount: courseChapters.length
+      };
+    });
+
+    return {
+      success: true,
+      data: courses
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 获取头条列表
 const getHeadlines = async (event = {}) => {
   try {
@@ -714,12 +752,12 @@ const updateCourseSettings = async (event) => {
 // 获取武功列表（用于首页脱敏）
 const getMartialArts = async (event) => {
   try {
-    const { limit = 50 } = event;
-    console.log('[getMartialArts] limit:', limit);
-    // 获取武功列表，随机排序
+    // 获取武功列表，按_id排序后返回（不再sample，由前端打乱）
+    // aggregate 的 limit 默认可以超过 100 条
     const martialArtsRes = await db.collection("martialArts")
       .aggregate()
-      .sample({ size: parseInt(limit) })
+      .sort({ _id: 1 })
+      .limit(1000)
       .end();
 
     const martialArts = martialArtsRes.list || [];
@@ -779,7 +817,7 @@ const getMartialArts = async (event) => {
       users: characterRelationMap[m._id] || []
     }));
 
-    console.log('[getMartialArts] returning data count:', data.length);
+    console.log('[getMartialArts] returning data count:', data.length, ', first 3:', data.slice(0, 3).map(d => d.name).join(', '));
     return {
       success: true,
       data
@@ -808,6 +846,9 @@ exports.main = async (event, context) => {
       return await getVersions();
     case "getCourses":
       return await getCourses(event);
+
+    case "getMinimalCourses":
+      return await getMinimalCourses(event);
     case "getHeadlines":
       return await getHeadlines(event);
     case "getCourseDetail":
