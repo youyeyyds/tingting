@@ -398,13 +398,6 @@ Page({
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
-    // 清理缓存
-    app.globalData.homePageCourses = [];
-    wx.removeStorageSync('indexCourses');
-    wx.removeStorageSync('playingCourse');
-    wx.removeStorageSync('playingChapter');
-    wx.removeStorageSync('playingSeq');
-
     // 优先使用缓存的脱敏数据（保持武功不变）
     const masked = this.getMaskedCoursesFromCache();
     console.log('[logoutConfirm] masked from cache:', Object.keys(masked).length);
@@ -414,6 +407,13 @@ Page({
       this.showStatusToast();
       return;
     }
+
+    // 没有缓存时，清空homePageMaskedCourses（不再清homePageCourses，作为后备）
+    app.globalData.homePageMaskedCourses = {};
+    wx.removeStorageSync('indexCourses');
+    wx.removeStorageSync('playingCourse');
+    wx.removeStorageSync('playingChapter');
+    wx.removeStorageSync('playingSeq');
 
     // 没有缓存时，如果有真实课程，先加载武功池再生成脱敏数据
     console.log('[logoutConfirm] no masked cache, check real courses');
