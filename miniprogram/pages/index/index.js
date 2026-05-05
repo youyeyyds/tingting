@@ -27,7 +27,7 @@ Page({
   onLoad() {
     this.initLayout();
     this.initTimes();
-    this.initCache();
+    this.loadData();
 
     // 监听其他页面刷新图片
     app.registerCallback?.('onCoverRefresh', (data) => {
