@@ -23,6 +23,10 @@ App({
     if (!cachedBannerTime) wx.setStorageSync('bannerLoadTime', this.globalData.bannerLoadTime);
     if (!cachedCoverTime) wx.setStorageSync('coverLoadTime', this.globalData.coverLoadTime);
 
+    // 冷启动时清空带时间戳的首页缓存
+    this.globalData.homePageHeadlines = [];
+    this.globalData.homePageCourses = [];
+
     // 尝试恢复登录状态
     this.restoreLoginState();
 
@@ -44,6 +48,9 @@ App({
     // 从后台切回且超过1小时才标记热启动
     if (this.globalData.wasInBackground && timeSinceLastShow > 3600000) {
       this.globalData.isHotStart = true;
+      // 热启动时清空带时间戳的首页缓存，下次加载会重新获取
+      this.globalData.homePageHeadlines = [];
+      this.globalData.homePageCourses = [];
     } else {
       this.globalData.isHotStart = false;
     }
@@ -142,7 +149,9 @@ App({
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
     defaultCoverUrl: null, // 默认封面URL
-    indexHeadlines: [], // 首页横幅缓存
+    indexHeadlines: [], // 首页横幅缓存（原始数据，无时间戳）
+    homePageHeadlines: [], // 首页横幅缓存（图片URL已带时间戳）
+    homePageCourses: [], // 首页课程缓存（封面URL已带时间戳）
     loginHeadlines: [], // 登录页横幅缓存
     favoriteHeadlines: [], // 收藏页横幅缓存
     mineHeadlines: [], // 我的页横幅缓存

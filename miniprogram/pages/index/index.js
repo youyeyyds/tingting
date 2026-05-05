@@ -65,38 +65,39 @@ Page({
   },
 
   initCache() {
-    // 优先从本地存储读取缓存
-    let headlines = app.globalData.indexHeadlines;
-
-    if (!headlines?.length) {
-      headlines = wx.getStorageSync('indexHeadlines') || [];
-      app.globalData.indexHeadlines = headlines;
-    }
-
     // 武功池不缓存，每次从数据库读取
     app.globalData.martialArtsPool = [];
     this._martialArtsPool = null;
 
-    // 用当前时间戳重建 headline URL
-    const bannerTime = app.globalData.bannerLoadTime;
-    if (headlines.length > 0) {
-      headlines = headlines.map(h => ({
-        ...h,
-        image: this.processUrl(h.image, bannerTime, 'banner')
-      }));
-    }
+    // 优先使用带时间戳的首页缓存
+    let cachedHeadlines = app.globalData.homePageHeadlines;
+    let cachedCourses = app.globalData.homePageCourses;
 
-    this.setData({ headlines, loading: true });
-
-    if (!headlines.length) {
+    if (cachedHeadlines?.length) {
+      // 使用缓存的带时间戳数据
+      this.setData({ headlines: cachedHeadlines, loading: false });
+    } else {
+      // 没有缓存，加载数据
+      this.setData({ loading: true });
       this.loadHeadlines();
     }
 
-    // 根据登录状态加载数据
-    if (app.globalData.isLoggedIn) {
-      this.loadCourses();
+    if (cachedCourses?.length) {
+      // 使用缓存的带时间戳数据
+      this.setData({ courses: cachedCourses, loading: false });
+      // 如果已登录且没有真实课程数据，加载课程
+      if (app.globalData.isLoggedIn && !this._realCourses?.length) {
+        this.loadCourses();
+      } else if (!app.globalData.isLoggedIn && !this._realCourses?.length) {
+        this.loadMinimalCourses();
+      }
     } else {
-      this.loadMinimalCourses();
+      // 没有缓存，加载数据
+      if (app.globalData.isLoggedIn) {
+        this.loadCourses();
+      } else {
+        this.loadMinimalCourses();
+      }
     }
   },
 
@@ -158,6 +159,13 @@ Page({
 
 // 同步封面URL（只更新封面字段，保留其他数据）
   syncCoverUrls() {
+    // 如果有带时间戳的缓存，直接使用缓存数据
+    const cachedCourses = app.globalData.homePageCourses;
+    if (cachedCourses?.length) {
+      this.setData({ coverTime: app.globalData.coverLoadTime, courses: cachedCourses });
+      return;
+    }
+
     const ct = app.globalData.coverLoadTime;
     if (!ct) return;
 
@@ -216,6 +224,9 @@ Page({
     wx.setStorageSync('coverLoadTime', t);
     app.globalData.indexHeadlines = [];
     app.globalData.indexCourses = [];
+    // 清空带时间戳的首页缓存
+    app.globalData.homePageHeadlines = [];
+    app.globalData.homePageCourses = [];
 
     // 重新加载武功池和脱敏数据
     app.globalData.martialArtsPool = [];
@@ -239,6 +250,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({ ...h, image: this.processUrl(h.image, null, 'banner') }));
         app.globalData.indexHeadlines = headlines;
+        app.globalData.homePageHeadlines = headlines;
         wx.setStorageSync('indexHeadlines', headlines);
         this.setData({
           headlines,
@@ -257,6 +269,7 @@ Page({
         const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
         this._realCourses = courses;
         app.globalData.indexCourses = courses;
+        app.globalData.homePageCourses = courses;
         wx.setStorageSync('indexCourses', courses);
         this.setData({ courses, loading: false });
       } else {
@@ -390,6 +403,7 @@ Page({
     });
 
     app.globalData.homePageMaskedCourses = maskedCourses;
+    app.globalData.homePageCourses = masked;
     this.setData({ courses: masked, loading: false });
   },
 
@@ -414,6 +428,7 @@ Page({
 
     // 清理课程缓存
     app.globalData.indexCourses = [];
+    app.globalData.homePageCourses = [];
     wx.removeStorageSync('indexCourses');
 
     // 清理播放状态
