@@ -103,6 +103,7 @@ Page({
   onShow() {
     // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      console.log('[onShow] restore branch, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
       app.globalData.needRestoreMaskedData = false;
       app.globalData.homePageCourses = [];
       app.globalData.homePageMaskedCourses = {};
@@ -111,7 +112,9 @@ Page({
       // 武功池为空时先加载，不为空则直接生成脱敏数据
       if (!app.globalData.martialArtsPool?.length) {
         if (this._realCourses?.length) {
+          console.log('[onShow] martial pool empty, loading...');
           this.loadMartialArts().then(() => {
+            console.log('[onShow] martial loaded, calling maskCourses');
             this.maskCourses();
             this.setData({ isLoggedIn: false });
             this.showStatusToast();
@@ -120,6 +123,7 @@ Page({
         }
       } else if (this._realCourses?.length) {
         // 武功池有数据，直接生成脱敏数据
+        console.log('[onShow] martial pool exists, calling maskCourses directly');
         this.maskCourses();
         this._realCourses = null;
         this.setData({ isLoggedIn: false });
@@ -128,6 +132,7 @@ Page({
       }
 
       // 极端情况：使用后备数据
+      console.log('[onShow] fallback branch, maskedCourses from cache');
       const maskedCourses = this.getMaskedCoursesFromCache();
       this._realCourses = null;
       this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
@@ -330,8 +335,10 @@ Page({
 
   // 脱敏课程
   maskCourses() {
+    console.log('[maskCourses] called, pool:', app.globalData.martialArtsPool?.length, '_realCourses:', this._realCourses?.length);
     const pool = app.globalData.martialArtsPool;
     if (!pool?.length || !this._realCourses?.length) {
+      console.log('[maskCourses] early return');
       return;
     }
 
@@ -373,6 +380,7 @@ Page({
 
   // 确认退出登录
   onLogoutConfirm() {
+    console.log('[logoutConfirm] _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
@@ -387,7 +395,9 @@ Page({
     // 武功池为空时先加载，不为空则直接生成脱敏数据
     if (!app.globalData.martialArtsPool?.length) {
       if (this._realCourses?.length) {
+        console.log('[logoutConfirm] martial pool empty, loading...');
         this.loadMartialArts().then(() => {
+          console.log('[logoutConfirm] martial loaded, calling maskCourses');
           this.maskCourses();
           this.setData({ isLoggedIn: false });
           this.showStatusToast();
@@ -396,6 +406,7 @@ Page({
       }
     } else if (this._realCourses?.length) {
       // 武功池有数据，直接生成脱敏数据
+      console.log('[logoutConfirm] martial pool exists, calling maskCourses directly');
       this.maskCourses();
       this.setData({ isLoggedIn: false });
       this.showStatusToast();
@@ -403,6 +414,7 @@ Page({
     }
 
     // 极端情况：使用后备数据
+    console.log('[logoutConfirm] fallback branch');
     const masked = this.getMaskedCoursesFromCache();
     this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
     this.showStatusToast();
