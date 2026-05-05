@@ -15,7 +15,8 @@
 
   <!-- 课程列表 -->
   <scroll-view class="course-list" scroll-y="true" enhanced="true" bounces="{{true}}"
-    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;">
+    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;"
+    scroll-top="{{scrollTop}}">
     <view class="course-list-inner" style="padding-bottom: {{isLoggedIn ? '60rpx' : '0rpx'}};">
       <!-- 头条轮播 BANNER（有头条时才显示） -->
       <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">

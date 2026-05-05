@@ -17,6 +17,7 @@ Page({
     refreshing: false,
     bannerTime: 0,
     coverTime: 0,
+    scrollTop: 0,
     logoutConfirmVisible: false,
     martialArtsVisible: false,
     isClosing: false,
@@ -115,7 +116,7 @@ Page({
       if (Object.keys(masked).length > 0) {
         console.log('[onShow] using cached masked courses');
         this._realCourses = null;
-        this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+        this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false, scrollTop: 0 });
         this.showStatusToast();
         return;
       }
@@ -128,7 +129,7 @@ Page({
           this.loadMartialArts().then(() => {
             this.maskCourses();
             this._realCourses = null;
-            this.setData({ isLoggedIn: false });
+            this.setData({ isLoggedIn: false, scrollTop: 0 });
             this.showStatusToast();
           });
           return;
@@ -137,7 +138,7 @@ Page({
           console.log('[onShow] generating masked courses');
           this.maskCourses();
           this._realCourses = null;
-          this.setData({ isLoggedIn: false });
+          this.setData({ isLoggedIn: false, scrollTop: 0 });
           this.showStatusToast();
           return;
         }
@@ -145,7 +146,7 @@ Page({
 
       console.log('[onShow] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
       this._realCourses = null;
-      this.setData({ isLoggedIn: false, courses: [], loading: false });
+      this.setData({ isLoggedIn: false, courses: [], loading: false, scrollTop: 0 });
       this.showStatusToast();
       return;
     }
@@ -406,7 +407,7 @@ Page({
     console.log('[logoutConfirm] masked from cache:', Object.keys(masked).length);
     if (Object.keys(masked).length > 0) {
       console.log('[logoutConfirm] using cached masked courses');
-      this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+      this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false, scrollTop: 0 });
       this.showStatusToast();
       return;
     }
@@ -418,7 +419,7 @@ Page({
         console.log('[logoutConfirm] martial pool empty, loading...');
         this.loadMartialArts().then(() => {
           this.maskCourses();
-          this.setData({ isLoggedIn: false });
+          this.setData({ isLoggedIn: false, scrollTop: 0 });
           this.showStatusToast();
         });
         return;
@@ -426,14 +427,14 @@ Page({
       if (app.globalData.martialArtsPool?.length) {
         console.log('[logoutConfirm] generating masked courses');
         this.maskCourses();
-        this.setData({ isLoggedIn: false });
+        this.setData({ isLoggedIn: false, scrollTop: 0 });
         this.showStatusToast();
         return;
       }
     }
 
     console.log('[logoutConfirm] fallback');
-    this.setData({ isLoggedIn: false, courses: [], loading: false });
+    this.setData({ isLoggedIn: false, courses: [], loading: false, scrollTop: 0 });
     this.showStatusToast();
   },
 
