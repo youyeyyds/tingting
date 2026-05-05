@@ -14,7 +14,6 @@ Page({
     headlines: [],
     bannerSpeed: 5000,
     loading: true,
-    activeTab: 0,
     refreshing: false,
     bannerTime: 0,
     coverTime: 0,
@@ -29,27 +28,22 @@ Page({
     this.initLayout();
     this.initTimes();
     this.initCache();
+
+    // 监听其他页面刷新图片
     app.registerCallback?.('onCoverRefresh', (data) => {
-      if (data?.coverLoadTime) {
-        app.globalData.coverLoadTime = data.coverLoadTime;
-        app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
-        // 清空缓存，重新加载数据
-        app.globalData.homePageHeadlines = [];
-        app.globalData.homePageCourses = [];
-        this.setData({
-          bannerTime: app.globalData.bannerLoadTime,
-          coverTime: app.globalData.coverLoadTime,
-          headlines: [],
-          courses: []
-        }, () => {
-          this.loadHeadlines();
-          if (app.globalData.isLoggedIn) {
-            this.loadCourses();
-          } else {
-            this.loadMinimalCourses();
-          }
-        });
-      }
+      app.globalData.coverLoadTime = data.coverLoadTime;
+      app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
+      // 清空缓存，重新加载
+      app.globalData.homePageHeadlines = [];
+      app.globalData.homePageCourses = [];
+      this.setData({
+        bannerTime: app.globalData.bannerLoadTime,
+        coverTime: app.globalData.coverLoadTime,
+        headlines: [],
+        courses: []
+      }, () => {
+        this.loadData();
+      });
     });
   },
 
@@ -58,7 +52,7 @@ Page({
     const menu = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750; // 100rpx 转 px
+    const tabH = 100 * windowWidth / 750;
 
     this.setData({
       statusBarHeight,
@@ -80,117 +74,76 @@ Page({
     });
   },
 
-  initCache() {
-    // 武功池不缓存，每次从数据库读取
-    app.globalData.martialArtsPool = [];
-    this._martialArtsPool = null;
-
-    // 优先使用带时间戳的首页缓存
-    let cachedHeadlines = app.globalData.homePageHeadlines;
-    let cachedCourses = app.globalData.homePageCourses;
+  // 统一加载数据
+  loadData() {
+    const isLoggedIn = app.globalData.isLoggedIn;
+    const cachedHeadlines = app.globalData.homePageHeadlines;
+    const cachedCourses = app.globalData.homePageCourses;
 
     if (cachedHeadlines?.length) {
-      // 使用缓存的带时间戳数据
-      this.setData({ headlines: cachedHeadlines, loading: false });
+      this.setData({ headlines: cachedHeadlines });
     } else {
-      // 没有缓存，加载数据
-      this.setData({ loading: true });
       this.loadHeadlines();
     }
 
     if (cachedCourses?.length) {
-      // 使用缓存的带时间戳数据
       this.setData({ courses: cachedCourses, loading: false });
-      // 如果已登录且没有真实课程数据，加载课程
-      if (app.globalData.isLoggedIn && !this._realCourses?.length) {
-        this.loadCourses();
-      } else if (!app.globalData.isLoggedIn && !this._realCourses?.length) {
-        this.loadMinimalCourses();
-      }
+      return;
+    }
+
+    // 无缓存或非登录状态，重新加载
+    this._realCourses = null;
+    if (isLoggedIn) {
+      this.loadCourses();
     } else {
-      // 没有缓存，加载数据
-      if (app.globalData.isLoggedIn) {
-        this.loadCourses();
-      } else {
-        this.loadMinimalCourses();
-      }
+      this.loadMinimalCourses();
     }
   },
 
   onShow() {
-    // logout 后首次回到首页，恢复脱敏数据
+    // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       app.globalData.needRestoreMaskedData = false;
-      app.globalData.indexCourses = [];
+      app.globalData.homePageCourses = [];
       wx.removeStorageSync('indexCourses');
       const maskedCourses = this.getMaskedCoursesFromCache();
-      const courses = Object.values(maskedCourses);
       this._realCourses = null;
-      this.setData({ isLoggedIn: false, courses, loading: false });
+      this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
       this.showStatusToast();
       return;
     }
 
-    // 更新登录状态
-    const isLoggedIn = app.globalData.isLoggedIn || false;
+    const isLoggedIn = app.globalData.isLoggedIn;
     const wasLoggedIn = this.data.isLoggedIn;
+
+    // 登录状态变化
     if (wasLoggedIn !== isLoggedIn) {
       this.setData({ isLoggedIn });
-      // 登录状态变化：从未登录变登录，需要重新加载真实课程
       if (isLoggedIn) {
         this._realCourses = null;
         this.loadCourses();
-        this.showStatusToast();
-        return;
       }
-    }
-
-    // 已登录：加载或显示课程
-    if (isLoggedIn) {
-      if (!this._realCourses?.length) {
-        this.loadCourses();
-      } else {
-        this.setData({ courses: this._realCourses, loading: false });
-      }
-      this.syncCoverUrls();
       this.showStatusToast();
       return;
     }
 
-    // 未登录：热启动时重新加载武功和课程
-    if (app.globalData.isHotStart) {
+    // 热启动：重新加载武功池和脱敏数据
+    if (app.globalData.isHotStart && !isLoggedIn) {
       app.globalData.martialArtsPool = [];
-      this._martialArtsPool = null;
       app.globalData.homePageMaskedCourses = {};
       this._realCourses = null;
-      this.loadMartialArts().then(() => {
-        this.loadMinimalCourses().then(() => {
-          this._onShowUnauthenticated();
-        });
-      });
-    } else {
-      this._onShowUnauthenticated();
+      this.loadMartialArts().then(() => this.loadMinimalCourses());
     }
+
+    this.showStatusToast();
   },
 
-// 同步封面URL（只更新封面字段，保留其他数据）
+// 同步封面URL
   syncCoverUrls() {
-    // 如果有带时间戳的缓存，直接使用缓存数据
     const cachedCourses = app.globalData.homePageCourses;
     if (cachedCourses?.length) {
       this.setData({ coverTime: app.globalData.coverLoadTime, courses: cachedCourses });
-      return;
     }
-
-    const ct = app.globalData.coverLoadTime;
-    if (!ct) return;
-
-    // 只更新现有 courses 的封面，保持其他字段不变
-    const courses = this.data.courses.map(c => ({
-      ...c, cover: this.processUrl(c.cover, ct, 'cover')
-    }));
-
-    this.setData({ coverTime: ct, courses });
   },
 
   showStatusToast() {
@@ -211,14 +164,13 @@ Page({
     if (!url || url.includes('seed/fixed_')) return url;
     const t = time || this.data[type === 'banner' ? 'bannerTime' : 'coverTime'];
 
-    // 已有时间戳格式，更新时间戳
+    // 时间戳格式已存在
     const m1 = url.match(/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
-    if (m1 && m1[1] != t) {
-      return url.replace(/seed\/\d+_(banner|cover)_/, `seed/${t}_${type}_`);
+    if (m1) {
+      return m1[1] != t ? url.replace(/seed\/\d+_(banner|cover)_/, `seed/${t}_${type}_`) : url;
     }
-    if (m1) return url;
 
-    // seed格式（非时间戳），添加时间戳
+    // seed格式添加时间戳
     const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
     if (m2) return `https://picsum.photos/seed/${t}_${type}_${m2[1]}/${m2[2]}`;
 
@@ -238,24 +190,16 @@ Page({
     app.globalData.coverLoadTime = t;
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
-    app.globalData.indexHeadlines = [];
-    app.globalData.indexCourses = [];
-    // 清空带时间戳的首页缓存
     app.globalData.homePageHeadlines = [];
     app.globalData.homePageCourses = [];
-
-    // 重新加载武功池和脱敏数据
     app.globalData.martialArtsPool = [];
-    this._martialArtsPool = null;
     app.globalData.homePageMaskedCourses = {};
-
-    app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
+    this._martialArtsPool = null;
+    this._realCourses = null;
 
     this.setData({ refreshing: true, bannerTime: t, coverTime: t, headlines: [], courses: [] });
-
-    Promise.all([this.loadHeadlines(), this.loadMinimalCourses()]).then(() => {
-      this.setData({ refreshing: false });
-    });
+    this.loadData();
+    setTimeout(() => this.setData({ refreshing: false }), 500);
   },
 
   loadHeadlines() {
@@ -264,14 +208,13 @@ Page({
       data: { type: 'getHeadlines', page: 'index' }
     }).then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({ ...h, image: this.processUrl(h.image, null, 'banner') }));
-        app.globalData.indexHeadlines = headlines;
+        const headlines = res.result.data.map(h => ({
+          ...h,
+          image: this.processUrl(h.image, this.data.bannerTime, 'banner')
+        }));
         app.globalData.homePageHeadlines = headlines;
         wx.setStorageSync('indexHeadlines', headlines);
-        this.setData({
-          headlines,
-          bannerSpeed: (res.result.speed || 5) * 1000
-        });
+        this.setData({ headlines, bannerSpeed: (res.result.speed || 5) * 1000 });
       }
     }).catch(e => console.error('获取头条失败', e));
   },
@@ -282,9 +225,11 @@ Page({
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
     }).then(res => {
       if (res.result.success) {
-        const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
+        const courses = res.result.data.map(c => ({
+          ...c,
+          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+        }));
         this._realCourses = courses;
-        app.globalData.indexCourses = courses;
         app.globalData.homePageCourses = courses;
         wx.setStorageSync('indexCourses', courses);
         this.setData({ courses, loading: false });
@@ -294,14 +239,13 @@ Page({
     }).catch(() => this.setData({ loading: false }));
   },
 
-  // 加载武功数据（每次都从数据库读取，云函数已随机）
+  // 加载武功数据
   loadMartialArts() {
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getMartialArts' }
     }).then(res => {
-      if (res.result && res.result.success && res.result.data) {
-        this._martialArtsPool = res.result.data;
+      if (res.result?.success) {
         app.globalData.martialArtsPool = res.result.data;
         this._martialArtIndex = 0;
       }
@@ -312,30 +256,23 @@ Page({
   getNextMartialArt() {
     const pool = app.globalData.martialArtsPool;
     if (!pool?.length) return null;
-    if (!this._martialArtIndex) {
-      this._martialArtIndex = 0;
-    }
     if (this._martialArtIndex >= pool.length) {
-      // 武功池用完，清空后下次会自动重新加载
       app.globalData.martialArtsPool = [];
-      this._martialArtsPool = null;
       this._martialArtIndex = 0;
       return null;
     }
     return pool[this._martialArtIndex++];
   },
 
-  // 获取武功作者（人物/门派）
+  // 获取武功作者
   getMartialArtAuthor(art) {
-    if (art.users?.length) return art.users[0];
-    if (art.faction) return art.faction;
-    return '江湖';
+    return art.users?.[0] || art.faction || '江湖';
   },
 
   // 获取缓存的脱敏课程
   getMaskedCoursesFromCache() {
-    let masked = app.globalData.homePageMaskedCourses || {};
-    const ct = app.globalData.coverLoadTime;
+    const masked = app.globalData.homePageMaskedCourses || {};
+    const ct = this.data.coverTime;
     Object.keys(masked).forEach(id => {
       masked[id] = { ...masked[id], cover: this.processUrl(masked[id].cover, ct, 'cover') };
     });
@@ -344,77 +281,47 @@ Page({
 
   // 加载最小课程信息（未登录用户）
   loadMinimalCourses() {
-    // 先确保武功池已加载
-    const martialArtsPromise = (app.globalData.martialArtsPool?.length > 0)
-      ? Promise.resolve()
-      : this.loadMartialArts();
-
-    return martialArtsPromise.then(() => {
-      return wx.cloud.callFunction({
-        name: 'courseFunctions',
-        data: { type: 'getMinimalCourses', limit: 20 }
-      }).then(res => {
-        if (res.result.success) {
-          const courses = res.result.data.map(c => ({ ...c, cover: this.processUrl(c.cover, null, 'cover') }));
-          this._realCourses = courses;
-          this.maskCourses();
-        } else {
-          this.setData({ loading: false });
-        }
-      }).catch(() => this.setData({ loading: false }));
-    });
-  },
-
-  // 处理未登录状态（武功池已就绪）
-  _onShowUnauthenticated() {
-    if (this._realCourses?.length) {
-      this.maskCourses();
-    }
-    this.syncCoverUrls();
-    this.showStatusToast();
-  },
-
-  // 脱敏课程（用武功替换 title/author/categoryName）
-  maskCourses() {
-    // 武功池未加载完成时，等待
     if (!app.globalData.martialArtsPool?.length) {
-      return this.loadMartialArts().then(() => this.maskCourses());
+      return this.loadMartialArts().then(() => this.loadMinimalCourses());
     }
 
-    // 课程数据未就绪时，等待
-    if (!this._realCourses?.length) {
-      const checkCourses = () => {
-        if (this._realCourses?.length) {
-          this.maskCourses();
-        } else {
-          setTimeout(checkCourses, 50);
-        }
-      };
-      checkCourses();
+    return wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getMinimalCourses', limit: 20 }
+    }).then(res => {
+      if (res.result.success) {
+        this._realCourses = res.result.data.map(c => ({
+          ...c,
+          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+        }));
+        this.maskCourses();
+      } else {
+        this.setData({ loading: false });
+      }
+    }).catch(() => this.setData({ loading: false }));
+  },
+
+  // 脱敏课程
+  maskCourses() {
+    const pool = app.globalData.martialArtsPool;
+    if (!pool?.length || !this._realCourses?.length) {
       return;
     }
 
-    const courses = this._realCourses;
-    let maskedCourses = app.globalData.homePageMaskedCourses;
-    if (!maskedCourses) maskedCourses = {};
+    let maskedCourses = app.globalData.homePageMaskedCourses || {};
+    const masked = this._realCourses.map(c => {
+      if (maskedCourses[c._id]) return maskedCourses[c._id];
 
-    const masked = courses.map(c => {
-      let cached = maskedCourses[c._id];
-      if (!cached) {
-        const art = this.getNextMartialArt();
-        if (art) {
-          cached = {
-            ...c,
-            title: art.name,
-            author: this.getMartialArtAuthor(art),
-            categoryName: art.type,
-            progress: 0
-          };
-        } else {
-          cached = { ...c, title: '未知武功', author: '江湖', categoryName: '', progress: 0 };
-        }
-        maskedCourses[c._id] = cached;
-      }
+      const art = this.getNextMartialArt();
+      const cached = art ? {
+        ...c,
+        title: art.name,
+        author: this.getMartialArtAuthor(art),
+        categoryName: art.type,
+        progress: 0
+      } : { ...c, title: '未知武功', author: '江湖', categoryName: '', progress: 0 };
+
+      maskedCourses[c._id] = cached;
       return cached;
     });
 
@@ -442,44 +349,34 @@ Page({
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
-    // 清理课程缓存
-    app.globalData.indexCourses = [];
+    // 清理缓存
     app.globalData.homePageCourses = [];
     wx.removeStorageSync('indexCourses');
-
-    // 清理播放状态
     wx.removeStorageSync('playingCourse');
     wx.removeStorageSync('playingChapter');
     wx.removeStorageSync('playingSeq');
-    wx.removeStorageSync('playlistSortOrder');
-    wx.removeStorageSync('playMode');
 
     // 显示脱敏数据
-    const maskedCourses = this.getMaskedCoursesFromCache();
-    const courses = Object.values(maskedCourses);
-
-    this.setData({ isLoggedIn: false, courses, loading: false }, () => {
-      this.showStatusToast();
-    });
+    const masked = this.getMaskedCoursesFromCache();
+    this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+    this.showStatusToast();
   },
 
   onCourseTap(e) {
     if (!app.globalData.isLoggedIn) {
-      const courseId = e.currentTarget.dataset.id;
-      const maskedCourse = app.globalData.homePageMaskedCourses?.[courseId];
-      if (maskedCourse) {
-        const martialArt = app.globalData.martialArtsPool?.find(m => m.name === maskedCourse.title);
-        const description = martialArt?.description || '暂无描述';
-        const lines = description.split(/\r?\n|\\n/).filter(l => l.trim());
+      const masked = app.globalData.homePageMaskedCourses?.[e.currentTarget.dataset.id];
+      if (masked) {
+        const art = app.globalData.martialArtsPool?.find(m => m.name === masked.title);
+        const desc = art?.description || '暂无描述';
         this.setData({
           martialArtsVisible: true,
-          currentMartialArt: martialArt || {
-            name: maskedCourse.title,
-            description: description,
-            novel: maskedCourse.categoryName || '',
-            users: maskedCourse.author ? [maskedCourse.author] : []
+          currentMartialArt: art || {
+            name: masked.title,
+            description: desc,
+            novel: masked.categoryName || '',
+            users: masked.author ? [masked.author] : []
           },
-          currentMartialArtLines: lines.length > 0 ? lines : ['暂无描述']
+          currentMartialArtLines: desc.split(/\r?\n|\\n/).filter(l => l.trim())
         });
         return;
       }
@@ -508,18 +405,14 @@ Page({
       wx.navigateTo({ url: '/pages/login/index' });
       return;
     }
-    const targetUrl = `/pages/${['', 'favorite', 'mine'][idx]}/index`;
+    const urls = ['', 'favorite', 'mine'];
+    const target = `pages/${urls[idx]}/index`;
     const pages = getCurrentPages();
-    const targetPage = pages.find(p => p.route === `pages/${['', 'favorite', 'mine'][idx]}/index`);
-    if (targetPage) {
-      const delta = pages.length - pages.indexOf(targetPage) - 1;
-      if (delta > 0) {
-        wx.navigateBack({ delta });
-      } else {
-        wx.navigateTo({ url: targetUrl });
-      }
+    const exist = pages.find(p => p.route === target);
+    if (exist) {
+      wx.navigateBack({ delta: pages.length - pages.indexOf(exist) - 1 });
     } else {
-      wx.navigateTo({ url: targetUrl });
+      wx.navigateTo({ url: `/pages/${urls[idx]}/index` });
     }
   }
 });
