@@ -103,27 +103,22 @@ Page({
   onShow() {
     // logout 后恢复脱敏数据
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
-      console.log('[onShow] restore branch, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
       app.globalData.needRestoreMaskedData = false;
       app.globalData.homePageCourses = [];
-      app.globalData.homePageMaskedCourses = {};
       wx.removeStorageSync('indexCourses');
 
-      // 武功池为空时先加载，不为空则直接生成脱敏数据
-      if (!app.globalData.martialArtsPool?.length) {
-        if (this._realCourses?.length) {
-          console.log('[onShow] martial pool empty, loading...');
-          this.loadMartialArts().then(() => {
-            console.log('[onShow] martial loaded, calling maskCourses');
-            this.maskCourses();
-            this.setData({ isLoggedIn: false });
-            this.showStatusToast();
-          });
-          return;
-        }
-      } else if (this._realCourses?.length) {
-        // 武功池有数据，直接生成脱敏数据
-        console.log('[onShow] martial pool exists, calling maskCourses directly');
+      // 优先使用缓存的脱敏数据（保持武功不变）
+      const masked = this.getMaskedCoursesFromCache();
+      if (Object.keys(masked).length > 0) {
+        console.log('[onShow] using cached masked courses, count:', Object.keys(masked).length);
+        this._realCourses = null;
+        this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+        this.showStatusToast();
+        return;
+      }
+
+      // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+      if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
         this.maskCourses();
         this._realCourses = null;
         this.setData({ isLoggedIn: false });
@@ -131,11 +126,8 @@ Page({
         return;
       }
 
-      // 极端情况：使用后备数据
-      console.log('[onShow] fallback branch, maskedCourses from cache');
-      const maskedCourses = this.getMaskedCoursesFromCache();
       this._realCourses = null;
-      this.setData({ isLoggedIn: false, courses: Object.values(maskedCourses), loading: false });
+      this.setData({ isLoggedIn: false, courses: [], loading: false });
       this.showStatusToast();
       return;
     }
@@ -380,43 +372,34 @@ Page({
 
   // 确认退出登录
   onLogoutConfirm() {
-    console.log('[logoutConfirm] _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
     this.setData({ logoutConfirmVisible: false });
     app.logout();
 
     // 清理缓存
     app.globalData.homePageCourses = [];
-    app.globalData.homePageMaskedCourses = {};
     wx.removeStorageSync('indexCourses');
     wx.removeStorageSync('playingCourse');
     wx.removeStorageSync('playingChapter');
     wx.removeStorageSync('playingSeq');
 
-    // 武功池为空时先加载，不为空则直接生成脱敏数据
-    if (!app.globalData.martialArtsPool?.length) {
-      if (this._realCourses?.length) {
-        console.log('[logoutConfirm] martial pool empty, loading...');
-        this.loadMartialArts().then(() => {
-          console.log('[logoutConfirm] martial loaded, calling maskCourses');
-          this.maskCourses();
-          this.setData({ isLoggedIn: false });
-          this.showStatusToast();
-        });
-        return;
-      }
-    } else if (this._realCourses?.length) {
-      // 武功池有数据，直接生成脱敏数据
-      console.log('[logoutConfirm] martial pool exists, calling maskCourses directly');
+    // 优先使用缓存的脱敏数据（保持武功不变）
+    const masked = this.getMaskedCoursesFromCache();
+    if (Object.keys(masked).length > 0) {
+      console.log('[logoutConfirm] using cached masked courses');
+      this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+      this.showStatusToast();
+      return;
+    }
+
+    // 没有缓存时，如果有真实课程且武功池有数据，重新生成
+    if (this._realCourses?.length && app.globalData.martialArtsPool?.length) {
       this.maskCourses();
       this.setData({ isLoggedIn: false });
       this.showStatusToast();
       return;
     }
 
-    // 极端情况：使用后备数据
-    console.log('[logoutConfirm] fallback branch');
-    const masked = this.getMaskedCoursesFromCache();
-    this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false });
+    this.setData({ isLoggedIn: false, courses: [], loading: false });
     this.showStatusToast();
   },
 
