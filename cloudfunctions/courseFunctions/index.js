@@ -238,12 +238,10 @@ const getHeadlines = async (event = {}) => {
 
     // 获取轮播配置
     let speed = 3; // 默认3秒
-    let homeProtect = true; // 默认开启首页保护
     try {
       const configRes = await db.collection("config").where({ key: 'banner' }).limit(1).get();
       if (configRes.data.length > 0 && configRes.data[0].value) {
         speed = configRes.data[0].value.speed || 3;
-        homeProtect = configRes.data[0].value.homeProtect !== false;
       }
     } catch (e) {
       console.error('获取轮播配置失败:', e);
@@ -252,8 +250,7 @@ const getHeadlines = async (event = {}) => {
     return {
       success: true,
       data: filteredHeadlines,
-      speed: speed,
-      homeProtect: homeProtect
+      speed: speed
     };
   } catch (e) {
     console.error('getHeadlines 错误:', e);
