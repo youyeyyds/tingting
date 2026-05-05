@@ -72,7 +72,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled } from '@element-plus/icons-vue'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection } from '@element-plus/icons-vue'
 import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
@@ -94,6 +94,7 @@ const menuLabels = {
   courses: '课程管理',
   audios: '音频管理',
   headlines: '首尾管理',
+  'martial-arts': '武功管理',
   categories: '分类管理',
   versions: '版本管理',
   users: '用户管理',
@@ -105,6 +106,7 @@ const menuIcons = {
   courses: Reading,
   audios: Headset,
   headlines: Tickets,
+  'martial-arts': Collection,
   categories: Folder,
   versions: InfoFilled,
   users: User,
@@ -112,7 +114,7 @@ const menuIcons = {
   system: Setting
 }
 
-const menuOrder = ref(['courses', 'audios', 'headlines', 'categories', 'versions', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'martial-arts', 'categories', 'versions', 'users', 'roles', 'system'])
 
 // 获取头像URL（兼容新旧格式）
 function getAvatarUrl(avatarUrl) {
@@ -185,6 +187,7 @@ const breadcrumb = computed(() => {
     '/courses': '课程管理',
     '/audios': '音频管理',
     '/headlines': '首尾管理',
+    '/martial-arts': '武功管理',
     '/categories': '分类管理',
     '/users': '用户管理',
     '/roles': '角色管理',

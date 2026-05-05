@@ -62,10 +62,11 @@ Page({
     // 注册播放器回调
     this.audioCallback = {
       onChapterChange: (data) => {
-        const { chapterId } = data;
+        // 使用globalData.playingChapter来判断当前播放章节，保持与chapter页一致
+        const currentPlayingId = app.globalData.playingChapter?._id;
         const favoriteChapters = this.data.favoriteChapters.map(ch => ({
           ...ch,
-          isPlaying: ch._id === chapterId
+          isPlaying: ch._id === currentPlayingId
         }));
         this.setData({ favoriteChapters });
         app.globalData.favoriteChapters = favoriteChapters;

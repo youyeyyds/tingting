@@ -319,8 +319,8 @@ Page({
   },
 
   onTimeUpdate() {
-    // 如果正在同步章节，保持当前设置的进度，不受 bgAudioManager.currentTime 变化影响
-    if (this._syncingChapter) return;
+// 如果正在同步章节或拖动滑块，跳过更新
+    if (this._syncingChapter || this._sliderDragging) return;
     const currentTime = this.bgAudioManager.currentTime;
     const duration = this.bgAudioManager.duration;
     this.setData({
@@ -345,6 +345,10 @@ Page({
     this.startCoverRotation();
   },
   onPause() {
+    // 暂停时保存当前播放进度
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     this.setData({ isPlaying: false });
     this.stopCoverRotation();
   },
@@ -477,6 +481,7 @@ Page({
   },
 
   onSliderChanging(e) {
+this._sliderDragging = true;
     const duration = this.bgAudioManager.duration;
     this.setData({ currentTime: (e.detail.value / 100) * duration });
     this.updateProgress();
@@ -485,6 +490,7 @@ Page({
   onSliderChange(e) {
     const duration = this.bgAudioManager.duration;
     this.bgAudioManager.seek((e.detail.value / 100) * duration);
+    this._sliderDragging = false;
   },
 
   togglePlayPause() {
@@ -500,10 +506,16 @@ Page({
   },
 
   playPrev() {
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     app.playPrev();
   },
 
   playNext() {
+    if (this.data.currentChapter._id) {
+      this.saveProgress();
+    }
     app.playNext();
   },
 
@@ -524,17 +536,21 @@ Page({
 
   saveProgress() {
     const chapterId = this.data.currentChapter._id;
-    if (!chapterId || !this.bgAudioManager.currentTime) return;
-    wx.cloud.callFunction({
+    if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
+    const lastPlayTime = this.bgAudioManager.currentTime;
+    const finished = lastPlayTime >= this.bgAudioManager.duration - 10;
+    return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
         type: 'updateChapterProgress',
         chapterId,
         courseId: this.data.currentChapter.course || this.data.course._id,
-        lastPlayTime: this.bgAudioManager.currentTime,
-        finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
+        lastPlayTime,
+        finished,
         userId: app.globalData.userId
       }
+    }).then(() => {
+      app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
     }).catch(err => console.error('保存进度失败:', err));
   },
 

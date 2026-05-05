@@ -23,14 +23,46 @@ App({
     if (!cachedBannerTime) wx.setStorageSync('bannerLoadTime', this.globalData.bannerLoadTime);
     if (!cachedCoverTime) wx.setStorageSync('coverLoadTime', this.globalData.coverLoadTime);
 
+    // 冷启动时清空带时间戳的首页缓存
+    this.globalData.homePageHeadlines = [];
+    this.globalData.homePageCourses = [];
+    this.globalData.homePageMaskedCourses = {};
+
     // 尝试恢复登录状态
     this.restoreLoginState();
+
+    // 重置mini-player状态，确保重新进入小程序时关闭
+    this.globalData.miniPlayerActive = false;
 
     // 尝试恢复播放状态
     this.restorePlayState();
 
     // 加载默认封面
     this.loadDefaultCover();
+  },
+
+  onShow() {
+    const now = Date.now();
+    const lastShowTime = wx.getStorageSync('lastAppShowTime') || 0;
+    const timeSinceLastShow = now - lastShowTime;
+
+    // 从后台切回且超过1小时才标记热启动
+    if (this.globalData.wasInBackground && timeSinceLastShow > 3600000) {
+      this.globalData.isHotStart = true;
+      // 热启动时清空带时间戳的首页缓存，下次加载会重新获取
+      this.globalData.homePageHeadlines = [];
+      this.globalData.homePageCourses = [];
+      this.globalData.homePageMaskedCourses = {};
+    } else {
+      this.globalData.isHotStart = false;
+    }
+    this.globalData.wasInBackground = false;
+
+    wx.setStorageSync('lastAppShowTime', now);
+  },
+
+  onHide() {
+    this.globalData.wasInBackground = true;
   },
 
   // 加载默认封面
@@ -74,7 +106,7 @@ App({
   },
 
   restorePlayState() {
-    // 从缓存恢复播放状态（只要有缓存数据就恢复）
+    // 从缓存恢复播放状态（不自动恢复miniPlayerActive，由页面onShow决定是否显示）
     const playingCourseStr = wx.getStorageSync('playingCourse');
     const playingChapterStr = wx.getStorageSync('playingChapter');
     const playingSeq = wx.getStorageSync('playingSeq');
@@ -88,7 +120,8 @@ App({
         this.globalData.playingSeq = playingSeq || null;
         this.globalData.playlistSortOrder = playlistSortOrder || 'asc';
         this.globalData.playMode = playMode || 'sequence';
-        this.globalData.miniPlayerActive = true;
+        // 不自动恢复miniPlayerActive，确保重新进入小程序时关闭
+        this.globalData.miniPlayerActive = false;
       } catch (e) {
         console.error('恢复播放状态失败:', e);
       }
@@ -106,6 +139,8 @@ App({
     playingStatus: false, // 统一播放状态：true=正在播放，false=暂停
     miniPlayerActive: false,
     miniPlayerIndexFadedIn: false,
+    wasInBackground: false, // 是否从后台切回
+    isHotStart: false, // 是否热启动（切后台超过1小时）
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
     playlistSortOrder: 'asc', // 'asc' | 'desc'
@@ -116,13 +151,16 @@ App({
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
     defaultCoverUrl: null, // 默认封面URL
-    indexHeadlines: [], // 首页横幅缓存
+    indexHeadlines: [], // 首页横幅缓存（原始数据，无时间戳）
+    homePageHeadlines: [], // 首页横幅缓存（图片URL已带时间戳）
+    homePageCourses: [], // 首页课程缓存（封面URL已带时间戳）
     loginHeadlines: [], // 登录页横幅缓存
     favoriteHeadlines: [], // 收藏页横幅缓存
     mineHeadlines: [], // 我的页横幅缓存
     favoriteChapters: [], // 收藏章节缓存
     cachedAvatarFileID: null, // 头像云文件ID缓存
-    cachedAvatarTempUrl: null // 头像临时URL缓存
+    cachedAvatarTempUrl: null, // 头像临时URL缓存
+    cachedUserStats: null // 用户统计数据缓存
   },
 
   restoreLoginState() {
@@ -293,6 +331,19 @@ App({
     this.globalData.playingSeq = chapter.seq;
     this.globalData.playingIndex = index;
 
+    // 更新playingCourse
+    if (chapter.course) {
+      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course._id;
+      if (!this.globalData.playingCourse || this.globalData.playingCourse._id !== courseId) {
+        this.globalData.playingCourse = {
+          _id: courseId,
+          title: chapter.courseTitle || this.globalData.playingCourse?.title || '',
+          cover: chapter.courseCover || this.globalData.playingCourse?.cover || '',
+          author: chapter.author || this.globalData.playingCourse?.author || ''
+        };
+      }
+    }
+
     // 保存到缓存
     wx.setStorageSync('playingChapter', JSON.stringify(chapter));
     wx.setStorageSync('playingSeq', chapter.seq);
@@ -420,11 +471,17 @@ App({
   logout() {
     this.resetPlayState();
     this.globalData.playlistSortOrder = 'asc';
+    this.globalData.favoriteChapters = [];
     this.globalData.isLoggedIn = false;
     this.globalData.userInfo = null;
     this.globalData.userId = null;
+    this.globalData.loginFlag = false;
     this.globalData.logoutFlag = true;
-    this.globalData.favoriteChapters = [];
+    this.globalData.needRestoreMaskedData = true;
+    // 清空头像缓存
+    this.globalData.cachedAvatarFileID = null;
+    this.globalData.cachedAvatarTempUrl = null;
+    this.globalData.cachedUserStats = null;
     wx.removeStorageSync('userId');
     wx.removeStorageSync('userInfo');
   },
@@ -434,11 +491,22 @@ App({
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
+    // 通知通用回调
+    if (this._callbacks && this._callbacks[event]) {
+      this._callbacks[event].forEach(cb => cb(data));
+    }
   },
 
   // 注册 mini-player 回调
   registerMiniPlayer(callback) {
     this.miniPlayerCallbacks.push(callback);
+  },
+
+  // 注册通用回调
+  registerCallback(event, callback) {
+    if (!this._callbacks) this._callbacks = {};
+    if (!this._callbacks[event]) this._callbacks[event] = [];
+    this._callbacks[event].push(callback);
   },
 
   // 移除 mini-player 回调

@@ -14,7 +14,7 @@ async function updateMenuConfig() {
     // 检查是否存在菜单配置
     const existing = await db.collection('system_config').doc('menu_config').get();
     
-    const newMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'users', 'roles', 'system'];
+    const newMenuOrder = ['courses', 'audios', 'headlines', 'categories', 'martial-arts', 'users', 'roles', 'system'];
     
     if (existing.data && existing.data.length > 0) {
       // 更新

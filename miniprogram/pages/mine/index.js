@@ -63,8 +63,6 @@ Page({
       headlines: cachedHeadlines
     });
     this.checkLoginStatus();
-    // 刷新头像 temp URL（只在 avatarFileID 变化时才更新，避免切换页面时闪烁）
-    this.refreshAvatarTempUrl();
     // 只在首次加载（无缓存）时获取横幅数据
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
@@ -79,10 +77,8 @@ Page({
       wx.reLaunch({ url: '/pages/index/index' });
       return;
     }
-    // 切换页面时不重新加载，保持原有数据
-    if (app.globalData.userId) {
-      this.loadUserStats();
-    }
+    // 学习报告每次进入时刷新
+    this.loadUserStats();
     // 同步图片时间戳变化
     this.syncImageTimes();
   },
@@ -117,10 +113,20 @@ Page({
         const user = res.result.data;
         app.globalData.userInfo = user;
         wx.setStorageSync('userInfo', JSON.stringify(user));
-        // 更新 userInfo 和 maskedPhone（头像由 refreshAvatarTempUrl 单独处理）
-        const newAvatarUrl = user.avatarFileID && user.avatarFileID.startsWith('cloud://')
-          ? (app.globalData.cachedAvatarTempUrl || user.avatarUrl)
-          : (user.avatarUrl || '/icons/svg/avatar.svg');
+        // 刷新头像临时URL
+        let newAvatarUrl = user.avatarUrl || '/icons/svg/avatar.svg';
+        if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
+          try {
+            const tempRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
+            if (tempRes.fileList && tempRes.fileList[0] && tempRes.fileList[0].tempFileURL) {
+              app.globalData.cachedAvatarFileID = user.avatarFileID;
+              app.globalData.cachedAvatarTempUrl = tempRes.fileList[0].tempFileURL;
+              newAvatarUrl = tempRes.fileList[0].tempFileURL;
+            }
+          } catch (e) {
+            console.error('刷新头像临时URL失败:', e);
+          }
+        }
         this.setData({
           userInfo: user,
           avatarUrl: newAvatarUrl,
@@ -133,8 +139,8 @@ Page({
   },
 
   // 刷新头像临时URL（仅在 avatarFileID 变化时更新），在 onLoad 中调用一次
-  async refreshAvatarTempUrl() {
-    const user = app.globalData.userInfo;
+  async refreshAvatarTempUrl(userParam) {
+    const user = userParam || app.globalData.userInfo;
     if (!user) return;
     if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
       const cachedFileID = app.globalData.cachedAvatarFileID;
@@ -254,14 +260,28 @@ Page({
   },
 
   checkLoginStatus() {
-    const { isLoggedIn, userInfo, userId } = app.globalData;
-    const avatarUrl = userInfo?.avatarUrl || '/icons/svg/avatar.svg';
+    const { isLoggedIn, userInfo, userId, cachedAvatarTempUrl, cachedUserStats } = app.globalData;
+    // 头像优先用缓存的临时URL
+    const avatarUrl = cachedAvatarTempUrl || userInfo?.avatarUrl || '/icons/svg/avatar.svg';
     const maskedPhone = userInfo?.phone ? this.maskPhone(userInfo.phone) : '';
+    // 用户统计数据从缓存获取
+    let stats = {}, studyTime = { days: 0, hours: 0, mins: 0 }, joinedTime = { days: 0, hours: 0, mins: 0 };
+    if (cachedUserStats) {
+      const totalMins = cachedUserStats.totalStudyMinutes || 0;
+      const studyHours = Math.floor(totalMins / 60);
+      const studyMins = totalMins % 60;
+      stats = cachedUserStats;
+      studyTime = { days: 0, hours: studyHours, mins: studyMins };
+      joinedTime = this.formatMinutesToObj(cachedUserStats.joinedMinutes || 0);
+    }
     this.setData({
       isLoggedIn: isLoggedIn || false,
       userInfo: userInfo || null,
       avatarUrl: avatarUrl,
-      maskedPhone: maskedPhone
+      maskedPhone: maskedPhone,
+      stats: stats,
+      studyTime: studyTime,
+      joinedTime: joinedTime
     });
     if (!isLoggedIn && userId) {
       // 尝试从本地存储恢复登录状态
@@ -275,9 +295,13 @@ Page({
         this.setData({
           isLoggedIn: true,
           userInfo: parsedUserInfo,
-          avatarUrl: parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
+          avatarUrl: cachedAvatarTempUrl || parsedUserInfo.avatarUrl || '/icons/svg/avatar.svg',
           maskedPhone: this.maskPhone(parsedUserInfo.phone)
         });
+        // 如果没有缓存的临时URL，重新获取
+        if (!cachedAvatarTempUrl && parsedUserInfo.avatarFileID) {
+          this.refreshAvatarTempUrl(parsedUserInfo);
+        }
       }
     }
   },
@@ -338,14 +362,19 @@ Page({
     app.globalData.coverLoadTime = t;
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
+    // 清空带时间戳的首页缓存，下次加载会重新获取
+    app.globalData.homePageHeadlines = [];
+    app.globalData.homePageCourses = [];
+    app.globalData.homePageMaskedCourses = {};
     this.setData({ loadTime: t });
+    // 立即广播事件，确保 index 页面及时响应
+    app.notifyCallbacks?.('onCoverRefresh', { bannerLoadTime: t, coverLoadTime: t });
+    // 异步加载数据
     Promise.all([
       this.loadHeadlines(),
       this.refreshUserInfo(),
       this.loadUserStats()
-    ]).then(() => {
-      app.notifyCallbacks?.('onCoverRefresh', { coverLoadTime: t });
-    });
+    ]);
   },
 
   // 点击退出登录，显示确认弹窗

@@ -15,7 +15,8 @@
 
   <!-- 课程列表 -->
   <scroll-view class="course-list" scroll-y="true" enhanced="true" bounces="{{true}}"
-    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;">
+    style="margin-top: {{headerHeight}}px; height: {{isLoggedIn ? scrollHeightWithTab : scrollHeightNoTab}}px;"
+    scroll-top="{{scrollTop}}">
     <view class="course-list-inner" style="padding-bottom: {{isLoggedIn ? '60rpx' : '0rpx'}};">
       <!-- 头条轮播 BANNER（有头条时才显示） -->
       <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
@@ -25,7 +26,7 @@
       </swiper>
 
       <!-- 骨架屏加载状态 -->
-      <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this" wx:if="{{loading}}">
+      <view class="skeleton-card {{headlines.length === 0 ? 'first-card' : ''}}" wx:for="{{[1,2,3]}}" wx:key="*this" wx:if="{{loading}}">
         <view class="skeleton-image"></view>
         <view class="skeleton-info">
           <view class="skeleton-title"></view>
@@ -83,5 +84,25 @@
       <view class="confirm-btn cancel" catchtap="onLogoutCancel">取消</view>
       <view class="confirm-btn confirm" catchtap="onLogoutConfirm">确定</view>
     </view>
+  </view>
+</view>
+
+<!-- 武功详情半屏弹窗 -->
+<view class="martial-art-modal" wx:if="{{martialArtsVisible || isClosing}}">
+  <view class="martial-art-mask" catchtap="onCloseMartialArt" catchtouchmove="preventModalMove"></view>
+  <view class="martial-art-content {{isClosing ? 'hide' : (martialArtsVisible ? 'show' : '')}}" catchtouchmove="preventModalMove">
+    <view class="martial-art-header">
+      <view class="martial-art-collapse" catchtap="onCloseMartialArt">
+        <text class="collapse-icon">›</text>
+      </view>
+      <text class="martial-art-title">{{currentMartialArt.name}}</text>
+      <text class="martial-art-novel">{{currentMartialArt.novel}}</text>
+    </view>
+    <scroll-view class="martial-art-body" scroll-y="true">
+      <block wx:for="{{currentMartialArtLines}}" wx:key="*this">
+        <text class="martial-art-desc">{{item}}</text>
+      </block>
+      <text class="martial-art-signature">— 飞雪连天射白鹿，笑书神侠倚碧鸳 —</text>
+    </scroll-view>
   </view>
 </view>

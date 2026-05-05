@@ -45,6 +45,11 @@ const routes = [
         component: () => import('@/views/Headlines.vue')
       },
       {
+        path: 'martial-arts',
+        name: 'MartialArts',
+        component: () => import('@/views/MartialArts.vue')
+      },
+      {
         path: 'categories',
         name: 'Categories',
         component: () => import('@/views/Categories.vue')

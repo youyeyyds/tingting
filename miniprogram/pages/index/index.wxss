@@ -201,6 +201,10 @@
   box-sizing: border-box;
 }
 
+.skeleton-card.first-card {
+  margin-top: 20rpx;
+}
+
 .skeleton-image {
   width: 160rpx;
   height: 160rpx;
@@ -293,4 +297,123 @@
 .confirm-btn.confirm {
   background: #FF6B00;
   color: #fff;
+}
+
+/* 武功详情半屏弹窗 */
+.martial-art-modal {
+  --animation-duration: 0.3s;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.martial-art-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.martial-art-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.martial-art-content.show {
+  animation: slideUp var(--animation-duration) ease forwards;
+}
+
+.martial-art-content.hide {
+  animation: slideDown var(--animation-duration) ease forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.martial-art-header {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  padding-left: 48rpx;
+  padding-right: 48rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.martial-art-collapse {
+  width: 120rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.collapse-icon {
+  font-size: 48rpx;
+  color: #999;
+  line-height: 1;
+  transform: rotate(90deg);
+  display: block;
+}
+
+.martial-art-title {
+  flex: 1;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.martial-art-novel {
+  font-size: 24rpx;
+  color: #999;
+  width: 120rpx;
+  flex-shrink: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.martial-art-body {
+  padding: 32rpx 48rpx;
+  height: calc(50vh - 150rpx);
+  box-sizing: border-box;
+}
+
+.martial-art-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.martial-art-signature {
+  display: block;
+  margin-top: 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
 }

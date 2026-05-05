@@ -42,27 +42,28 @@ Component({
             }
           }
         },
-        onPlayModeChange: ({ playMode }) => {
-          // 同步播放模式变化
-          app.globalData.playMode = playMode;
-        },
         onPlay: () => {
           // 清除章节同步标志，允许 onTimeUpdate 更新进度
           this._syncingChapter = false;
           this.setData({ isPlaying: true });
           // 通知播放状态变化，更新 chapter 页面的按钮样式
-          const { currentChapter } = this.data;
-          if (currentChapter) {
+          const { currentChapter, currentIndex } = this.data;
+          if (currentChapter._id) {
             app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: true });
-            app.notifyCallbacks('onChapterChange', { chapterId: currentChapter._id });
           }
         },
         onPause: () => {
-          this.setData({ isPlaying: false });
-          // 通知播放暂停状态变化
-          const { currentChapter } = this.data;
-          if (currentChapter) {
-            app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+          // 暂停时保存当前播放进度
+          if (this.data.currentChapter._id) {
+            this.saveProgress();
+          }
+          // 只有音频真正暂停时才更新状态和通知
+          if (this.bgAudioManager.paused) {
+            this.setData({ isPlaying: false });
+            const { currentChapter } = this.data;
+            if (currentChapter._id) {
+              app.notifyCallbacks('onPlayPause', { chapterId: currentChapter._id, isPlaying: false });
+            }
           }
         },
         onPlayPause: ({ isPlaying }) => {
@@ -160,6 +161,12 @@ Component({
 
       this.showMiniPlayer(isTabBarPage);
       this._setupAudioListeners();
+    },
+    hide() {
+      // 页面隐藏时，如果miniPlayerActive为false，隐藏mini-player
+      if (!app.globalData.miniPlayerActive) {
+        this.setData({ visible: false, fadeInClass: '' });
+      }
     },
   },
 
@@ -285,8 +292,8 @@ Component({
       const { index, chapters } = data;
       if (!chapters || chapters.length === 0 || index < 0) return;
 
-      // 保存当前播放进度
-      if (this.data.currentChapter._id && this.data.isPlaying) {
+      // 保存当前播放进度（使用 bgAudioManager 状态判断）
+      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
         this.saveProgress();
       }
 
@@ -339,17 +346,17 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示
+// 设置 mini-player 显示（不设置isPlaying，由onPlay回调统一管理）
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
-        playerBottom: this.calcPosition(),
-        isPlaying: false
+        playerBottom: this.calcPosition()
       });
     },
 
     play(chapterId, playlistChapters, courseData, sortOrder) {
-      if (this.data.currentChapter._id && this.data.isPlaying) {
+      // 使用 bgAudioManager 状态判断是否需要保存进度（比 this.data.isPlaying 更可靠）
+      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
         this.saveProgress();
       }
 
@@ -413,12 +420,11 @@ Component({
       // 使用app的playChapter
       app.playChapter(chapter._id, chapters);
 
-      // 设置 mini-player 显示
+// 设置 mini-player 显示（不设置isPlaying，由onPlay回调统一管理）
       this.setData({
         visible: true,
         fadeInClass: 'fade-in',
-        playerBottom: this.calcPosition(),
-        isPlaying: false
+        playerBottom: this.calcPosition()
       });
     },
 
@@ -455,46 +461,53 @@ Component({
       this.setData({ fadeInClass: 'fade-out' });
       // 等待动画完成后重置状态
       setTimeout(() => {
-        this.setData({
-          visible: false,
-          fadeInClass: '',
-          chapters: [],
-          currentChapter: {},
-          currentIndex: 0,
-          course: {},
-          isPlaying: false,
-          currentTime: 0,
-          duration: 0,
-          progressPercent: 0
+        // 先保存进度，等待完成后停止播放
+        this.saveProgress().then(() => {
+          app.stop();
+          this.setData({
+            visible: false,
+            fadeInClass: '',
+            chapters: [],
+            currentChapter: {},
+            currentIndex: 0,
+            course: {},
+            isPlaying: false,
+            currentTime: 0,
+            duration: 0,
+            progressPercent: 0
+          });
+          app.globalData.miniPlayerActive = false;
+          app.globalData.miniPlayerIndexFadedIn = false;
+          app.globalData.playingCourse = null;
+          app.globalData.playingChapter = null;
+          app.globalData.playingSeq = null;
+          app.globalData.playingIndex = 0;
+          app.globalData.playlistChaptersData = [];
+          app.globalData.isFavoriteList = false;
+          this.clearPlayStateCache();
+          app.notifyCallbacks('onClose', { chapterId: lastChapterId });
         });
-        this.saveProgress();
-        app.stop();
-        app.globalData.miniPlayerActive = false;
-        app.globalData.miniPlayerIndexFadedIn = false;
-        app.globalData.playingCourse = null;
-        app.globalData.playingChapter = null;
-        app.globalData.playingSeq = null;
-        app.globalData.playingIndex = 0;
-        app.globalData.playlistChaptersData = [];
-        app.globalData.isFavoriteList = false;
-        this.clearPlayStateCache();
-        app.notifyCallbacks('onClose', { chapterId: lastChapterId });
       }, 300);
     },
 
     saveProgress() {
       const chapterId = this.data.currentChapter._id;
-      if (!chapterId || !this.bgAudioManager.currentTime) return;
-      wx.cloud.callFunction({
+      if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
+      const lastPlayTime = this.bgAudioManager.currentTime;
+      const finished = lastPlayTime >= this.bgAudioManager.duration - 10;
+      return wx.cloud.callFunction({
         name: 'courseFunctions',
         data: {
           type: 'updateChapterProgress',
           chapterId: chapterId,
           courseId: this.data.currentChapter.course || this.data.course._id,
-          lastPlayTime: this.bgAudioManager.currentTime,
-          finished: this.bgAudioManager.currentTime >= this.bgAudioManager.duration - 10,
+          lastPlayTime,
+          finished,
           userId: app.globalData.userId
         }
+      }).then(() => {
+        // 通知其他组件（chapter页面）进度已更新
+        app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
       }).catch(err => console.error('保存进度失败:', err));
     },
 
@@ -511,6 +524,8 @@ Component({
           finished: finished,
           userId: app.globalData.userId
         }
+      }).then(() => {
+        app.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime: time, finished });
       }).catch(err => console.error('更新进度失败:', err));
     },
 
