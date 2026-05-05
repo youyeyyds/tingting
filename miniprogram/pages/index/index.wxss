@@ -319,7 +319,6 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 50vh;
   background: #fff;
   border-radius: 32rpx 32rpx 0 0;
   display: flex;
