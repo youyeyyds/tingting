@@ -105,6 +105,55 @@ Page({
   },
 
   onShow() {
+    // logout 后恢复脱敏数据
+    if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      console.log('[onShow] restore, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length, 'homePageMasked:', Object.keys(app.globalData.homePageMaskedCourses || {}).length);
+      app.globalData.needRestoreMaskedData = false;
+
+      // 优先使用缓存的脱敏数据（保持武功不变）
+      const masked = this.getMaskedCoursesFromCache();
+      console.log('[onShow] masked from cache:', Object.keys(masked).length);
+      if (Object.keys(masked).length > 0) {
+        console.log('[onShow] using cached masked courses');
+        // 先显示脱敏数据，再清理缓存
+        this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false, scrollTop: 0 });
+        app.globalData.homePageCourses = [];
+        wx.removeStorageSync('indexCourses');
+        this._realCourses = null;
+        this.showStatusToast();
+        return;
+      }
+
+      // 没有缓存时，如果有真实课程，先加载武功池再生成脱敏数据
+      console.log('[onShow] no masked cache, check real courses');
+      if (this._realCourses?.length) {
+        if (!app.globalData.martialArtsPool?.length) {
+          console.log('[onShow] martial pool empty, loading...');
+          this.loadMartialArts().then(() => {
+            this.maskCourses();
+            this._realCourses = null;
+            this.setData({ isLoggedIn: false, scrollTop: 0 });
+            this.showStatusToast();
+          });
+          return;
+        }
+        if (app.globalData.martialArtsPool?.length) {
+          console.log('[onShow] generating masked courses');
+          this.maskCourses();
+          this._realCourses = null;
+          this.setData({ isLoggedIn: false, scrollTop: 0 });
+          this.showStatusToast();
+          return;
+        }
+      }
+
+      console.log('[onShow] fallback, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length);
+      this._realCourses = null;
+      this.setData({ isLoggedIn: false, courses: [], loading: false, scrollTop: 0 });
+      this.showStatusToast();
+      return;
+    }
+
     const isLoggedIn = app.globalData.isLoggedIn;
     const wasLoggedIn = this.data.isLoggedIn;
 
