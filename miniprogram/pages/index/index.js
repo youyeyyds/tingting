@@ -109,14 +109,14 @@ Page({
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       console.log('[onShow] restore, _realCourses:', this._realCourses?.length, 'martialPool:', app.globalData.martialArtsPool?.length, 'homePageMasked:', Object.keys(app.globalData.homePageMaskedCourses || {}).length);
       app.globalData.needRestoreMaskedData = false;
-      app.globalData.homePageCourses = [];
-      wx.removeStorageSync('indexCourses');
 
       // 优先使用缓存的脱敏数据（保持武功不变）
       const masked = this.getMaskedCoursesFromCache();
       console.log('[onShow] masked from cache:', Object.keys(masked).length);
       if (Object.keys(masked).length > 0) {
         console.log('[onShow] using cached masked courses');
+        app.globalData.homePageCourses = [];
+        wx.removeStorageSync('indexCourses');
         this._realCourses = null;
         this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false, scrollTop: 0 });
         this.showStatusToast();
