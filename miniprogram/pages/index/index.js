@@ -312,13 +312,7 @@ Page({
 
   // 获取缓存的脱敏课程
   getMaskedCoursesFromCache() {
-    let masked = app.globalData.homePageMaskedCourses || {};
-    // 脱敏缓存为空但有真实课程缓存，用它作为后备
-    if (Object.keys(masked).length === 0 && app.globalData.homePageCourses?.length) {
-      console.log('[getMaskedCoursesFromCache] using homePageCourses as fallback, length:', app.globalData.homePageCourses.length);
-      masked = {};
-      app.globalData.homePageCourses.forEach(c => { masked[c._id] = c; });
-    }
+    const masked = app.globalData.homePageMaskedCourses || {};
     console.log('[getMaskedCoursesFromCache] masked keys:', Object.keys(masked).length, 'homePageCourses:', app.globalData.homePageCourses?.length);
     const ct = this.data.coverTime;
     Object.keys(masked).forEach(id => {
