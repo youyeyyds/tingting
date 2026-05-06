@@ -103,6 +103,37 @@ Page({
   },
 
   onShow() {
+    // logout 后恢复脱敏数据（从mine页退出登录时触发）
+    if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
+      app.globalData.needRestoreMaskedData = false;
+      const masked = this.getMaskedCoursesFromCache();
+      if (Object.keys(masked).length > 0) {
+        this.setData({ isLoggedIn: false, courses: Object.values(masked), loading: false, scrollTop: 0 });
+        app.globalData.homePageCourses = [];
+        wx.removeStorageSync('indexCourses');
+        this._realCourses = null;
+        this.showStatusToast();
+        return;
+      }
+      if (this._realCourses?.length) {
+        if (!app.globalData.martialArtsPool?.length) {
+          this.loadMartialArts().then(() => {
+            this.maskCourses();
+            this.setData({ isLoggedIn: false, scrollTop: 0 });
+            this.showStatusToast();
+          });
+          return;
+        }
+        this.maskCourses();
+        this.setData({ isLoggedIn: false, scrollTop: 0 });
+        this.showStatusToast();
+        return;
+      }
+      this.setData({ isLoggedIn: false, courses: [], loading: false, scrollTop: 0 });
+      this.showStatusToast();
+      return;
+    }
+
     const isLoggedIn = app.globalData.isLoggedIn;
     const wasLoggedIn = this.data.isLoggedIn;
 
