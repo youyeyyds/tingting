@@ -362,13 +362,6 @@ Page({
     app.globalData.coverLoadTime = t;
     wx.setStorageSync('bannerLoadTime', t);
     wx.setStorageSync('coverLoadTime', t);
-    // 清空带时间戳的首页缓存，下次加载会重新获取
-    app.globalData.homePageHeadlines = [];
-    app.globalData.homePageCourses = [];
-    // 只有登录用户清空脱敏缓存，未登录用户的脱敏武功保持不变
-    if (app.globalData.isLoggedIn) {
-      app.globalData.homePageMaskedCourses = {};
-    }
     this.setData({ loadTime: t });
     // 立即广播事件，确保 index 页面及时响应
     app.notifyCallbacks?.('onCoverRefresh', { bannerLoadTime: t, coverLoadTime: t });

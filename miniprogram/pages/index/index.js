@@ -34,20 +34,19 @@ Page({
     app.registerCallback?.('onCoverRefresh', (data) => {
       app.globalData.coverLoadTime = data.coverLoadTime;
       app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
-      // 清空缓存，重新加载
+      // 只清空头条缓存重新获取，课程数据用新时间戳重新处理封面URL
       app.globalData.homePageHeadlines = [];
-      app.globalData.homePageCourses = [];
-      // 只有未登录时才清空脱敏缓存（登录状态用真实课程不受影响）
-      if (!app.globalData.isLoggedIn) {
-        app.globalData.homePageMaskedCourses = {};
-      }
       this.setData({
         bannerTime: app.globalData.bannerLoadTime,
-        coverTime: app.globalData.coverLoadTime,
-        headlines: [],
-        courses: []
+        coverTime: app.globalData.coverLoadTime
       }, () => {
-        this.loadData();
+        this.loadHeadlines();
+        // 用新时间戳重新处理课程封面URL
+        const courses = this.data.courses.map(c => ({
+          ...c,
+          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+        }));
+        this.setData({ courses });
       });
     });
   },
