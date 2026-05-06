@@ -491,7 +491,6 @@ App({
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
-    // 通知通用回调
     if (this._callbacks && this._callbacks[event]) {
       this._callbacks[event].forEach(cb => cb(data));
     }
@@ -513,5 +512,67 @@ App({
   unregisterMiniPlayer(callback) {
     const index = this.miniPlayerCallbacks.indexOf(callback);
     if (index > -1) this.miniPlayerCallbacks.splice(index, 1);
+  },
+
+  // ========== 公共工具方法 ==========
+
+  // 处理图片URL（带时间戳的picsum稳定化）
+  processImageUrl(url, type = 'cover', loadTime) {
+    if (!url) return url;
+    const t = loadTime || this.globalData.coverLoadTime || Date.now();
+
+    // 固定图片不处理
+    if (url.match(/picsum\.photos\/seed\/fixed_/) || url.includes('seed/fixed_')) {
+      return url;
+    }
+
+    // 已带时间戳格式的seed，直接替换时间戳
+    const timestampedMatch = url.match(/seed\/(\d+)_cover_([^\/]+)\/(\d+(\/\d+)?)/);
+    if (timestampedMatch) {
+      const oldTime = timestampedMatch[1];
+      const seed = timestampedMatch[2];
+      const size = timestampedMatch[3];
+      if (oldTime != t) {
+        return `https://picsum.photos/seed/${t}_cover_${seed}/${size}`;
+      }
+      return url;
+    }
+
+    // 标准picsum格式: seed/xxx/400/400
+    const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+    if (seedMatch) {
+      const seed = seedMatch[1];
+      const size = seedMatch[2];
+      return `https://picsum.photos/seed/${t}_cover_${seed}/${size}`;
+    }
+
+    // 旧格式: picsum.photos/400/400?random=1
+    const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+    const randomMatch = url.match(/random=(\d+)/);
+    if (sizeMatch) {
+      const size = sizeMatch[1];
+      const random = randomMatch ? randomMatch[1] : '0';
+      return `https://picsum.photos/seed/${t}_cover_${random}/${size}`;
+    }
+
+    return url;
+  },
+
+  // 保存播放进度（云端）
+  saveProgress(chapterId, courseId, lastPlayTime, finished) {
+    if (!chapterId || !lastPlayTime || !this.globalData.userId) return Promise.resolve();
+    return wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: {
+        type: 'updateChapterProgress',
+        chapterId,
+        courseId,
+        lastPlayTime,
+        finished,
+        userId: this.globalData.userId
+      }
+    }).then(() => {
+      this.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
+    }).catch(err => console.error('保存进度失败:', err));
   }
 });
