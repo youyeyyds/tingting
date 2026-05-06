@@ -313,7 +313,7 @@ Page({
   // 获取缓存的脱敏课程
   getMaskedCoursesFromCache() {
     const masked = app.globalData.homePageMaskedCourses || {};
-    console.log('[getMaskedCoursesFromCache] masked keys:', Object.keys(masked).length, 'homePageCourses:', app.globalData.homePageCourses?.length);
+    console.log('[getMaskedCoursesFromCache] masked keys:', Object.keys(masked).length, 'homePageMaskedCourses empty:', Object.keys(masked).length === 0);
     const ct = this.data.coverTime;
     Object.keys(masked).forEach(id => {
       masked[id] = { ...masked[id], cover: this.processUrl(masked[id].cover, ct, 'cover') };
