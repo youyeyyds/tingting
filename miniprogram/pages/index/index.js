@@ -424,6 +424,7 @@ Page({
         console.log('[logoutConfirm] martial pool empty, loading...');
         this.loadMartialArts().then(() => {
           this.maskCourses();
+          console.log('[logoutConfirm] after maskCourses, courses:', this.data.courses?.length, 'title:', this.data.courses?.[0]?.title);
           this.setData({ isLoggedIn: false, scrollTop: 0 });
           this.showStatusToast();
         });
@@ -432,6 +433,7 @@ Page({
       if (app.globalData.martialArtsPool?.length) {
         console.log('[logoutConfirm] generating masked courses');
         this.maskCourses();
+        console.log('[logoutConfirm] after maskCourses, courses:', this.data.courses?.length, 'title:', this.data.courses?.[0]?.title);
         this.setData({ isLoggedIn: false, scrollTop: 0 });
         this.showStatusToast();
         return;
