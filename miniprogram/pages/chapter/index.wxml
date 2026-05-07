@@ -19,8 +19,8 @@
       <view class="course-title">{{course.title}}</view>
       <view class="course-author">{{course.author}}</view>
       <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
-      <!-- 播放按钮：合并为一个，有列表时切换播放/暂停，无列表时创建 -->
-      <view class="play-btn {{hasPlaylist ? 'active' : ''}}" bindtap="handlePlayBtnTap">
+      <!-- 播放按钮：始终显示，有列表时切换播放/暂停，无列表时创建 -->
+      <view class="play-btn active" bindtap="handlePlayBtnTap">
         <view class="play-icon {{isPlaying ? 'pause' : ''}}">
           <view class="pause-bar" wx:if="{{isPlaying}}"></view>
           <view class="pause-bar" wx:if="{{isPlaying}}"></view>
