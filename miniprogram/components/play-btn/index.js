@@ -26,7 +26,6 @@ Component({
         onEnded: () => this._updateState(false),
         onClose: () => this._updateState(false),
         onChapterChange: (data) => this._updateState(data?.isPlaying),
-        onPlayPause: (data) => this._updateState(data?.isPlaying),
         onReset: () => this._updateState(false)
       };
     },
@@ -51,10 +50,10 @@ Component({
       const playingCourseId = app.globalData.playingCourse?._id;
       const isCurrentCourse = playingCourseId === courseId;
       const hasPlaylist = isCurrentCourse && app.globalData.playlistChaptersData && app.globalData.playlistChaptersData.length > 0;
-      // 优先使用回调传来的 isPlaying
+      // 优先使用回调传来的 isPlaying，其次使用全局 playingStatus
       const isPlayingFinal = isPlaying !== undefined
         ? isCurrentCourse && isPlaying
-        : isCurrentCourse && !this.bgAudioManager.paused;
+        : isCurrentCourse && app.globalData.playingStatus;
 
       const isActive = hasPlaylist;
 
@@ -71,14 +70,9 @@ Component({
       const hasPlaylist = isCurrentCourse && app.globalData.playlistChaptersData && app.globalData.playlistChaptersData.length > 0;
 
       if (hasPlaylist) {
-        // 已有播放列表，切换播放/暂停
-        const willPause = !this.bgAudioManager.paused;
+        // 已有播放列表，切换播放/暂停（使用 playingStatus 判断）
+        const willPause = app.globalData.playingStatus;
         app.togglePlayPause();
-        // 手动通知所有回调更新状态
-        setTimeout(() => {
-          // 通知 mini-player 更新，willPause=true 表示即将暂停，所以 isPlaying=false
-          app.notifyCallbacks('onPlayPause', { isPlaying: !willPause });
-        }, 100);
       } else {
         // 没有播放列表，创建播放列表并播放
         this._createPlaylistAndPlay();
