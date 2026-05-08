@@ -2420,10 +2420,10 @@ app.get('/api/martial-arts', async (req, res) => {
     const novelIds = martialArts.map(m => m.novelId).filter(Boolean);
 
     const [typesRes, factionsRes, novelsRes, charactersRes] = await Promise.all([
-      typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).get() : { data: [] },
-      factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).get() : { data: [] },
-      novelIds.length > 0 ? db.collection('martialArtNovels').where({ _id: db.command.in(novelIds) }).get() : { data: [] },
-      db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).get()
+      typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).limit(1000).get() : { data: [] },
+      factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).limit(1000).get() : { data: [] },
+      novelIds.length > 0 ? db.collection('martialArtNovels').where({ _id: db.command.in(novelIds) }).limit(1000).get() : { data: [] },
+      db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).limit(1000).get()
     ]);
 
     // 构建映射
@@ -2767,10 +2767,10 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
     const factionIds = [...new Set(martialArts.map(m => m.factionId).filter(Boolean))];
     const novelIds = [...new Set(martialArts.map(m => m.novelId).filter(Boolean))];
     const [typesRes, factionsRes, novelsRes, relationsRes] = await Promise.all([
-      typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).get() : { data: [] },
-      factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).get() : { data: [] },
-      novelIds.length > 0 ? db.collection('martialArtNovels').where({ _id: db.command.in(novelIds) }).get() : { data: [] },
-      db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).get()
+      typeIds.length > 0 ? db.collection('martialArtTypes').where({ _id: db.command.in(typeIds) }).limit(1000).get() : { data: [] },
+      factionIds.length > 0 ? db.collection('martialArtFactions').where({ _id: db.command.in(factionIds) }).limit(1000).get() : { data: [] },
+      novelIds.length > 0 ? db.collection('martialArtNovels').where({ _id: db.command.in(novelIds) }).limit(1000).get() : { data: [] },
+      db.collection('martialArtCharacterRelations').where({ martialArtId: db.command.in(martialArts.map(m => m._id)) }).limit(1000).get()
     ]);
 
     const typeMap = {};
