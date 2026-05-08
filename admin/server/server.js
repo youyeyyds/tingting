@@ -2400,8 +2400,9 @@ app.get('/api/martial-arts', async (req, res) => {
     const total = countResult.total;
 
     // 先获取全部数据（不分页），再按小说顺序+拼音排序，最后分页
+    // 添加较大的limit确保获取所有数据（默认云数据库get限制100条）
     const offset = (parseInt(page) - 1) * parseInt(pageSize);
-    const allData = await query.get();
+    const allData = await query.limit(1000).get();
     const martialArts = allData.data;
 
     // 构建小说顺序映射
