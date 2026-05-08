@@ -40,16 +40,19 @@ Component({
           }
         },
         onPlay: () => {
+          console.log('[mini-player] onPlay', { playingStatus: app.globalData.playingStatus });
           this._syncingChapter = false;
           this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onPause: () => {
+          console.log('[mini-player] onPause', { playingStatus: app.globalData.playingStatus });
           if (this.data.currentChapter._id && app.globalData.playingStatus === false) {
             this._doSaveProgress();
           }
           this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onPlayPause: () => {
+          console.log('[mini-player] onPlayPause', { playingStatus: app.globalData.playingStatus });
           this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onEnded: () => {},

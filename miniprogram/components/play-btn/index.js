@@ -55,6 +55,8 @@ Component({
         ? isCurrentCourse && isPlaying
         : isCurrentCourse && app.globalData.playingStatus;
 
+      console.log('[play-btn] _updateState', { isPlaying, isCurrentCourse, playingStatus: app.globalData.playingStatus, isPlayingFinal });
+
       const isActive = hasPlaylist;
 
       this.setData({
@@ -64,6 +66,7 @@ Component({
     },
 
     onTap() {
+      console.log('[play-btn] onTap', { playingStatus: app.globalData.playingStatus, paused: this.bgAudioManager.paused });
       const courseId = this.properties.courseId;
       const playingCourseId = app.globalData.playingCourse?._id;
       const isCurrentCourse = playingCourseId === courseId;
@@ -72,6 +75,7 @@ Component({
       if (hasPlaylist) {
         // 已有播放列表，切换播放/暂停（使用 playingStatus 判断）
         const willPause = app.globalData.playingStatus;
+        console.log('[play-btn] togglePlayPause, willPause:', willPause);
         app.togglePlayPause();
       } else {
         // 没有播放列表，创建播放列表并播放
