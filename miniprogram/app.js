@@ -416,7 +416,8 @@ App({
   // 切换播放/暂停
   togglePlayPause() {
     const bgAudio = this.bgAudioManager;
-    console.log('[app] togglePlayPause', { paused: bgAudio.paused, playingStatus: this.globalData.playingStatus });
+    const currentStatus = this.globalData.playingStatus;
+    console.log('[app] togglePlayPause START', { bgPaused: bgAudio.paused, playingStatus: currentStatus });
     if (bgAudio.paused) {
       // 如果音频已结束（currentTime >= duration-1）或 duration 异常（0 或 NaN），重新加载当前章节
       const duration = bgAudio.duration || 0;
@@ -430,17 +431,18 @@ App({
         }
       }
       // 先更新状态再播放
-      console.log('[app] togglePlayPause -> play, playingStatus := true');
+      console.log('[app] togglePlayPause -> play, playingStatus: false => true');
       this.globalData.playingStatus = true;
       this.notifyCallbacks('onPlay', { isPlaying: true });
       bgAudio.play();
     } else {
       // 先更新状态再暂停
-      console.log('[app] togglePlayPause -> pause, playingStatus := false');
+      console.log('[app] togglePlayPause -> pause, playingStatus: true => false');
       this.globalData.playingStatus = false;
       this.notifyCallbacks('onPause', { isPlaying: false });
       bgAudio.pause();
     }
+    console.log('[app] togglePlayPause END', { playingStatus: this.globalData.playingStatus });
   },
 
   // 停止播放
