@@ -326,6 +326,8 @@ App({
       return;
     }
 
+    console.log('[app] playChapter', { chapterId, chapterTitle: chapter.title, playingStatus: this.globalData.playingStatus });
+
     const index = chapters.findIndex(ch => ch._id === chapterId);
     this.globalData.playingChapter = chapter;
     this.globalData.playingSeq = chapter.seq;
@@ -396,6 +398,8 @@ App({
     const bgAudio = this.bgAudioManager;
     const course = this.globalData.playingCourse || {};
 
+    console.log('[app] playAudio', { src: src.substring(0, 50), startTime, playingStatus: this.globalData.playingStatus });
+
     bgAudio.title = chapter.title || '音频课程';
     bgAudio.epname = course.title || '';
     bgAudio.coverImgUrl = course.cover || '';
@@ -404,6 +408,7 @@ App({
     const [baseUrl, query] = src.split('?');
     bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(src);
     // 立即更新播放状态
+    console.log('[app] playAudio set playingStatus = true');
     this.globalData.playingStatus = true;
     this.notifyCallbacks('onPlay', {});
   },
@@ -411,6 +416,7 @@ App({
   // 切换播放/暂停
   togglePlayPause() {
     const bgAudio = this.bgAudioManager;
+    console.log('[app] togglePlayPause', { paused: bgAudio.paused, playingStatus: this.globalData.playingStatus });
     if (bgAudio.paused) {
       // 如果音频已结束（currentTime >= duration-1）或 duration 异常（0 或 NaN），重新加载当前章节
       const duration = bgAudio.duration || 0;
@@ -418,16 +424,19 @@ App({
         const chapter = this.globalData.playingChapter;
         const chapters = this.globalData.playlistChaptersData;
         if (chapter && chapters.length) {
+          console.log('[app] togglePlayPause reload chapter');
           this.playChapter(chapter._id, chapters);
           return;
         }
       }
       // 先更新状态再播放
+      console.log('[app] togglePlayPause -> play, playingStatus := true');
       this.globalData.playingStatus = true;
       this.notifyCallbacks('onPlay', { isPlaying: true });
       bgAudio.play();
     } else {
       // 先更新状态再暂停
+      console.log('[app] togglePlayPause -> pause, playingStatus := false');
       this.globalData.playingStatus = false;
       this.notifyCallbacks('onPause', { isPlaying: false });
       bgAudio.pause();

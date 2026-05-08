@@ -22,15 +22,16 @@ Page({
       onClose: () => this.resetPlayingState(),
       onStop: () => this.resetPlayingState(),
       onPlay: () => {
+        console.log('[chapter] onPlay', { playingStatus: app.globalData.playingStatus });
         const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
         this.setData({ hasPlaylist: isCurrentCourse, isPlaying: isCurrentCourse });
       },
-      onPause: () => this.setData({ isPlaying: false }),
-      onPlayPause: ({ isPlaying }) => {
-        const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
-        this.setData({ isPlaying: isCurrentCourse ? isPlaying : false });
+      onPause: () => {
+        console.log('[chapter] onPause', { playingStatus: app.globalData.playingStatus });
+        this.setData({ isPlaying: false });
       },
       onChapterChange: ({ chapterId }) => {
+        console.log('[chapter] onChapterChange', { chapterId, playingStatus: app.globalData.playingStatus });
         const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
         const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }));
@@ -108,8 +109,9 @@ Page({
   },
 
   updatePlayingState() {
+    console.log('[chapter] updatePlayingState', { playingStatus: app.globalData.playingStatus });
     const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
-    const isPlaying = !app.bgAudioManager.paused && isCurrentCourse;
+    const isPlaying = isCurrentCourse && app.globalData.playingStatus;
     this.setData({ hasPlaylist: isCurrentCourse && app.globalData.playlistChaptersData?.length > 0, isPlaying });
   },
 
