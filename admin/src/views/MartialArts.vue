@@ -120,9 +120,12 @@
         </el-table-column>
                 <el-table-column prop="description" label="描述" min-width="300">
           <template #default="{ row }">
-            <el-tooltip :content="row.description || ''" placement="left" :disabled="!row.description" popper-class="desc-tooltip" transition="" :show-after="0" :hide-after="0">
-              <span class="desc-text">{{ row.description }}</span>
-            </el-tooltip>
+            <el-tooltip placement="left" :disabled="!row.description" popper-class="desc-tooltip" transition="" :show-after="0" :hide-after="0">
+                <template #content>
+                  <span style="white-space: pre-wrap; display: inline-block;">{{ row.description?.replace(/\n/g, '\n\n') }}</span>
+                </template>
+                <span class="desc-text">{{ row.description }}</span>
+              </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column v-if="activeNovelTab === ''" prop="novelName" label="小说" width="120">
@@ -931,19 +934,7 @@ watch(activeBaseTab, () => {
 .desc-tooltip {
   max-width: 500px !important;
   font-size: 16px !important;
-  white-space: pre-wrap !important;
-}
-
-.desc-tooltip .el-popper__inner,
-.desc-tooltip .el-tooltip__inner,
-.desc-tooltip div,
-.desc-tooltip span,
-.desc-tooltip p {
-  max-width: 500px !important;
-  word-wrap: break-word !important;
-  white-space: pre-wrap !important;
-  font-size: 16px !important;
-  text-align: left !important;
+  padding: 12px 16px !important;
   line-height: 1.5 !important;
 }
 </style>
