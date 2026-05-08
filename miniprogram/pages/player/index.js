@@ -76,7 +76,7 @@ Page({
       currentChapter, currentIndex: currentIndex >= 0 ? currentIndex : 0,
       chapters, course, sortOrder: playlistSortOrder || 'asc',
       playMode: playMode || 'sequence',
-      isPlaying: !this.bgAudioManager.paused,
+      isPlaying: app.globalData.playingStatus,
       currentTime: this.bgAudioManager.currentTime || 0,
       duration: this.bgAudioManager.duration || 0,
       playbackRate: this.bgAudioManager.playbackRate || 2,
@@ -115,7 +115,7 @@ Page({
   },
 
   syncPlaybackState() {
-    const isPlaying = !this.bgAudioManager.paused;
+    const isPlaying = app.globalData.playingStatus;
     const currentTime = this.bgAudioManager.currentTime || 0;
     const duration = this.bgAudioManager.duration || 0;
     const playbackRate = this.bgAudioManager.playbackRate || 2;
@@ -162,8 +162,8 @@ Page({
   setupAudioEvents() {
     this.audioCallbacks = {
       onTimeUpdate: () => this.onTimeUpdate(),
-      onPlay: () => { this._syncingChapter = false; this.setData({ isPlaying: true }); this.startCoverRotation(); },
-      onPause: () => { if (this.data.currentChapter._id) this._doSaveProgress(); this.setData({ isPlaying: false }); this.stopCoverRotation(); },
+      onPlay: () => { this._syncingChapter = false; this.setData({ isPlaying: app.globalData.playingStatus }); this.startCoverRotation(); },
+      onPause: () => { if (this.data.currentChapter._id) this._doSaveProgress(); this.setData({ isPlaying: app.globalData.playingStatus }); this.stopCoverRotation(); },
       onEnded: () => app.onAudioEnded(),
       onCanplay: () => { this.bgAudioManager.playbackRate = 2; this.setData({ duration: this.bgAudioManager.duration, playbackRate: 2 }); }
     };

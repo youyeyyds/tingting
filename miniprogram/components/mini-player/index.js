@@ -41,16 +41,16 @@ Component({
         },
         onPlay: () => {
           this._syncingChapter = false;
-          this.setData({ isPlaying: true });
+          this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onPause: () => {
-          if (this.data.currentChapter._id && this.bgAudioManager.paused) {
+          if (this.data.currentChapter._id && app.globalData.playingStatus === false) {
             this._doSaveProgress();
           }
-          this.setData({ isPlaying: false });
+          this.setData({ isPlaying: app.globalData.playingStatus });
         },
-        onPlayPause: ({ isPlaying }) => {
-          this.setData({ isPlaying });
+        onPlayPause: () => {
+          this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onEnded: () => {},
         onLastChapterEnded: () => {
@@ -151,7 +151,7 @@ Component({
 
       const data = {
         playerBottom: this._calcPosition(),
-        isPlaying: !this.bgAudioManager.paused,
+        isPlaying: app.globalData.playingStatus,
         currentChapter,
         currentIndex: currentIndex >= 0 ? currentIndex : 0,
         courseCover,
