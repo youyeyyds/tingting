@@ -2437,7 +2437,7 @@ app.get('/api/martial-arts', async (req, res) => {
     // 获取人物详情
     const characterIds = charactersRes.data.map(r => r.characterId).filter(Boolean);
     const charactersDetailRes = characterIds.length > 0
-      ? await db.collection('martialArtCharacters').where({ _id: db.command.in(characterIds) }).get()
+      ? await db.collection('martialArtCharacters').where({ _id: db.command.in(characterIds) }).limit(1000).get()
       : { data: [] };
     const characterMap = {};
     charactersDetailRes.data.forEach(c => { characterMap[c._id] = c; });
@@ -2782,7 +2782,7 @@ app.get('/api/martial-arts/export-list', async (req, res) => {
 
     const characterIds = [...new Set(relationsRes.data.map(r => r.characterId).filter(Boolean))];
     const charactersDetailRes = characterIds.length > 0
-      ? await db.collection('martialArtCharacters').where({ _id: db.command.in(characterIds) }).get()
+      ? await db.collection('martialArtCharacters').where({ _id: db.command.in(characterIds) }).limit(1000).get()
       : { data: [] };
     const characterMap = {};
     charactersDetailRes.data.forEach(c => { characterMap[c._id] = c; });
