@@ -54,4 +54,124 @@
 
 <!-- 播放列表面板 -->
 <playlist-panel id="playlistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
-                bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" />
+                bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
+
+<!-- Player Overlay -->
+<view wx:if="{{playerOverlayVisible}}" class="player-overlay">
+  <!-- 背景图层 -->
+  <view class="overlay-bg-layer">
+    <image class="overlay-bg-cover {{overlayBgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover}}" mode="aspectFill" bindload="onOverlayBgCoverLoad" binderror="onOverlayBgCoverError" wx:if="{{courseCover && !overlayBgCoverError}}" />
+    <view class="overlay-bg-overlay" wx:if="{{courseCover && !overlayBgCoverError}}"></view>
+  </view>
+
+  <!-- 关闭按钮 -->
+  <view class="overlay-close-btn" bindtap="closePlayerOverlay">
+    <text class="overlay-close-text">×</text>
+  </view>
+
+  <!-- 播放器容器 -->
+  <view class="overlay-player-container">
+    <!-- 封面图 -->
+    <view class="overlay-cover-section">
+      <image class="overlay-cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{overlayCoverRotationAngle}}deg);" src="{{courseCover}}" mode="aspectFill" wx:if="{{courseCover && !overlayCoverError}}" binderror="onOverlayCoverError" bindtap="onOverlayCoverTap" />
+      <image class="overlay-cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{overlayCoverRotationAngle}}deg); background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);" src="/icons/svg/headphones.svg" mode="aspectFit" wx:if="{{!courseCover || overlayCoverError}}" />
+    </view>
+
+    <!-- 课程信息 -->
+    <view class="overlay-course-info">
+      <text class="overlay-course-title">{{courseName || '未知课程'}}</text>
+      <view class="overlay-chapter-line">
+        <text class="overlay-chapter-seq" wx:if="{{currentChapter.seq > 0}}">{{currentChapter.seq}}</text>
+        <text class="overlay-chapter-sep" wx:if="{{currentChapter.seq > 0}}">|</text>
+        <text class="overlay-chapter-name">{{currentChapter.title}}</text>
+      </view>
+    </view>
+
+    <!-- 进度条 -->
+    <view class="overlay-progress-section">
+      <slider class="overlay-progress-slider" min="0" max="100" value="{{progressPercent}}"
+        block-size="12" activeColor="#FF6B00" backgroundColor="rgba(255,255,255,0.3)"
+        bindchange="onOverlaySliderChange" bindchanging="onOverlaySliderChanging" />
+      <view class="overlay-time-row">
+        <text class="overlay-time-text left">{{overlayCurrentTimeText}}</text>
+        <text class="overlay-time-text right" bindtap="toggleOverlayTimeDisplay">{{overlayRemainingTimeText}}</text>
+      </view>
+    </view>
+
+    <!-- 播放控制按钮 -->
+    <view class="overlay-play-controls">
+      <view class="overlay-control-btn prev-btn" bindtap="overlayPlayPrev">
+        <text class="prev-icon-text">◀</text>
+      </view>
+      <view class="overlay-control-btn rewind-btn" bindtap="overlayRewind15">
+        <text class="rewind-text">-15</text>
+      </view>
+      <view class="overlay-control-btn play-pause-btn" bindtap="onPlayPause">
+        <view class="play-icon-cs" wx:if="{{!isPlaying}}"></view>
+        <view class="pause-icon-cs" wx:else>
+          <view class="pause-bar-cs"></view>
+          <view class="pause-bar-cs"></view>
+        </view>
+      </view>
+      <view class="overlay-control-btn forward-btn" bindtap="overlayForward30">
+        <text class="forward-text">+30</text>
+      </view>
+      <view class="overlay-control-btn next-btn" bindtap="overlayPlayNext">
+        <text class="next-icon-text">▶</text>
+      </view>
+    </view>
+
+    <!-- 功能按钮行 -->
+    <view class="overlay-func-row">
+      <view class="overlay-func-btn mode-btn" bindtap="toggleOverlayPlayMode">
+        <view class="mode-icon">
+          <text class="mode-text" wx:if="{{playMode === 'sequence'}}">→</text>
+          <text class="mode-text" wx:elif="{{playMode === 'loop'}}">↻</text>
+          <text class="mode-text" wx:else>1</text>
+        </view>
+      </view>
+      <view class="overlay-func-btn playlist-btn" bindtap="showOverlayPlaylist">
+        <view class="playlist-icon">
+          <view class="list-bar"></view>
+          <view class="list-bar"></view>
+          <view class="list-bar"></view>
+        </view>
+      </view>
+      <view class="overlay-func-btn favorite-btn {{overlayIsFavorite ? 'favorited' : ''}}" bindtap="toggleOverlayFavorite">
+        <text class="favorite-icon">♡</text>
+      </view>
+      <view class="overlay-func-btn sort-btn" bindtap="toggleOverlaySort">
+        <text class="sort-text">{{playlistSortOrder === 'asc' ? '↑' : '↓'}}</text>
+      </view>
+      <view class="overlay-func-btn speed-btn">
+        <text class="speed-text">{{playbackRate}}x</text>
+      </view>
+    </view>
+
+    <!-- 倍速控制 -->
+    <view class="overlay-speed-control">
+      <view class="overlay-speed-track-wrap" bindtap="onOverlaySpeedTrackTap" bindtouchstart="onOverlaySpeedTouchStart" bindtouchmove="onOverlaySpeedTouchMove" bindtouchend="onOverlaySpeedTouchEnd">
+        <text class="speed-mark {{playbackRate === 0.75 ? 'active' : ''}}">0.75</text>
+        <text class="speed-mark {{playbackRate === 1 ? 'active' : ''}}">1</text>
+        <text class="speed-mark {{playbackRate === 1.25 ? 'active' : ''}}">1.25</text>
+        <text class="speed-mark {{playbackRate === 1.5 ? 'active' : ''}}">1.5</text>
+        <text class="speed-mark {{playbackRate === 2 ? 'active' : ''}}">2</text>
+        <view class="overlay-speed-indicator" style="left: {{overlaySpeedIndicatorPos}}%;">
+          <text class="speed-indicator-text">{{playbackRate}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 下一条信息 -->
+    <view class="overlay-next-info">
+      <text class="next-info-label">下一条：</text>
+      <text class="next-info-seq" wx:if="{{overlayNextChapterSeq !== 0 && overlayNextChapterSeq}}">{{overlayNextChapterSeq}}</text>
+      <text class="next-info-sep" wx:if="{{overlayNextChapterSeq !== 0 && overlayNextChapterSeq}}">|</text>
+      <text class="next-info-title">{{overlayNextChapterTitle}}</text>
+    </view>
+  </view>
+
+  <!-- 播放列表面板 -->
+  <playlist-panel id="overlayPlaylistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
+                  bind:play="onOverlayPlaylistPlay" bind:togglePlayPause="onPlayPause" bind:delete="onOverlayPlaylistDelete" bind:collapse="onOverlayPlaylistCollapse" bind:clear="onOverlayPlaylistClear" bind:syncSort="onOverlayPlaylistSyncSort" bind:modeChange="onOverlayPlaylistModeChange" />
+</view>

@@ -23,13 +23,30 @@ Component({
     playbackRate: 2,
     chapters: [],
     playlistSortOrder: 'asc',
-    isFavoriteList: false
+    isFavoriteList: false,
+    playMode: 'sequence',
+    // Overlay state
+    playerOverlayVisible: false,
+    overlayCoverRotationAngle: 0,
+    overlaySpeedIndicatorPos: 70,
+    overlayCurrentTimeText: '0:00',
+    overlayRemainingTimeText: '-0:00',
+    overlayShowTotalTime: false,
+    overlayNextChapterSeq: '',
+    overlayNextChapterTitle: '',
+    overlayIsFavorite: false,
+    overlayBgCoverLoaded: false,
+    overlayBgCoverError: false,
+    overlayCoverError: false,
+    overlayUsingDefaultCover: false,
+    overlayOriginalCover: ''
   },
 
   lifetimes: {
     created() {
       this.bgAudioManager = app.bgAudioManager;
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
+      this._overlayRotationTimer = null;
       this.audioCallback = {
         onChapterChange: ({ chapterId, chapter, index }) => {
           if (!chapterId) return;
@@ -43,6 +60,8 @@ Component({
           console.log('[mini-player] onPlay', { playingStatus: app.globalData.playingStatus });
           this._syncingChapter = false;
           this.setData({ isPlaying: app.globalData.playingStatus });
+          if (this.data.playerOverlayVisible) this._startOverlayRotation();
+          else this._stopOverlayRotation();
         },
         onPause: () => {
           console.log('[mini-player] onPause', { playingStatus: app.globalData.playingStatus });
@@ -50,6 +69,7 @@ Component({
             this._doSaveProgress();
           }
           this.setData({ isPlaying: app.globalData.playingStatus });
+          this._stopOverlayRotation();
         },
         onPlayPause: () => {
           console.log('[mini-player] onPlayPause', { playingStatus: app.globalData.playingStatus });
@@ -307,7 +327,8 @@ Component({
       this.setData({
         visible: false, fadeInClass: '', chapters: [], currentChapter: {},
         currentIndex: 0, course: {}, isPlaying: false,
-        currentTime: 0, duration: 0, progressPercent: 0
+        currentTime: 0, duration: 0, progressPercent: 0,
+        playerOverlayVisible: false, playMode: 'sequence'
       });
     },
 
@@ -365,7 +386,316 @@ Component({
     },
 
     openPlayerPanel() {
-      wx.navigateTo({ url: '/pages/player/index' });
+      this._syncOverlayState();
+      this.setData({ playerOverlayVisible: true });
+      if (this.data.isPlaying) this._startOverlayRotation();
+    },
+
+    closePlayerOverlay() {
+      this._stopOverlayRotation();
+      this.setData({ playerOverlayVisible: false });
+    },
+
+    _syncOverlayState() {
+      const { currentTime, duration, playbackRate } = this.data;
+      const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+      const currentTimeText = this._formatTime(currentTime);
+      const showTotalTime = this.data.overlayShowTotalTime || false;
+      const remainingTimeText = showTotalTime ? this._formatTime(duration) : '-' + this._formatTime(duration - currentTime);
+      const speedIndex = this.speedOptions.findIndex(s => Math.abs(s - playbackRate) < 0.01);
+      const speedIndicatorPos = speedIndex >= 0 ? 10 + speedIndex * 20 : 50;
+      this._updateOverlayNextChapterInfo();
+      this.setData({
+        overlayCurrentTimeText: currentTimeText,
+        overlayRemainingTimeText: remainingTimeText,
+        overlaySpeedIndicatorPos: speedIndicatorPos,
+        overlayOriginalCover: this.data.courseCover
+      });
+      if (!this.speedOptions.includes(playbackRate)) {
+        this.setData({ playbackRate: 2 });
+        this.bgAudioManager.playbackRate = 2;
+      }
+    },
+
+    _startOverlayRotation() {
+      if (this._overlayRotationTimer) return;
+      this._overlayRotationTimer = setInterval(() => {
+        const { overlayCoverRotationAngle, playlistSortOrder } = this.data;
+        const newAngle = playlistSortOrder === 'asc' ? overlayCoverRotationAngle + 1.5 : overlayCoverRotationAngle - 1.5;
+        this.setData({ overlayCoverRotationAngle: newAngle });
+      }, 50);
+    },
+
+    _stopOverlayRotation() {
+      if (this._overlayRotationTimer) {
+        clearInterval(this._overlayRotationTimer);
+        this._overlayRotationTimer = null;
+      }
+    },
+
+    _formatTime(seconds) {
+      if (!seconds || seconds < 0) return '0:00';
+      return `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
+    },
+
+    _updateOverlayNextChapterInfo() {
+      const { chapters, playlistSortOrder, currentChapter } = this.data;
+      const playMode = app.globalData.playMode || 'sequence';
+      if (!chapters || chapters.length === 0) {
+        this.setData({ overlayNextChapterSeq: '', overlayNextChapterTitle: '' });
+        return;
+      }
+      if (playMode === 'single') {
+        this.setData({ overlayNextChapterSeq: currentChapter.seq, overlayNextChapterTitle: currentChapter.title });
+        return;
+      }
+      const currentIdx = chapters.findIndex(ch => ch._id === currentChapter?._id);
+      const nextIndex = currentIdx + 1;
+      if (nextIndex < chapters.length) {
+        const nextCh = chapters[nextIndex];
+        this.setData({ overlayNextChapterSeq: nextCh.seq, overlayNextChapterTitle: nextCh.title });
+      } else if (playMode === 'loop') {
+        this.setData({ overlayNextChapterSeq: chapters[0].seq, overlayNextChapterTitle: chapters[0].title });
+      } else {
+        this.setData({ overlayNextChapterSeq: '', overlayNextChapterTitle: '已经是最后一条' });
+      }
+    },
+
+    _updateOverlayProgress() {
+      const { currentTime, duration, overlayShowTotalTime } = this.data;
+      this.setData({
+        overlayCurrentTimeText: this._formatTime(currentTime),
+        overlayRemainingTimeText: overlayShowTotalTime ? this._formatTime(duration) : '-' + this._formatTime(duration - currentTime)
+      });
+    },
+
+    toggleOverlayTimeDisplay() {
+      const newShowTotal = !this.data.overlayShowTotalTime;
+      this.setData({ overlayShowTotalTime: newShowTotal });
+      this._updateOverlayProgress();
+    },
+
+    onOverlaySliderChanging(e) {
+      this._sliderDragging = true;
+      const duration = this.bgAudioManager.duration || 0;
+      this.setData({ currentTime: (e.detail.value / 100) * duration });
+      this._updateOverlayProgress();
+    },
+
+    onOverlaySliderChange(e) {
+      const duration = this.bgAudioManager.duration || 0;
+      this.bgAudioManager.seek((e.detail.value / 100) * duration);
+      this._sliderDragging = false;
+    },
+
+    overlayPlayPrev() {
+      if (this.data.currentChapter._id) this._doSaveProgress();
+      app.playPrev();
+    },
+
+    overlayPlayNext() {
+      if (this.data.currentChapter._id) this._doSaveProgress();
+      app.playNext();
+    },
+
+    overlayRewind15() {
+      this.bgAudioManager.seek(Math.max(0, this.bgAudioManager.currentTime - 15));
+    },
+
+    overlayForward30() {
+      this.bgAudioManager.seek(Math.min(this.bgAudioManager.duration, this.bgAudioManager.currentTime + 30));
+    },
+
+    _updateOverlaySpeedIndicator() {
+      const { playbackRate } = this.data;
+      const index = this.speedOptions.findIndex(s => Math.abs(s - playbackRate) < 0.01);
+      this.setData({ overlaySpeedIndicatorPos: index >= 0 ? 10 + index * 20 : 50 });
+    },
+
+    onOverlaySpeedTrackTap(e) {
+      if (this.speedMoved) { this.speedMoved = false; return; }
+      const touch = e.detail.x ? e : e.touches?.[0] || e;
+      const clientX = touch.clientX || touch.detail?.x || 0;
+      const query = this.createSelectorQuery();
+      query.select('.overlay-speed-track-wrap').boundingClientRect((rect) => {
+        if (!rect) return;
+        const x = clientX - rect.left;
+        const pos = Math.max(10, Math.min(90, (x / rect.width) * 100));
+        const index = Math.round((pos - 10) / 20);
+        const rate = this.speedOptions[Math.max(0, Math.min(this.speedOptions.length - 1, index))];
+        this.setData({ playbackRate: rate });
+        this.bgAudioManager.playbackRate = rate;
+        this._updateOverlaySpeedIndicator();
+      }).exec();
+    },
+
+    onOverlaySpeedTouchStart(e) {
+      this.speedTouching = true;
+      this.speedTouchStartX = e.touches[0].clientX;
+      this.speedMoved = false;
+    },
+
+    onOverlaySpeedTouchMove(e) {
+      if (!this.speedTouching) return;
+      if (Math.abs(e.touches[0].clientX - this.speedTouchStartX) > 10) this.speedMoved = true;
+      const query = this.createSelectorQuery();
+      query.select('.overlay-speed-track-wrap').boundingClientRect((rect) => {
+        if (!rect) return;
+        const x = e.touches[0].clientX - rect.left;
+        const pos = Math.max(10, Math.min(90, (x / rect.width) * 100));
+        const index = Math.round((pos - 10) / 20);
+        const rate = this.speedOptions[Math.max(0, Math.min(this.speedOptions.length - 1, index))];
+        this.setData({ playbackRate: rate });
+        this.bgAudioManager.playbackRate = rate;
+        this._updateOverlaySpeedIndicator();
+      }).exec();
+    },
+
+    onOverlaySpeedTouchEnd() {
+      this.speedTouching = false;
+    },
+
+    toggleOverlayFavorite() {
+      const chapterId = this.data.currentChapter._id;
+      if (!chapterId || !app.globalData.userId) return;
+      wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: { type: 'toggleFavorite', chapterId, userId: app.globalData.userId }
+      }).then(res => {
+        if (res.result.success) {
+          this.setData({ overlayIsFavorite: res.result.data.isFavorite });
+          wx.showToast({ title: res.result.data.isFavorite ? '已收藏' : '已取消收藏', icon: 'none' });
+        }
+      }).catch(() => wx.showToast({ title: '操作失败', icon: 'none' }));
+    },
+
+    toggleOverlaySort() {
+      const { playlistSortOrder, chapters, currentChapter } = this.data;
+      const newOrder = playlistSortOrder === 'asc' ? 'desc' : 'asc';
+      const reversed = [...chapters].reverse();
+      const currentId = currentChapter?._id;
+      const newIndex = reversed.findIndex(ch => ch._id === currentId);
+      const newCurrentChapter = reversed[newIndex];
+      Object.assign(app.globalData, { playlistSortOrder: newOrder, playlistChaptersData: reversed, playingIndex: newIndex >= 0 ? newIndex : 0 });
+      this.setData({
+        playlistSortOrder: newOrder,
+        chapters: reversed,
+        currentIndex: newIndex >= 0 ? newIndex : 0,
+        currentChapter: newCurrentChapter || currentChapter
+      }, () => this._updateOverlayNextChapterInfo());
+      wx.showToast({ title: newOrder === 'asc' ? '正序' : '倒序', icon: 'none' });
+    },
+
+    showOverlayPlaylist() {
+      const playlistPanel = this.selectComponent('#overlayPlaylistPanel');
+      if (playlistPanel) playlistPanel.show();
+    },
+
+    onPlaylistModeChange(e) {
+      this.setData({ playMode: e.detail.playMode });
+      app.globalData.playMode = e.detail.playMode;
+    },
+
+    onOverlayPlaylistPlay(e) {
+      const { chapterId, index } = e.detail;
+      if (chapterId === this.data.currentChapter._id) { app.togglePlayPause(); return; }
+      if (this.data.currentChapter._id && this.data.isPlaying) this._doSaveProgress();
+      app.playChapter(chapterId, this.data.chapters);
+      const chapter = this.data.chapters.find(ch => ch._id === chapterId);
+      if (chapter) {
+        const lastPlayTime = Number(chapter.lastPlayTime) || 0;
+        const chapterDuration = Number(chapter.duration) || 0;
+        this._syncingChapter = true;
+        this.setData({
+          currentChapter: chapter,
+          currentIndex: index >= 0 ? index : this.data.currentIndex,
+          isPlaying: false, currentTime: lastPlayTime, duration: chapterDuration, progressPercent: chapterDuration > 0 ? (lastPlayTime / chapterDuration) * 100 : 0
+        });
+      }
+    },
+
+    onOverlayPlaylistDelete(e) {
+      const { chapterId } = e.detail;
+      const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
+      this.setData({ chapters });
+      app.globalData.playlistChaptersData = chapters;
+      if (chapterId === this.data.currentChapter._id) {
+        if (this.data.isPlaying) this._doSaveProgress();
+        const nextIndex = this.data.currentIndex;
+        if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
+          app.playChapter(chapters[nextIndex]._id, chapters);
+        } else {
+          app.stop();
+          this.setData({ visible: false, isPlaying: false });
+        }
+      }
+      this._updateOverlayNextChapterInfo();
+    },
+
+    onOverlayPlaylistCollapse() {},
+
+    onOverlayPlaylistClear() {
+      this._doSaveProgress();
+      app.stop();
+      this.setData({ isPlaying: false, chapters: [], currentChapter: {}, currentIndex: 0 });
+      this.closePlayerOverlay();
+    },
+
+    onOverlayPlaylistSyncSort(e) {
+      const { chapters, sortOrder } = e.detail;
+      const currentId = this.data.currentChapter._id;
+      const newIndex = chapters.findIndex(ch => ch._id === currentId);
+      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder }, () => this._updateOverlayNextChapterInfo());
+      app.globalData.playingIndex = newIndex;
+      app.globalData.playlistChaptersData = chapters;
+      app.globalData.playlistSortOrder = sortOrder;
+    },
+
+    toggleOverlayPlayMode() {
+      const nextMode = app.togglePlayMode();
+      this.setData({ playMode: nextMode });
+      this._updateOverlayNextChapterInfo();
+      wx.showToast({ title: nextMode === 'sequence' ? '顺序播放' : nextMode === 'loop' ? '列表循环' : '单曲循环', icon: 'none' });
+    },
+
+    onOverlayPlaylistModeChange(e) {
+      this.setData({ playMode: e.detail.playMode });
+      app.globalData.playMode = e.detail.playMode;
+    },
+
+    onOverlayCoverError() {
+      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+      if (this.data.courseCover === defaultCover && defaultCover) {
+        this.setData({ overlayCoverError: true, courseCover: '' });
+        return;
+      }
+      this.setData({ overlayCoverError: true, courseCover: defaultCover || this.data.courseCover });
+    },
+
+    onOverlayCoverTap() {
+      const { overlayUsingDefaultCover, overlayOriginalCover } = this.data;
+      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+      if (!defaultCover || !overlayOriginalCover) return;
+      if (overlayUsingDefaultCover) {
+        const coverLoadTime = app.globalData.coverLoadTime || Date.now();
+        this.setData({
+          overlayUsingDefaultCover: false,
+          courseCover: app.processImageUrl(overlayOriginalCover, 'cover', coverLoadTime),
+          overlayCoverError: false,
+          overlayBgCoverError: false
+        });
+      } else {
+        this.setData({ overlayUsingDefaultCover: true, courseCover: defaultCover, overlayCoverError: false, overlayBgCoverError: false });
+      }
+    },
+
+    onOverlayBgCoverLoad() {
+      this.setData({ overlayBgCoverLoaded: true });
+    },
+
+    onOverlayBgCoverError() {
+      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+      this.setData({ overlayBgCoverError: true, courseCover: defaultCover || this.data.courseCover });
     },
 
     onPlaylistTap() {
