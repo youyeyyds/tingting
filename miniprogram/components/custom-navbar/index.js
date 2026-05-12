@@ -8,6 +8,10 @@ Component({
     showBack: {
       type: Boolean,
       value: true
+    },
+    title: {
+      type: String,
+      value: ''
     }
   },
 

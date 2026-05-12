@@ -1,5 +1,5 @@
 <!--custom-navbar/index.wxml-->
-<view class="custom-navbar">
+<view class="custom-navbar" style="height: {{statusBarHeight + navContentHeight}}px;">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
 
@@ -8,15 +8,20 @@
     <!-- 左侧胶囊按钮 -->
     <view class="nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
       <!-- 返回按钮 -->
-      <view class="nav-btn" bindtap="onBack">
+      <view class="nav-btn" bindtap="onBack" wx:if="{{showBack}}">
         <image class="nav-icon" src="/icons/svg/back.svg" mode="aspectFit" />
       </view>
       <!-- 分隔线 -->
-      <view class="nav-divider" style="height: {{menuButtonHeight * 0.6}}px;"></view>
+      <view class="nav-divider" style="height: {{menuButtonHeight * 0.6}}px;" wx:if="{{showBack && showHome}}"></view>
       <!-- 首页按钮 -->
-      <view class="nav-btn" bindtap="onHome">
+      <view class="nav-btn" bindtap="onHome" wx:if="{{showHome}}">
         <image class="nav-icon" src="/icons/svg/home-white.svg" mode="aspectFit" />
       </view>
+    </view>
+
+    <!-- 标题居中 -->
+    <view class="nav-title-center" wx:if="{{title}}">
+      <text class="nav-title-text">{{title}}</text>
     </view>
   </view>
 </view>

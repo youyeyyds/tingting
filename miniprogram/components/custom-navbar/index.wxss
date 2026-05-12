@@ -1,12 +1,8 @@
 /* custom-navbar/index.wxss */
 
 .custom-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  background: transparent;
+  width: 100%;
+  background: #fff;
 }
 
 .status-bar {
@@ -17,6 +13,7 @@
   display: flex;
   align-items: center;
   width: 100%;
+  position: relative;
 }
 
 .nav-btn-group {
@@ -43,4 +40,19 @@
 .nav-divider {
   width: 1rpx;
   background: rgba(255, 255, 255, 0.3);
+}
+
+.nav-title-center {
+  position: absolute;
+  left: 100rpx;
+  right: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title-text {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #000;
 }
