@@ -1,7 +1,10 @@
 {
+  "navigationStyle": "custom",
   "navigationBarTitleText": "我的",
   "navigationBarBackgroundColor": "#ffffff",
   "navigationBarTextStyle": "black",
   "disableScroll": false,
-  "usingComponents": {}
+  "usingComponents": {
+    "custom-navbar": "/components/custom-navbar/index"
+  }
 }
