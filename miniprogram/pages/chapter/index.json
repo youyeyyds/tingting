@@ -1,8 +1,10 @@
 {
+  "navigationStyle": "custom",
   "navigationBarTitleText": "",
   "disableScroll": false,
   "usingComponents": {
     "mini-player": "/components/mini-player/index",
-    "play-btn": "/components/play-btn/index"
+    "play-btn": "/components/play-btn/index",
+    "custom-navbar": "/components/custom-navbar/index"
   }
 }
