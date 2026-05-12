@@ -53,7 +53,10 @@ Component({
           const foundChapter = chapter || this.data.chapters.find(ch => ch._id === chapterId);
           const foundIndex = index >= 0 ? index : this.data.chapters.findIndex(ch => ch._id === chapterId);
           if (foundChapter && foundIndex >= 0) {
-            this.setData({ currentChapter: foundChapter, currentIndex: foundIndex });
+            this.setData({ currentChapter: foundChapter, currentIndex: foundIndex }, () => {
+              this._updateOverlayNextChapterInfo();
+              this.checkOverlayFavoriteStatus();
+            });
           }
         },
         onPlay: () => {
@@ -389,11 +392,22 @@ Component({
       this._syncOverlayState();
       this.setData({ playerOverlayVisible: true });
       if (this.data.isPlaying) this._startOverlayRotation();
+      this.checkOverlayFavoriteStatus();
     },
 
     closePlayerOverlay() {
       this._stopOverlayRotation();
       this.setData({ playerOverlayVisible: false });
+    },
+
+    checkOverlayFavoriteStatus() {
+      const chapterId = this.data.currentChapter._id;
+      if (!chapterId || !app.globalData.userId) return;
+      wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: { type: 'checkFavorite', chapterId, userId: app.globalData.userId }
+      }).then(res => { if (res.result.success) this.setData({ overlayIsFavorite: res.result.data.isFavorite }); })
+        .catch(err => console.error('检查收藏状态失败:', err));
     },
 
     _syncOverlayState() {
@@ -509,7 +523,10 @@ Component({
     _updateOverlaySpeedIndicator() {
       const { playbackRate } = this.data;
       const index = this.speedOptions.findIndex(s => Math.abs(s - playbackRate) < 0.01);
-      this.setData({ overlaySpeedIndicatorPos: index >= 0 ? 10 + index * 20 : 50 });
+      let pos = index >= 0 ? 10 + index * 20 : 50;
+      // 最后一个位置（2x）需要限制，避免超出容器
+      pos = Math.min(pos, 85);
+      this.setData({ overlaySpeedIndicatorPos: pos });
     },
 
     onOverlaySpeedTrackTap(e) {

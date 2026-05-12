@@ -276,7 +276,7 @@
 .overlay-cover-section {
   display: flex;
   justify-content: center;
-  padding: 120rpx 0 40rpx;
+  padding: 60rpx 0 40rpx;
 }
 
 .overlay-cover-image {
