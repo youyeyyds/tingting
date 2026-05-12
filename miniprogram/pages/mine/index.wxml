@@ -1,7 +1,7 @@
 <!--mine/index.wxml-->
 <view class="page-container {{pageAnimating ? 'page-exit' : ''}}">
   <!-- 自定义导航栏 -->
-  <custom-navbar />
+  <custom-navbar showBack="{{false}}" title="我的" />
   <!-- 内容区域，使用原生页面滚动 -->
   <view class="content">
     <!-- 头条轮播 -->

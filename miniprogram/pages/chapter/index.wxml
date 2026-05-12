@@ -1,7 +1,7 @@
 <!--chapter.wxml-->
 <view class="page-container">
   <!-- 自定义导航栏 -->
-  <custom-navbar />
+  <custom-navbar title="{{course.title}}" />
   <!-- 骨架屏 -->
   <view class="skeleton-section" wx:if="{{loading}}">
     <view class="skeleton-info">
