@@ -242,26 +242,37 @@
   z-index: 2;
 }
 
-/* Overlay close button */
-.overlay-close-btn {
+/* Overlay close button capsule */
+.overlay-nav-btn-group {
   position: absolute;
   top: 60rpx;
+  left: 16rpx;
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-evenly;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 32rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.3);
   height: 64rpx;
-  padding: 0 20rpx;
-  /* 使用与胶囊按钮相同的右边距实现对称 */
-  margin-left: 16rpx;
+  padding: 0 16rpx;
 }
 
-.overlay-close-icon {
+.overlay-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-nav-icon {
   width: 36rpx;
   height: 36rpx;
+}
+
+.overlay-nav-divider {
+  width: 1rpx;
+  height: 38rpx;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Overlay player container */
