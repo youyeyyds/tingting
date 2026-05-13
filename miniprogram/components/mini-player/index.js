@@ -464,12 +464,16 @@ Component({
       const speedIndex = this.speedOptions.findIndex(s => Math.abs(s - playbackRate) < 0.01);
       const speedIndicatorPos = speedIndex >= 0 ? 10 + speedIndex * 20 : 50;
       this._updateOverlayNextChapterInfo();
-      this.setData({
+      const setData = {
         overlayCurrentTimeText: currentTimeText,
         overlayRemainingTimeText: remainingTimeText,
-        overlaySpeedIndicatorPos: speedIndicatorPos,
-        overlayOriginalCover: this.data.courseCover
-      });
+        overlaySpeedIndicatorPos: speedIndicatorPos
+      };
+      // 只有在还没有切换到默认封面时，才更新原始封面
+      if (!this.data.overlayUsingDefaultCover) {
+        setData.overlayOriginalCover = this.data.courseCover;
+      }
+      this.setData(setData);
       if (!this.speedOptions.includes(playbackRate)) {
         this.setData({ playbackRate: 2 });
         this.bgAudioManager.playbackRate = 2;
@@ -726,17 +730,17 @@ Component({
     },
 
     onOverlayCoverError() {
-      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
-      if (this.data.courseCover === defaultCover && defaultCover) {
+      const localCover = app.globalData.defaultCoverLocalPath || app.globalData.fallbackCover;
+      if (this.data.courseCover === localCover && localCover) {
         this.setData({ overlayCoverError: true, courseCover: '' });
         return;
       }
-      this.setData({ overlayCoverError: true, courseCover: defaultCover || this.data.courseCover });
+      this.setData({ overlayCoverError: true, courseCover: localCover || this.data.courseCover });
     },
 
     onOverlayCoverTap() {
       const { overlayUsingDefaultCover, overlayOriginalCover } = this.data;
-      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
+      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.fallbackCover || '';
       if (!defaultCover || !overlayOriginalCover) return;
       if (overlayUsingDefaultCover) {
         const coverLoadTime = app.globalData.coverLoadTime || Date.now();
@@ -756,8 +760,8 @@ Component({
     },
 
     onOverlayBgCoverError() {
-      const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.defaultCoverUrl || '';
-      this.setData({ overlayBgCoverError: true, courseCover: defaultCover || this.data.courseCover });
+      const localCover = app.globalData.defaultCoverLocalPath || app.globalData.fallbackCover;
+      this.setData({ overlayBgCoverError: true, courseCover: localCover || this.data.courseCover });
     },
 
     onPlaylistTap() {

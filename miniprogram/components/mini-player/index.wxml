@@ -80,7 +80,6 @@
     <!-- 封面图 -->
     <view class="overlay-cover-section">
       <image class="overlay-cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{overlayCoverRotationAngle}}deg);" src="{{courseCover}}" mode="aspectFill" wx:if="{{courseCover && !overlayCoverError}}" binderror="onOverlayCoverError" bindtap="onOverlayCoverTap" />
-      <image class="overlay-cover-image {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{overlayCoverRotationAngle}}deg); background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);" src="/icons/svg/headphones.svg" mode="aspectFit" wx:if="{{!courseCover || overlayCoverError}}" />
     </view>
 
     <!-- 课程信息 -->
