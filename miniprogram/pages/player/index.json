@@ -1,8 +1,0 @@
-{
-  "navigationStyle": "custom",
-  "navigationBarTextStyle": "white",
-  "usingComponents": {
-    "custom-navbar": "/components/custom-navbar/index",
-    "playlist-panel": "/components/playlist-panel/index"
-  }
-}
