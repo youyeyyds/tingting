@@ -252,7 +252,7 @@
   justify-content: space-evenly;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 32rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  border: 1rpx solid rgba(255, 255, 255, 0.4);
 }
 
 .overlay-nav-btn {
