@@ -1,5 +1,8 @@
 <!--chapter.wxml-->
 <view class="page-container">
+  <!-- 自定义导航栏 -->
+  <custom-navbar />
+
   <!-- 课程信息区 -->
   <view class="course-info-section">
     <image class="course-cover" src="{{course.cover}}" mode="aspectFill" />

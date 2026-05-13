@@ -1,7 +1,7 @@
 <!--login/index.wxml-->
 <view class="page-container">
   <!-- 自定义导航栏 -->
-  <custom-navbar title="" />
+  <custom-navbar title="登录" />
 
   <scroll-view class="scroll-view" scroll-y="true" enhanced="true" bounces="{{true}}">
     <view class="scroll-content">
