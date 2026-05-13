@@ -245,8 +245,8 @@
 /* Overlay close button capsule */
 .overlay-nav-btn-group {
   position: absolute;
-  top: 60rpx;
-  left: 16rpx;
+  top: 0;
+  left: 0;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -254,11 +254,10 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: 32rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.3);
-  height: 64rpx;
-  padding: 0 16rpx;
 }
 
 .overlay-nav-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,7 +270,6 @@
 
 .overlay-nav-divider {
   width: 1rpx;
-  height: 38rpx;
   background: rgba(255, 255, 255, 0.3);
 }
 
