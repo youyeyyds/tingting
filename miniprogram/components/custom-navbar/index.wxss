@@ -16,30 +16,16 @@
   position: relative;
 }
 
-.nav-btn-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  background: #fff;
-  border-radius: 32rpx;
-  border: 1rpx solid #ddd;
-}
-
-.nav-btn {
-  flex: 1;
+.nav-back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 30rpx;
 }
 
 .nav-icon {
-  width: 36rpx;
-  height: 36rpx;
-}
-
-.nav-divider {
-  width: 1rpx;
-  background: #ddd;
+  width: 44rpx;
+  height: 44rpx;
 }
 
 .nav-title-center {
