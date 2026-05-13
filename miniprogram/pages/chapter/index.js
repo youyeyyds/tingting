@@ -11,36 +11,57 @@ Page({
     sortOrder: 'asc',
     loading: true,
     coverLoadTime: 0,
-    hasPlaylist: false,
-    isPlaying: false
+    playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' },
+    hasPlaylist: false, // 当前课程是否有播放列表（用于决定显示哪个按钮）
+    isPlaying: false // 当前是否正在播放
   },
 
   onLoad(options) {
-    this.setData({ courseId: options.id || '' });
+    this.setData({
+      courseId: options.id || ''
+    });
 
     this.audioCallback = {
-      onClose: () => this.resetPlayingState(),
-      onStop: () => this.resetPlayingState(),
+      onClose: ({ chapterId }) => {
+        if (chapterId) {
+          this.setData({ lastPlayedChapterId: chapterId });
+        }
+        this.resetPlayingState();
+      },
+      onStop: ({ chapterId }) => {
+        if (chapterId) {
+          this.setData({ lastPlayedChapterId: chapterId });
+        }
+        this.resetPlayingState();
+      },
       onPlay: () => {
-        console.log('[chapter] onPlay', { playingStatus: app.globalData.playingStatus });
-        const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
-        this.setData({ hasPlaylist: isCurrentCourse, isPlaying: isCurrentCourse });
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
+        this.setData({
+          hasPlaylist: isCurrentCourse,
+          isPlaying: isCurrentCourse
+        });
       },
       onPause: () => {
-        console.log('[chapter] onPause', { playingStatus: app.globalData.playingStatus });
-        this.setData({ isPlaying: false });
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
+        this.setData({
+          isPlaying: false
+        });
       },
       onChapterChange: ({ chapterId }) => {
-        console.log('[chapter] onChapterChange', { chapterId, playingStatus: app.globalData.playingStatus });
-        const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
+        const playingCourseId = app.globalData.playingCourse?._id;
+        const isCurrentCourse = playingCourseId === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
-        const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }));
+        // 检查 chapterId 是否属于当前课程
+        const isCurrentChapter = isCurrentCourse && chapterId && this.data.chapters.some(ch => ch._id === chapterId);
         this.setData({
-          chapters,
-          filteredChapters: this._applyFilterAndSort(chapters),
+          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
           hasPlaylist: isCurrentCourse && miniPlayerActive,
           isPlaying: isCurrentCourse && miniPlayerActive
         });
+        this.applyFilterAndSort();
+        // 保存最近播放的章节ID
         this.saveCourseSettings({ lastPlayedChapterId: chapterId });
       },
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
@@ -53,16 +74,15 @@ Page({
           return { ...ch, lastPlayTime, progress, progressText };
         });
         const courseProgress = chapters.length ? Math.round(chapters.reduce((s, c) => s + (c.progress || 0), 0) / chapters.length) : 0;
-        const progressText = courseProgress === 100 ? '已学完' : courseProgress ? `已学${courseProgress}%` : '未学习';
         this.setData({
           chapters,
-          filteredChapters: this._applyFilterAndSort(chapters),
-          course: { ...this.data.course, progress: courseProgress, progressText }
+          course: { ...this.data.course, progress: courseProgress, progressText: courseProgress === 100 ? '已学完' : courseProgress ? `已学${courseProgress}%` : '未学习' }
         });
+        this.applyFilterAndSort();
       },
       onFavoriteChange: ({ chapterId, isFavorite }) => {
-        const chapters = this.data.chapters.map(ch => ch._id === chapterId ? { ...ch, isFavorite } : ch);
-        this.setData({ chapters, filteredChapters: this._applyFilterAndSort(chapters) });
+        this.setData({ chapters: this.data.chapters.map(ch => ch._id === chapterId ? { ...ch, isFavorite } : ch) });
+        this.applyFilterAndSort();
       }
     };
     app.registerMiniPlayer(this.audioCallback);
@@ -71,7 +91,7 @@ Page({
         if (coverLoadTime && coverLoadTime !== this.data.coverLoadTime) {
           this.setData({ coverLoadTime });
           if (this.data.course.cover) {
-            this.setData({ course: { ...this.data.course, cover: app.processImageUrl(this.data.course.cover) } });
+            this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
           }
         }
       }
@@ -81,13 +101,18 @@ Page({
   },
 
   onShow() {
+    // 不再每次都 loadCourseData，只在首次加载或需要刷新数据时
     if (this.data.courseId && this.data.chapters.length === 0) {
       this.loadCourseData();
     } else {
+      // 保持现有数据，只更新进度等动态信息
       this.applyFilterAndSort();
     }
+    // 同步图片时间戳变化
     this.syncImageTimes();
+    // 同步播放状态
     this.updatePlayingState();
+    // 刷新用户设置（如上次播放章节）
     this.reloadCourseSettings();
   },
 
@@ -108,19 +133,24 @@ Page({
     });
   },
 
+  // 更新当前播放状态
   updatePlayingState() {
-    console.log('[chapter] updatePlayingState', { playingStatus: app.globalData.playingStatus });
-    const isCurrentCourse = app.globalData.playingCourse?._id === this.data.courseId;
-    const isPlaying = isCurrentCourse && app.globalData.playingStatus;
-    this.setData({ hasPlaylist: isCurrentCourse && app.globalData.playlistChaptersData?.length > 0, isPlaying });
+    const playingCourseId = app.globalData.playingCourse?._id;
+    const isCurrentCourse = playingCourseId === this.data.courseId;
+    const isPlaying = !app.bgAudioManager.paused && isCurrentCourse;
+    this.setData({
+      hasPlaylist: isCurrentCourse && app.globalData.playlistChaptersData?.length > 0,
+      isPlaying: isPlaying
+    });
   },
 
+  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
   syncImageTimes() {
     const ct = app.globalData.coverLoadTime;
     if (ct && ct !== this.data.coverLoadTime) {
       this.setData({ coverLoadTime: ct });
       if (this.data.course.cover) {
-        this.setData({ course: { ...this.data.course, cover: app.processImageUrl(this.data.course.cover) } });
+        this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
       }
     }
   },
@@ -131,26 +161,36 @@ Page({
   },
 
   resetPlayingState() {
-    const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: false }));
-    this.setData({ chapters, filteredChapters: this._applyFilterAndSort(chapters), hasPlaylist: false, isPlaying: false });
+    this.setData({
+      chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: false })),
+      hasPlaylist: false,
+      isPlaying: false
+    });
+    this.applyFilterAndSort();
   },
 
   loadCourseData() {
+    // 先获取用户课程偏好设置
     wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId }
     }).then(settingsRes => {
-      const userSettings = settingsRes.result?.success ? settingsRes.result.data : { sortOrder: 'asc', showUnfinishedOnly: false, lastPlayedChapterId: null };
+      // 获取设置失败时使用默认值
+      const userSettings = (settingsRes.result && settingsRes.result.success) ? settingsRes.result.data : { sortOrder: 'asc', showUnfinishedOnly: false, lastPlayedChapterId: null };
+
+      // 然后获取课程详情
       return wx.cloud.callFunction({
         name: 'courseFunctions',
         data: { type: 'getCourseDetail', courseId: this.data.courseId, userId: app.globalData.userId }
       }).then(res => {
         if (res.result.success) {
           const course = res.result.course;
-          course.cover = app.processImageUrl(course.cover);
+          course.cover = this.processImageUrl(course.cover);
           const chapters = res.result.chapters.map(ch => this.formatChapter(ch));
           this.setData({
-            course, chapters, filteredChapters: chapters,
+            course,
+            chapters,
+            filteredChapters: chapters,
             sortOrder: userSettings.sortOrder,
             showUnfinishedOnly: userSettings.showUnfinishedOnly,
             lastPlayedChapterId: userSettings.lastPlayedChapterId,
@@ -169,12 +209,25 @@ Page({
     });
   },
 
+  processImageUrl(url) {
+    if (!url || url.includes('seed/fixed_')) return url;
+    const t = app.globalData.coverLoadTime || this.data.coverLoadTime;
+    if (!t) return url; // 时间戳未初始化时不处理
+    const m1 = url.match(/seed\/(\d+)_cover_/);
+    if (m1) return m1[1] != t ? url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`) : url;
+    const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
+    if (m2) return `https://picsum.photos/seed/${t}_cover_${m2[1]}/${m2[2]}`;
+    const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
+    if (m3) return `https://picsum.photos/seed/${t}_cover_${url.match(/random=(\d+)/)?.[1] || 0}/${m3[1]}`;
+    return url;
+  },
+
   formatChapter(chapter) {
     const lastPlayTime = Number(chapter.lastPlayTime) || 0;
     const duration = Number(chapter.duration) || 0;
     const finished = chapter.finished === true;
-    const progress = finished ? 100 : (lastPlayTime > 0 && duration > 0 ? Math.min(Math.round((lastPlayTime / duration) * 100), 100) : 0);
-    const progressText = progress === 100 ? '已学完' : progress > 0 ? `已学${progress}%` : '未学习';
+    let progress = finished ? 100 : (lastPlayTime > 0 && duration > 0 ? Math.min(Math.round((lastPlayTime / duration) * 100), 100) : 0);
+    let progressText = progress === 100 ? '已学完' : progress > 0 ? `已学${progress}%` : '未学习';
     return {
       ...chapter,
       progress,
@@ -185,28 +238,33 @@ Page({
     };
   },
 
-  handlePlayBtnTap() {
-    if (this.data.hasPlaylist) {
-      app.togglePlayPause();
-    } else {
-      this.handleCreatePlaylist();
-    }
+  handleTogglePlay() {
+    // 有播放列表时切换播放/暂停
+    app.togglePlayPause();
   },
 
   handleCreatePlaylist() {
-    const { courseId, chapters, course, sortOrder, lastPlayedChapterId } = this.data;
-    if (!courseId || !chapters.length) return wx.showToast({ title: '暂无章节', icon: 'none' });
+    // 创建完整播放列表（使用全部章节，不受筛选影响）
+    const { courseId, chapters, course } = this.data;
+    if (!courseId || !chapters.length) {
+      return wx.showToast({ title: '暂无章节', icon: 'none' });
+    }
 
-    const sortedChapters = [...chapters].sort((a, b) => {
-      const seqA = a.seq || 0, seqB = b.seq || 0;
-      return sortOrder === 'asc' ? seqA - seqB : seqB - seqA;
-    });
+    // 找到第一个未完成的章节
+    let chapterToPlay = chapters.find(ch => ch.progress < 100) || chapters[0];
 
-    let chapterToPlay = sortedChapters.find(ch => ch._id === lastPlayedChapterId) || sortedChapters.find(ch => ch.progress < 100) || sortedChapters[0];
-
+    // 调用 miniPlayer.play 来显示 mini-player UI 并开始播放
     const miniPlayer = this.selectComponent('#miniPlayer');
-    if (miniPlayer) miniPlayer.play(chapterToPlay._id, sortedChapters, course, sortOrder);
-    this.setData({ hasPlaylist: true, isPlaying: true });
+    if (miniPlayer) {
+      // 传入完整章节列表，播放第一个未完成的章节
+      miniPlayer.play(chapterToPlay._id, chapters, course, 'asc');
+    }
+
+    // 更新按钮状态（回调会进一步更新）
+    this.setData({
+      hasPlaylist: true,
+      isPlaying: true
+    });
   },
 
   onFilterChange(e) {
@@ -226,31 +284,38 @@ Page({
   saveCourseSettings(settings) {
     wx.cloud.callFunction({
       name: 'courseFunctions',
-      data: { type: 'updateCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId, ...settings }
+      data: {
+        type: 'updateCourseSettings',
+        courseId: this.data.courseId,
+        userId: app.globalData.userId,
+        ...settings
+      }
     });
   },
 
-  _applyFilterAndSort(chapters) {
-    let filtered = chapters || [...this.data.chapters];
-    if (this.data.showUnfinishedOnly) filtered = filtered.filter(ch => ch.progress < 100);
-    filtered.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
-    const currentPlayingId = app.globalData.playingChapter?._id;
-    return filtered.map(ch => ({ ...ch, isPlaying: ch._id === currentPlayingId }));
-  },
-
   applyFilterAndSort() {
-    this.setData({ filteredChapters: this._applyFilterAndSort() });
+    let chapters = [...this.data.chapters];
+    if (this.data.showUnfinishedOnly) chapters = chapters.filter(ch => ch.progress < 100);
+    chapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
+    this.setData({ filteredChapters: chapters });
   },
 
-  onChapterTap(e) { this.playChapter(e.currentTarget.dataset.id); },
-  onPlayTap(e) { this.playChapter(e.currentTarget.dataset.id); },
+  onChapterTap(e) {
+    this.playChapter(e.currentTarget.dataset.id);
+  },
+
+  onPlayTap(e) {
+    this.playChapter(e.currentTarget.dataset.id);
+  },
 
   playChapter(chapterId) {
-    const chapters = this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId }));
-    chapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
-    this.setData({ chapters, filteredChapters: this._applyFilterAndSort(chapters) });
     const miniPlayer = this.selectComponent('#miniPlayer');
-    if (miniPlayer) miniPlayer.play(chapterId, chapters, this.data.course, this.data.sortOrder);
+    if (miniPlayer) {
+      miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
+    }
+    this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
+    this.applyFilterAndSort();
+    // 保存最近播放的章节ID
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
   },
 
@@ -262,10 +327,13 @@ Page({
     }).then(res => {
       if (res.result.success) {
         const newIsFavorite = res.result.data.isFavorite;
-        const chapters = this.data.chapters.map(ch => ch._id === chapterId ? { ...ch, isFavorite: newIsFavorite } : ch);
-        this.setData({ chapters, filteredChapters: this._applyFilterAndSort(chapters) });
+        this.setData({ chapters: this.data.chapters.map(ch => ch._id === chapterId ? { ...ch, isFavorite: newIsFavorite } : ch) });
+        this.applyFilterAndSort();
         wx.showToast({ title: newIsFavorite ? '已收藏' : '已取消收藏', icon: 'none' });
       } else wx.showToast({ title: '操作失败', icon: 'none' });
-    }).catch(() => wx.showToast({ title: '操作失败', icon: 'none' }));
+    }).catch(err => {
+      console.error('收藏操作失败:', err);
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    });
   }
 });

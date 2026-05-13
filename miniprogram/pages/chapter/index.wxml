@@ -1,33 +1,27 @@
 <!--chapter.wxml-->
 <view class="page-container">
-  <!-- 自定义导航栏 -->
-  <custom-navbar />
-  <!-- 骨架屏 -->
-  <view class="skeleton-section" wx:if="{{loading}}">
-    <view class="skeleton-info">
-      <view class="skeleton-cover"></view>
-      <view class="skeleton-details">
-        <view class="skeleton-title"></view>
-        <view class="skeleton-author"></view>
-        <view class="skeleton-meta"></view>
-      </view>
-    </view>
-  </view>
-
   <!-- 课程信息区 -->
-  <view class="course-info-section" wx:if="{{!loading}}">
+  <view class="course-info-section">
     <image class="course-cover" src="{{course.cover}}" mode="aspectFill" />
     <view class="course-details">
       <view class="course-title">{{course.title}}</view>
       <view class="course-author">{{course.author}}</view>
       <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
-      <!-- 播放按钮：始终显示，有列表时切换播放/暂停，无列表时创建 -->
-      <view class="play-btn active" bindtap="handlePlayBtnTap">
-        <view class="play-icon {{isPlaying ? 'pause' : ''}}">
-          <view class="pause-bar" wx:if="{{isPlaying}}"></view>
-          <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+      <!-- 播放按钮组：两个重叠的按钮 -->
+      <view class="play-btn-group">
+        <!-- play-btn1 (bottom): 只显示三角形，创建完整播放列表（不受筛选影响） -->
+        <view class="play-btn play-btn-1 {{!hasPlaylist ? 'active' : ''}}" bindtap="handleCreatePlaylist">
+          <view class="play-icon"></view>
+          <text class="play-btn-text">继续播放</text>
         </view>
-        <text class="play-btn-text">{{isPlaying ? '暂停播放' : '继续播放'}}</text>
+        <!-- play-btn2 (top): 播放/暂停切换，与mini-player风格一致 -->
+        <view class="play-btn play-btn-2 {{hasPlaylist ? 'active' : ''}}" bindtap="handleTogglePlay">
+          <view class="play-icon {{isPlaying ? 'pause' : ''}}">
+            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+          </view>
+          <text class="play-btn-text">{{isPlaying ? '暂停播放' : '继续播放'}}</text>
+        </view>
       </view>
     </view>
   </view>
@@ -46,20 +40,11 @@
 
   <!-- 章节列表 -->
   <view class="chapter-list">
-    <!-- 骨架屏章节卡片 -->
-    <view class="skeleton-chapter-card" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" wx:if="{{loading}}">
-      <view class="skeleton-chapter-info">
-        <view class="skeleton-chapter-title"></view>
-        <view class="skeleton-chapter-meta"></view>
-      </view>
-      <view class="skeleton-chapter-actions"></view>
-    </view>
-
-    <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap" wx:if="{{!loading}}">
+    <view class="chapter-card" wx:for="{{filteredChapters}}" wx:key="_id" data-id="{{item._id}}" bindtap="onChapterTap">
       <view class="chapter-info">
         <view class="chapter-title-line {{item.isPlaying ? 'playing' : ''}} {{item.progress === 100 && !item.isPlaying ? 'completed' : ''}}">
-          <text class="chapter-seq" wx:if="{{item.seq > 0}}">{{item.seq}}</text>
-          <text class="chapter-sep" wx:if="{{item.seq > 0}}">|</text>
+          <text class="chapter-seq" wx:if="{{item.seq !== 0}}">{{item.seq}}</text>
+          <text class="chapter-sep" wx:if="{{item.seq !== 0}}">|</text>
           <text class="chapter-name">{{item.title}}</text>
         </view>
         <view class="chapter-meta-line">
@@ -88,7 +73,7 @@
 
     <!-- 空状态 -->
     <view class="empty-tip" wx:if="{{!loading && filteredChapters.length === 0}}">
-      <text class="empty-text">随时随地，学习成长</text>
+      <text class="empty-text">{{showUnfinishedOnly ? '所有章节已学完' : '暂无章节数据'}}</text>
     </view>
 
     <!-- 底部文案 -->
