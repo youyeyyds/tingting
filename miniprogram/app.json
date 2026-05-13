@@ -5,7 +5,6 @@
     "pages/favorite/index",
     "pages/mine/index",
     "pages/login/index",
-    "pages/player/index",
     "pages/version/index",
     "pages/version-detail/index"
   ],
