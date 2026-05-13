@@ -7,7 +7,7 @@
   <view class="nav-content" style="height: {{navContentHeight}}px;">
     <!-- 返回按钮 -->
     <view class="nav-back-btn" bindtap="onBack" wx:if="{{showBack}}">
-      <image class="nav-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
+      <image class="nav-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
     </view>
 
     <!-- 标题居中 -->

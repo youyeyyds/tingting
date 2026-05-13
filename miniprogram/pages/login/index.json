@@ -1,5 +1,7 @@
 {
-  "navigationBarTitleText": "登录",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": false,
-  "usingComponents": {}
+  "usingComponents": {
+    "custom-navbar": "/components/custom-navbar/index"
+  }
 }

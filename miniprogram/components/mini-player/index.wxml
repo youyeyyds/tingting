@@ -57,7 +57,7 @@
                 bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
 
 <!-- Player Overlay -->
-<view wx:if="{{playerOverlayVisible}}" class="player-overlay">
+<view wx:if="{{playerOverlayVisible}}" class="player-overlay {{overlayFadeClass}}">
   <!-- 背景图层 -->
   <view class="overlay-bg-layer">
     <image class="overlay-bg-cover {{overlayBgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover}}" mode="aspectFill" bindload="onOverlayBgCoverLoad" binderror="onOverlayBgCoverError" wx:if="{{courseCover && !overlayBgCoverError}}" />
@@ -65,13 +65,13 @@
   </view>
 
   <!-- 关闭按钮（胶囊样式） -->
-  <view class="overlay-nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
+  <view class="overlay-nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; top: {{statusBarHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
     <view class="overlay-nav-btn" bindtap="closePlayerOverlay">
       <image class="overlay-nav-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
     </view>
     <view class="overlay-nav-divider" style="height: {{menuButtonHeight * 0.6}}px;"></view>
     <view class="overlay-nav-btn" bindtap="goHome">
-      <image class="overlay-nav-icon" src="/icons/svg/home.svg" mode="aspectFit" />
+      <image class="overlay-nav-icon" src="/icons/svg/home-white.svg" mode="aspectFit" />
     </view>
   </view>
 
