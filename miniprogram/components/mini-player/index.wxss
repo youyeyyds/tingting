@@ -245,6 +245,7 @@
 /* Overlay close button capsule */
 .overlay-nav-btn-group {
   position: absolute;
+  top: 90rpx;
   z-index: 20;
   display: flex;
   align-items: center;
