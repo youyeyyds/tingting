@@ -32,6 +32,7 @@ Component({
     playMode: 'sequence',
     // Overlay state
     playerOverlayVisible: false,
+    overlayFadeClass: '',
     overlayCoverRotationAngle: 0,
     overlaySpeedIndicatorPos: 70,
     overlayCurrentTimeText: '0:00',
@@ -427,14 +428,17 @@ Component({
 
     openPlayerPanel() {
       this._syncOverlayState();
-      this.setData({ playerOverlayVisible: true });
+      this.setData({ playerOverlayVisible: true, overlayFadeClass: 'fade-in' });
       if (this.data.isPlaying) this._startOverlayRotation();
       this.checkOverlayFavoriteStatus();
     },
 
     closePlayerOverlay() {
       this._stopOverlayRotation();
-      this.setData({ playerOverlayVisible: false });
+      this.setData({ overlayFadeClass: 'fade-out' });
+      setTimeout(() => {
+        this.setData({ playerOverlayVisible: false, overlayFadeClass: '' });
+      }, 300);
     },
 
     goHome() {

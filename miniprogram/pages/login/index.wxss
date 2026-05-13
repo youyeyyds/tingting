@@ -1,11 +1,16 @@
 /* login/index.wxss */
 
 .page-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, #f8f8f8 0%, #fff 100%);
   box-sizing: border-box;
   height: 100vh;
+}
+
+.scroll-view {
+  flex: 1;
 }
 
 .scroll-content {

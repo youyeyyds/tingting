@@ -1,49 +1,54 @@
 <!--login/index.wxml-->
-<scroll-view class="page-container" scroll-y="true" enhanced="true" bounces="{{true}}">
-  <view class="scroll-content">
-    <!-- 横幅轮播 -->
-    <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0 && !bannerHidden}}">
-      <swiper-item wx:for="{{headlines}}" wx:key="_id">
-        <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
-      </swiper-item>
-    </swiper>
-    <!-- 横幅占位（骨架屏） -->
-    <view class="banner-placeholder" wx:if="{{headlines.length === 0 && !bannerHidden}}"></view>
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <custom-navbar title="" />
 
-    <!-- 内容包裹层 -->
-    <view class="content-inner">
-      <!-- 品牌区域 -->
-      <view class="brand-section">
-        <text class="app-name">听听</text>
-        <text class="app-slogan">随时随地，学习成长</text>
+  <scroll-view class="scroll-view" scroll-y="true" enhanced="true" bounces="{{true}}">
+    <view class="scroll-content">
+      <!-- 横幅轮播 -->
+      <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0 && !bannerHidden}}">
+        <swiper-item wx:for="{{headlines}}" wx:key="_id">
+          <image class="banner-image" src="{{item.image}}" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
+      <!-- 横幅占位（骨架屏） -->
+      <view class="banner-placeholder" wx:if="{{headlines.length === 0 && !bannerHidden}}"></view>
+
+      <!-- 内容包裹层 -->
+      <view class="content-inner">
+        <!-- 品牌区域 -->
+        <view class="brand-section">
+          <text class="app-name">听听</text>
+          <text class="app-slogan">随时随地，学习成长</text>
+        </view>
+
+        <!-- 登录表单 -->
+        <view class="login-form">
+          <view class="form-item">
+            <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{phone}}" />
+          </view>
+
+          <view class="form-item">
+            <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{password}}" />
+          </view>
+
+          <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
+            <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
+          </view>
+
+          <!-- 版权内容 -->
+          <view class="copyright-section">
+            <text class="copyright-line copyright-line-1" wx:if="{{copyrightLines[0]}}">{{copyrightLines[0]}}</text>
+            <text class="copyright-line copyright-line-2" wx:if="{{copyrightLines[1]}}">{{copyrightLines[1]}}</text>
+            <text class="copyright-line copyright-line-3" wx:if="{{copyrightLines[2]}}">{{copyrightLines[2]}}</text>
+          </view>
+        </view>
       </view>
 
-      <!-- 登录表单 -->
-      <view class="login-form">
-        <view class="form-item">
-          <input class="form-input" type="number" placeholder="请输入手机号" maxlength="11" bindinput="onPhoneInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{phone}}" />
-        </view>
-
-        <view class="form-item">
-          <input class="form-input" type="password" placeholder="请输入密码" bindinput="onPasswordInput" bindkeyboardheightchange="onKeyboardHeightChange" value="{{password}}" />
-        </view>
-
-        <view class="login-btn {{loading ? 'disabled' : ''}}" bindtap="handleLogin">
-          <text class="login-text">{{loading ? '登录中...' : '登录'}}</text>
-        </view>
-
-        <!-- 版权内容 -->
-        <view class="copyright-section">
-          <text class="copyright-line copyright-line-1" wx:if="{{copyrightLines[0]}}">{{copyrightLines[0]}}</text>
-          <text class="copyright-line copyright-line-2" wx:if="{{copyrightLines[1]}}">{{copyrightLines[1]}}</text>
-          <text class="copyright-line copyright-line-3" wx:if="{{copyrightLines[2]}}">{{copyrightLines[2]}}</text>
-        </view>
+      <!-- 备案号（在内容底部） -->
+      <view class="icp-footer">
+        <text class="icp-text">{{icpNumber}}</text>
       </view>
     </view>
-
-    <!-- 备案号（在内容底部） -->
-    <view class="icp-footer">
-      <text class="icp-text">{{icpNumber}}</text>
-    </view>
-  </view>
-</scroll-view>
+  </scroll-view>
+</view>
