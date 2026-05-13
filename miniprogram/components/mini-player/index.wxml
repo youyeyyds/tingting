@@ -86,6 +86,7 @@
     <!-- 课程信息 -->
     <view class="overlay-course-info">
       <text class="overlay-course-title">{{courseName || '未知课程'}}</text>
+      <text class="overlay-course-author">{{course.author || '未知作者'}}</text>
       <view class="overlay-chapter-line">
         <text class="overlay-chapter-seq" wx:if="{{currentChapter.seq > 0}}">{{currentChapter.seq}}</text>
         <text class="overlay-chapter-sep" wx:if="{{currentChapter.seq > 0}}">|</text>
