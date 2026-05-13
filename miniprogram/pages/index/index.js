@@ -4,6 +4,7 @@ const ANIMATION_DURATION = 300;
 
 Page({
   data: {
+    activeTab: 0,
     statusBarHeight: 0,
     navBarHeight: 0,
     headerHeight: 0,
@@ -103,6 +104,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ activeTab: 0 });
     // logout 后恢复脱敏数据（从mine页退出登录时触发）
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       app.globalData.needRestoreMaskedData = false;
