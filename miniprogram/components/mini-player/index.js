@@ -11,6 +11,11 @@ Component({
     visible: false,
     fadeInClass: '',
     playerBottom: 15,
+    statusBarHeight: 0,
+    navContentHeight: 0,
+    menuButtonHeight: 32,
+    menuButtonWidth: 87,
+    menuButtonLeftGap: 10,
     currentChapter: {},
     currentIndex: 0,
     courseCover: '',
@@ -47,6 +52,7 @@ Component({
       this.bgAudioManager = app.bgAudioManager;
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this._overlayRotationTimer = null;
+      this._initNavButtonData();
       this.audioCallback = {
         onChapterChange: ({ chapterId, chapter, index }) => {
           if (!chapterId) return;
@@ -134,6 +140,37 @@ Component({
   },
 
   methods: {
+    _initNavButtonData() {
+      try {
+        const systemInfo = wx.getWindowInfo();
+        const statusBarHeight = systemInfo.statusBarHeight || 20;
+        const menuButton = wx.getMenuButtonBoundingClientRect();
+        const menuButtonTop = menuButton.top;
+        const menuButtonHeight = menuButton.height;
+        const menuButtonWidth = menuButton.width;
+        const menuButtonRight = menuButton.right;
+        const menuButtonMarginTop = menuButtonTop - statusBarHeight;
+        const navContentHeight = menuButtonHeight + menuButtonMarginTop * 2;
+        const windowWidth = systemInfo.windowWidth || systemInfo.screenWidth;
+        const menuButtonLeftGap = windowWidth - menuButtonRight;
+        this.setData({
+          statusBarHeight,
+          navContentHeight,
+          menuButtonHeight,
+          menuButtonWidth,
+          menuButtonLeftGap
+        });
+      } catch (e) {
+        this.setData({
+          statusBarHeight: 20,
+          navContentHeight: 44,
+          menuButtonHeight: 32,
+          menuButtonWidth: 87,
+          menuButtonLeftGap: 10
+        });
+      }
+    },
+
     _setupAudioListeners() {
       if (!this._onTimeUpdate) {
         this._onTimeUpdate = () => {
