@@ -5,19 +5,23 @@
 
   <!-- 导航栏内容区域 -->
   <view class="nav-content" style="height: {{navContentHeight}}px;">
-    <!-- 返回按钮 -->
-    <view class="nav-back-btn" bindtap="onBack" wx:if="{{showBack}}">
-      <image class="nav-icon-img" src="/icons/svg/back.svg" mode="aspectFit" />
+    <!-- 左侧胶囊按钮 -->
+    <view class="nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
+      <!-- 返回按钮 -->
+      <view class="nav-btn" bindtap="onBack" wx:if="{{showBack}}">
+        <image class="nav-icon" src="/icons/svg/back.svg" mode="aspectFit" />
+      </view>
+      <!-- 分隔线 -->
+      <view class="nav-divider" style="height: {{menuButtonHeight * 0.6}}px;" wx:if="{{showBack && showHome}}"></view>
+      <!-- 首页按钮 -->
+      <view class="nav-btn" bindtap="onHome" wx:if="{{showHome}}">
+        <image class="nav-icon" src="/icons/svg/home.svg" mode="aspectFit" />
+      </view>
     </view>
 
     <!-- 标题居中 -->
     <view class="nav-title-center" wx:if="{{title}}">
       <text class="nav-title-text">{{title}}</text>
-    </view>
-
-    <!-- 首页按钮 -->
-    <view class="nav-home-btn" bindtap="onHome" wx:if="{{showHome}}">
-      <image class="nav-icon-img" src="/icons/svg/home.svg" mode="aspectFit" />
     </view>
   </view>
 </view>
