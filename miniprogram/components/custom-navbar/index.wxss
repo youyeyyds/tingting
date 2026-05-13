@@ -16,24 +16,30 @@
   position: relative;
 }
 
-.nav-back-btn {
+.nav-btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  background: #fff;
+  border-radius: 32rpx;
+  border: 1rpx solid #ddd;
+}
+
+.nav-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20rpx;
 }
 
-.nav-icon-img {
-  width: 44rpx;
-  height: 44rpx;
+.nav-icon {
+  width: 36rpx;
+  height: 36rpx;
 }
 
-.nav-home-btn {
-  position: absolute;
-  right: 30rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.nav-divider {
+  width: 1rpx;
+  background: #ddd;
 }
 
 .nav-title-center {
