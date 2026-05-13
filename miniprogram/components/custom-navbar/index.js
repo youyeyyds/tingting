@@ -89,7 +89,9 @@ Component({
     onBack() {
       const pages = getCurrentPages();
       if (pages.length > 1) {
-        wx.navigateBack();
+        wx.navigateBack({ fail: () => {
+          wx.reLaunch({ url: '/pages/index/index' });
+        }});
       } else {
         wx.reLaunch({
           url: '/pages/index/index'
