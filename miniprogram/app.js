@@ -69,6 +69,8 @@ App({
       },
       fail: (err) => {
         console.error('下载默认封面失败:', err);
+        // 下载失败时，使用内置兜底封面
+        this.globalData.defaultCoverLocalPath = this.globalData.fallbackCover;
       }
     });
   },
@@ -116,7 +118,8 @@ App({
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
     defaultCoverUrl: null, // 默认封面URL
-    indexHeadlines: [], // 首页横幅缓存
+    defaultCoverLocalPath: null, // 默认封面本地路径（下载的）
+    fallbackCover: '/images/default_cover.png', // 内置兜底封面
     loginHeadlines: [], // 登录页横幅缓存
     favoriteHeadlines: [], // 收藏页横幅缓存
     mineHeadlines: [], // 我的页横幅缓存
