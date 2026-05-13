@@ -9,7 +9,7 @@
     <view class="nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
       <!-- 返回按钮 -->
       <view class="nav-btn" bindtap="onBack" wx:if="{{showBack}}">
-        <image class="nav-icon" src="/icons/svg/back.svg" mode="aspectFit" />
+        <image class="nav-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
       </view>
       <!-- 分隔线 -->
       <view class="nav-divider" style="height: {{menuButtonHeight * 0.6}}px;" wx:if="{{showBack && showHome}}"></view>
