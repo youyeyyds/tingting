@@ -64,9 +64,9 @@
     <view class="overlay-bg-overlay" wx:if="{{courseCover && !overlayBgCoverError}}"></view>
   </view>
 
-  <!-- 关闭按钮 -->
+  <!-- 关闭按钮（胶囊样式） -->
   <view class="overlay-close-btn" bindtap="closePlayerOverlay">
-    <text class="overlay-close-text">×</text>
+    <image class="overlay-close-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
   </view>
 
   <!-- 播放器容器 -->
