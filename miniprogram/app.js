@@ -430,16 +430,45 @@ App({
     this.notifyCallbacks('onReset', {});
   },
 
+  // 退出登录
+  logout() {
+    this.resetPlayState();
+    this.globalData.playlistSortOrder = 'asc';
+    this.globalData.favoriteChapters = [];
+    this.globalData.isLoggedIn = false;
+    this.globalData.userInfo = null;
+    this.globalData.userId = null;
+    this.globalData.loginFlag = false;
+    this.globalData.logoutFlag = true;
+    this.globalData.needRestoreMaskedData = true;
+    // 清空头像缓存
+    this.globalData.cachedAvatarFileID = null;
+    this.globalData.cachedAvatarTempUrl = null;
+    this.globalData.cachedUserStats = null;
+    wx.removeStorageSync('userId');
+    wx.removeStorageSync('userInfo');
+  },
+
   // 通知所有 mini-player 回调
   notifyCallbacks(event, data) {
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
+    if (this._callbacks && this._callbacks[event]) {
+      this._callbacks[event].forEach(cb => cb(data));
+    }
   },
 
   // 注册 mini-player 回调
   registerMiniPlayer(callback) {
     this.miniPlayerCallbacks.push(callback);
+  },
+
+  // 注册通用回调
+  registerCallback(event, callback) {
+    if (!this._callbacks) this._callbacks = {};
+    if (!this._callbacks[event]) this._callbacks[event] = [];
+    this._callbacks[event].push(callback);
   },
 
   // 移除 mini-player 回调
