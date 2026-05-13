@@ -65,8 +65,14 @@
   </view>
 
   <!-- 关闭按钮（胶囊样式） -->
-  <view class="overlay-close-btn" bindtap="closePlayerOverlay">
-    <image class="overlay-close-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
+  <view class="overlay-nav-btn-group">
+    <view class="overlay-nav-btn" bindtap="closePlayerOverlay">
+      <image class="overlay-nav-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
+    </view>
+    <view class="overlay-nav-divider"></view>
+    <view class="overlay-nav-btn" bindtap="goHome">
+      <image class="overlay-nav-icon" src="/icons/svg/home.svg" mode="aspectFit" />
+    </view>
   </view>
 
   <!-- 播放器容器 -->

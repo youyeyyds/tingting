@@ -400,6 +400,10 @@ Component({
       this.setData({ playerOverlayVisible: false });
     },
 
+    goHome() {
+      wx.reLaunch({ url: '/pages/index/index' });
+    },
+
     checkOverlayFavoriteStatus() {
       const chapterId = this.data.currentChapter._id;
       if (!chapterId || !app.globalData.userId) return;
