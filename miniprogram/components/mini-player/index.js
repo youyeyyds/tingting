@@ -67,14 +67,12 @@ Component({
           }
         },
         onPlay: () => {
-          console.log('[mini-player] onPlay', { playingStatus: app.globalData.playingStatus });
           this._syncingChapter = false;
           this.setData({ isPlaying: app.globalData.playingStatus });
           if (this.data.playerOverlayVisible) this._startOverlayRotation();
           else this._stopOverlayRotation();
         },
         onPause: () => {
-          console.log('[mini-player] onPause', { playingStatus: app.globalData.playingStatus });
           if (this.data.currentChapter._id && app.globalData.playingStatus === false) {
             this._doSaveProgress();
           }
@@ -82,7 +80,6 @@ Component({
           this._stopOverlayRotation();
         },
         onPlayPause: () => {
-          console.log('[mini-player] onPlayPause', { playingStatus: app.globalData.playingStatus });
           this.setData({ isPlaying: app.globalData.playingStatus });
         },
         onEnded: () => {},

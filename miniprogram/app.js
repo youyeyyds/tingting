@@ -317,7 +317,8 @@ App({
     this.notifyCallbacks('onChapterChange', {
       chapterId: chapter._id,
       chapter: chapter,
-      index: index
+      index: index,
+      isPlaying: true
     });
 
     // 加载并播放音频
@@ -358,6 +359,8 @@ App({
   playAudio(chapter, src, startTime) {
     const bgAudio = this.bgAudioManager;
     const course = this.globalData.playingCourse || {};
+    // 先更新播放状态，确保 onPlay 回调能读到正确的值
+    this.globalData.playingStatus = true;
 
     bgAudio.title = chapter.title || '音频课程';
     bgAudio.epname = course.title || '';
@@ -366,9 +369,6 @@ App({
     // URL 需要编码，否则真机无法播放
     const [baseUrl, query] = src.split('?');
     bgAudio.src = query ? `${encodeURI(baseUrl)}?${query}` : encodeURI(src);
-    // 立即更新播放状态
-    this.globalData.playingStatus = true;
-    this.notifyCallbacks('onPlay', {});
   },
 
   // 切换播放/暂停
@@ -385,14 +385,10 @@ App({
           return;
         }
       }
-      // 先更新状态再播放
       this.globalData.playingStatus = true;
-      this.notifyCallbacks('onPlay', { isPlaying: true });
       bgAudio.play();
     } else {
-      // 先更新状态再暂停
       this.globalData.playingStatus = false;
-      this.notifyCallbacks('onPause', { isPlaying: false });
       bgAudio.pause();
     }
   },
