@@ -49,7 +49,7 @@ Page({
           isPlaying: false
         });
       },
-      onChapterChange: ({ chapterId }) => {
+      onChapterChange: ({ chapterId, isPlaying }) => {
         const playingCourseId = app.globalData.playingCourse?._id;
         const isCurrentCourse = playingCourseId === this.data.courseId;
         const miniPlayerActive = app.globalData.miniPlayerActive;
@@ -58,7 +58,7 @@ Page({
         this.setData({
           chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
           hasPlaylist: isCurrentCourse && miniPlayerActive,
-          isPlaying: isCurrentCourse && miniPlayerActive
+          isPlaying: isPlaying !== undefined ? isPlaying : (isCurrentCourse && miniPlayerActive)
         });
         this.applyFilterAndSort();
         // 保存最近播放的章节ID
