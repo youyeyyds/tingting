@@ -60,10 +60,24 @@ Component({
           const foundChapter = chapter || this.data.chapters.find(ch => ch._id === chapterId);
           const foundIndex = index >= 0 ? index : this.data.chapters.findIndex(ch => ch._id === chapterId);
           if (foundChapter && foundIndex >= 0) {
-            this.setData({ currentChapter: foundChapter, currentIndex: foundIndex }, () => {
-              this._updateOverlayNextChapterInfo();
-              this.checkOverlayFavoriteStatus();
-            });
+            // 更新课程信息（收藏场景跨课程切换时）
+            if (app.globalData.playingCourse) {
+              this.setData({
+                currentChapter: foundChapter,
+                currentIndex: foundIndex,
+                course: app.globalData.playingCourse,
+                courseCover: app.globalData.playingCourse.cover || '',
+                courseName: app.globalData.playingCourse.title || ''
+              }, () => {
+                this._updateOverlayNextChapterInfo();
+                this.checkOverlayFavoriteStatus();
+              });
+            } else {
+              this.setData({ currentChapter: foundChapter, currentIndex: foundIndex }, () => {
+                this._updateOverlayNextChapterInfo();
+                this.checkOverlayFavoriteStatus();
+              });
+            }
           }
         },
         onPlay: () => {
@@ -319,7 +333,6 @@ Component({
       }
 
       const chapters = playlistChapters || this.properties.initialChapters;
-      const course = courseData || this.properties.initialCourse;
       const index = chapters.findIndex(ch => ch._id === chapterId);
 
       if (index === -1 || !chapters[index]?.audioUrl) {
@@ -330,6 +343,17 @@ Component({
       const chapter = chapters[index];
       if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
       const coverLoadTime = app.globalData.coverLoadTime;
+
+      // 构建 course 对象：收藏场景 courseData 为 null，从 chapter 提取课程信息
+      let course = courseData || this.properties.initialCourse;
+      if (!course || (!course._id && !course.title)) {
+        course = {
+          _id: chapter.course || '',
+          title: chapter.courseTitle || '收藏列表',
+          cover: chapter.courseCover || '',
+          author: chapter.author || ''
+        };
+      }
       const courseCover = app.processImageUrl(course.cover || '', 'cover', coverLoadTime);
       course.cover = courseCover;
 

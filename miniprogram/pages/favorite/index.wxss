@@ -317,3 +317,38 @@
   background: #f0f0f0;
   border-radius: 4rpx;
 }
+
+/* 音频动画 */
+.audio-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rpx;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.audio-bar {
+  width: 4rpx;
+  height: 16rpx;
+  background: #999;
+  border-radius: 2rpx;
+}
+
+.audio-bar-1 { height: 12rpx; }
+.audio-bar-2 { height: 20rpx; }
+.audio-bar-3 { height: 16rpx; }
+
+.audio-icon.playing .audio-bar {
+  background: #FF6B00;
+  animation: audioWave 0.5s ease-in-out infinite alternate;
+}
+
+.audio-icon.playing .audio-bar-1 { animation-delay: 0s; }
+.audio-icon.playing .audio-bar-2 { animation-delay: 0.2s; }
+.audio-icon.playing .audio-bar-3 { animation-delay: 0.4s; }
+
+@keyframes audioWave {
+  from { height: 8rpx; }
+  to { height: 24rpx; }
+}

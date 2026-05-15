@@ -63,9 +63,18 @@
             <text class="chapter-progress">{{item.progressText}}</text>
           </view>
           <view class="chapter-actions">
-            <view class="play-btn" catchtap="onChapterTap" data-index="{{index}}">
-              <view class="play-triangle"></view>
-            </view>
+            <block wx:if="{{item.isPlaying}}">
+              <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onChapterTap" data-index="{{index}}">
+                <view class="audio-bar audio-bar-1"></view>
+                <view class="audio-bar audio-bar-2"></view>
+                <view class="audio-bar audio-bar-3"></view>
+              </view>
+            </block>
+            <block wx:else>
+              <view class="play-btn" catchtap="onChapterTap" data-index="{{index}}">
+                <view class="play-triangle"></view>
+              </view>
+            </block>
             <view class="close-btn" catchtap="onRemoveTap" data-id="{{item._id}}" data-index="{{index}}">
               <text class="close-text">×</text>
             </view>
