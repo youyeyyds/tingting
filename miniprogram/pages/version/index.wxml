@@ -9,7 +9,7 @@
       <view class="back-btn" bindtap="onBack">
         <image class="back-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
       </view>
-      <text class="title-text">版本历史</text>
+      <text class="title-text">版本介绍</text>
     </view>
   </view>
 
