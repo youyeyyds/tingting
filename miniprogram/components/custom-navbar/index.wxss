@@ -3,6 +3,10 @@
 .custom-navbar {
   width: 100%;
   background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
 }
 
 .status-bar {

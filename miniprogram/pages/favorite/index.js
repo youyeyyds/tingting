@@ -10,10 +10,15 @@ Page({
     coverLoadTime: 0,
     bannerSpeed: 5000,
     loading: true,
-    activeTab: 1
+    activeTab: 1,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0
   },
 
   onLoad() {
+    this.initLayout();
     if (!app.globalData.bannerLoadTime) app.globalData.bannerLoadTime = Date.now();
     if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
     const loadTime = app.globalData.bannerLoadTime;
@@ -80,6 +85,26 @@ Page({
 
   onUnload() {
     app.unregisterMiniPlayer(this.audioCallback);
+  },
+
+  initLayout() {
+    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+    const headerHeight = statusBarHeight + navBarHeight;
+    const tabH = 100 * windowWidth / 750;
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      headerHeight,
+      scrollHeight: windowHeight - headerHeight - tabH
+    });
+  },
+
+  onBack() {
+    wx.navigateBack({ fail: () => {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }});
   },
 
   onShow() {
