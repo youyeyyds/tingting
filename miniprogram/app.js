@@ -195,7 +195,7 @@ App({
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
     const sortOrder = this.globalData.playlistSortOrder || 'asc';
-    const currentChapter = this.globalData.playingChapter;
+    const currentIndex = this.globalData.playingIndex;
 
     if (playMode === 'single') {
       // 单曲循环模式：从头播放
@@ -205,20 +205,23 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if ((currentSeq === undefined || currentSeq === null) || !chapters.length) {
+    if (currentIndex < 0 || currentIndex >= chapters.length) {
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
       this._audioEndedProcessing = false;
       return;
     }
 
-    // 根据排序方向计算下一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
-    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+    // 根据排序方向计算下一条的索引
+    let nextIndex;
+    if (sortOrder === 'asc') {
+      nextIndex = currentIndex + 1;
+    } else {
+      nextIndex = currentIndex - 1;
+    }
 
-    if (nextChapter) {
-      this.playChapter(nextChapter._id, chapters);
+    if (nextIndex >= 0 && nextIndex < chapters.length) {
+      this.playChapter(chapters[nextIndex]._id, chapters);
     } else if (playMode === 'loop') {
       // 循环模式：回到第一/最后一条
       const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
@@ -237,7 +240,7 @@ App({
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
     const sortOrder = this.globalData.playlistSortOrder || 'asc';
-    const currentChapter = this.globalData.playingChapter;
+    const currentIndex = this.globalData.playingIndex;
 
     if (playMode === 'single') {
       this.bgAudioManager.seek(0);
@@ -245,15 +248,18 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if (currentSeq === undefined || currentSeq === null) return;
+    if (currentIndex < 0 || currentIndex >= chapters.length) return;
 
-    // 根据排序方向计算上一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq - 1 : currentSeq + 1;
-    const prevChapter = chapters.find(ch => ch.seq === targetSeq);
+    // 根据排序方向计算上一条的索引
+    let prevIndex;
+    if (sortOrder === 'asc') {
+      prevIndex = currentIndex - 1;
+    } else {
+      prevIndex = currentIndex + 1;
+    }
 
-    if (prevChapter) {
-      this.playChapter(prevChapter._id, chapters);
+    if (prevIndex >= 0 && prevIndex < chapters.length) {
+      this.playChapter(chapters[prevIndex]._id, chapters);
     } else if (playMode === 'loop') {
       // 循环模式：回到最后/第一条
       const lastOrFirst = sortOrder === 'asc' ? chapters[chapters.length - 1] : chapters[0];
@@ -268,7 +274,7 @@ App({
     const chapters = this.globalData.playlistChaptersData;
     const playMode = this.globalData.playMode || 'sequence';
     const sortOrder = this.globalData.playlistSortOrder || 'asc';
-    const currentChapter = this.globalData.playingChapter;
+    const currentIndex = this.globalData.playingIndex;
 
     if (playMode === 'single') {
       this.bgAudioManager.seek(0);
@@ -276,15 +282,18 @@ App({
       return;
     }
 
-    const currentSeq = currentChapter?.seq;
-    if (currentSeq === undefined || currentSeq === null) return;
+    if (currentIndex < 0 || currentIndex >= chapters.length) return;
 
-    // 根据排序方向计算下一条的 seq
-    const targetSeq = sortOrder === 'asc' ? currentSeq + 1 : currentSeq - 1;
-    const nextChapter = chapters.find(ch => ch.seq === targetSeq);
+    // 根据排序方向计算下一条的索引
+    let nextIndex;
+    if (sortOrder === 'asc') {
+      nextIndex = currentIndex + 1;
+    } else {
+      nextIndex = currentIndex - 1;
+    }
 
-    if (nextChapter) {
-      this.playChapter(nextChapter._id, chapters);
+    if (nextIndex >= 0 && nextIndex < chapters.length) {
+      this.playChapter(chapters[nextIndex]._id, chapters);
     } else if (playMode === 'loop') {
       // 循环模式：回到第一/最后一条
       const firstOrLast = sortOrder === 'asc' ? chapters[0] : chapters[chapters.length - 1];
