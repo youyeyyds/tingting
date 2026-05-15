@@ -783,14 +783,15 @@ Component({
     },
 
     onPlaylistSyncSort(e) {
-      const { chapters } = e.detail;
+      const { chapters, sortOrder } = e.detail;
       const currentId = this.data.currentChapter._id;
       const newIndex = chapters.findIndex(ch => ch._id === currentId);
       const currentChapter = chapters[newIndex];
-      this.setData({ chapters, currentIndex: newIndex });
+      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder });
       app.globalData.playingIndex = newIndex;
       app.globalData.playingSeq = currentChapter?.seq;
       app.globalData.playlistChaptersData = chapters;
+      app.globalData.playlistSortOrder = sortOrder;
     },
 
     onPlaylistPlay(e) {
