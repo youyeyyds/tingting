@@ -412,7 +412,9 @@ Component({
       return app.saveProgress(chapterId, this.data.currentChapter.course || this.data.course._id, lastPlayTime, finished);
     },
 
-    preventMove() {},
+    preventMove() {
+      return true;
+    },
 
     onCoverError() {
       const localCover = app.globalData.defaultCoverLocalPath;
