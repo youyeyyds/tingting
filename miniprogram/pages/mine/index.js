@@ -23,25 +23,29 @@ Page({
     bannerSpeed: 5000, // 轮播速度
     activeTab: 2, // 我的页为 tab 2
     refreshConfirmVisible: false, // 刷新图片确认弹窗
-    logoutConfirmVisible: false // 退出登录确认弹窗
+    logoutConfirmVisible: false, // 退出登录确认弹窗
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0
   },
 
-  // 格式化分钟数，返回拆分后的对象
-  formatMinutesToObj(minutes) {
-    if (!minutes || minutes <= 0) return { days: 0, hours: 0, mins: 0 };
-    const days = Math.floor(minutes / (24 * 60));
-    const hours = Math.floor((minutes % (24 * 60)) / 60);
-    const mins = minutes % 60;
-    return { days, hours, mins };
-  },
-
-  // 计算隐藏手机号中间5位
-  maskPhone(phone) {
-    if (!phone) return '';
-    return phone.replace(/(\d{3})\d{5}(\d{3})/, '$1*****$2');
+  initLayout() {
+    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+    const headerHeight = statusBarHeight + navBarHeight;
+    const tabH = 100 * windowWidth / 750;
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      headerHeight,
+      scrollHeight: windowHeight - headerHeight - tabH
+    });
   },
 
   onLoad() {
+    this.initLayout();
     // 使用全局时间戳和数据缓存，保持图片稳定
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
@@ -67,6 +71,26 @@ Page({
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
     }
+  },
+
+  formatMinutesToObj(minutes) {
+    if (!minutes || minutes <= 0) return { days: 0, hours: 0, mins: 0 };
+    const days = Math.floor(minutes / (24 * 60));
+    const hours = Math.floor((minutes % (24 * 60)) / 60);
+    const mins = minutes % 60;
+    return { days, hours, mins };
+  },
+
+  // 计算隐藏手机号中间5位
+  maskPhone(phone) {
+    if (!phone) return '';
+    return phone.replace(/(\d{3})\d{5}(\d{3})/, '$1*****$2');
+  },
+
+  onBack() {
+    wx.navigateBack({ fail: () => {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }});
   },
 
   onShow() {

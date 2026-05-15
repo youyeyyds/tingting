@@ -1,9 +1,20 @@
 <!--favorite/index.wxml-->
 <view class="page-container">
-  <!-- 自定义导航栏 -->
-  <custom-navbar title="收藏" />
+  <!-- 固定顶部区域 -->
+  <view class="header-fixed">
+    <!-- 状态栏占位 -->
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+    <!-- 标题栏 -->
+    <view class="title-bar" style="height: {{navBarHeight}}px;">
+      <view class="back-btn" bindtap="onBack">
+        <image class="back-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
+      </view>
+      <text class="title-text">收藏</text>
+    </view>
+  </view>
+
   <!-- 内容区域，使用原生页面滚动 -->
-  <view class="content">
+  <view class="content" style="margin-top: {{headerHeight}}px; height: {{scrollHeight}}px;">
     <!-- 头条轮播 -->
     <swiper class="banner" indicator-dots="{{headlines.length > 1}}" autoplay="{{true}}" interval="{{bannerSpeed}}" circular="{{true}}" wx:if="{{headlines.length > 0}}">
       <swiper-item wx:for="{{headlines}}" wx:key="_id">

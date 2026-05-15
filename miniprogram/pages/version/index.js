@@ -7,10 +7,29 @@ Page({
     versions: [],
     bannerSpeed: 5000,
     loadTime: 0,
-    activeTab: 2
+    activeTab: 2,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0
+  },
+
+  initLayout() {
+    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+    const headerHeight = statusBarHeight + navBarHeight;
+    const tabH = 100 * windowWidth / 750;
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      headerHeight,
+      scrollHeight: windowHeight - headerHeight - tabH
+    });
   },
 
   onLoad() {
+    this.initLayout();
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
@@ -33,6 +52,12 @@ Page({
       this.loadHeadlines();
     }
     this.loadVersions();
+  },
+
+  onBack() {
+    wx.navigateBack({ fail: () => {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }});
   },
 
   onShow() {

@@ -13,10 +13,15 @@ Page({
     coverLoadTime: 0,
     playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' },
     hasPlaylist: false, // 当前课程是否有播放列表（用于决定显示哪个按钮）
-    isPlaying: false // 当前是否正在播放
+    isPlaying: false, // 当前是否正在播放
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0
   },
 
   onLoad(options) {
+    this.initLayout();
     this.setData({
       courseId: options.id || ''
     });
@@ -153,6 +158,19 @@ Page({
         this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
       }
     }
+  },
+
+  initLayout() {
+    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+    const headerHeight = statusBarHeight + navBarHeight;
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      headerHeight,
+      scrollHeight: windowHeight - headerHeight
+    });
   },
 
   onUnload() {
@@ -317,6 +335,12 @@ Page({
     this.applyFilterAndSort();
     // 保存最近播放的章节ID
     this.saveCourseSettings({ lastPlayedChapterId: chapterId });
+  },
+
+  onBack() {
+    wx.navigateBack({ fail: () => {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }});
   },
 
   onFavoriteTap(e) {

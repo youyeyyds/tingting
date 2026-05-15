@@ -11,10 +11,15 @@ Page({
     icpNumber: '',
     bannerSpeed: 5000,
     bannerHidden: false,
-    loadTime: 0
+    loadTime: 0,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
+    scrollHeight: 0
   },
 
   onLoad() {
+    this.initLayout();
     if (!app.globalData.bannerLoadTime) {
       app.globalData.bannerLoadTime = Date.now();
     }
@@ -37,6 +42,25 @@ Page({
 
     if (!headlines.length) this.loadHeadlines();
     if (!cachedCopyright.copyrightLines) this.loadCopyright();
+  },
+
+  initLayout() {
+    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
+    const headerHeight = statusBarHeight + navBarHeight;
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      headerHeight,
+      scrollHeight: windowHeight - headerHeight
+    });
+  },
+
+  onBack() {
+    wx.navigateBack({ fail: () => {
+      wx.reLaunch({ url: '/pages/index/index' });
+    }});
   },
 
   onShow() {
