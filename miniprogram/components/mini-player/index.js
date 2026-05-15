@@ -439,7 +439,7 @@ Component({
     },
 
     goHome() {
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.navigateTo({ url: '/pages/index/index' });
     },
 
     checkOverlayFavoriteStatus() {
