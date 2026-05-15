@@ -57,7 +57,7 @@
                 bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
 
 <!-- Player Overlay -->
-<view wx:if="{{playerOverlayVisible}}" class="player-overlay {{overlayFadeClass}}">
+<view wx:if="{{playerOverlayVisible}}" class="player-overlay {{overlayFadeClass}}" catchtouchmove="preventMove">
   <!-- 背景图层 -->
   <view class="overlay-bg-layer">
     <image class="overlay-bg-cover {{overlayBgCoverLoaded ? 'loaded' : ''}}" src="{{courseCover}}" mode="aspectFill" bindload="onOverlayBgCoverLoad" binderror="onOverlayBgCoverError" wx:if="{{courseCover && !overlayBgCoverError}}" />
