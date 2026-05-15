@@ -302,10 +302,21 @@ App({
     this.globalData.playingSeq = chapter.seq;
     this.globalData.playingIndex = index;
 
+    // 更新 playingCourse（收藏场景跨课程切换时需要）
+    if (chapter.course) {
+      this.globalData.playingCourse = {
+        _id: chapter.course,
+        title: chapter.courseTitle || '收藏列表',
+        cover: chapter.courseCover || '',
+        author: chapter.author || ''
+      };
+    }
+
     // 保存到缓存
     wx.setStorageSync('playingChapter', JSON.stringify(chapter));
     wx.setStorageSync('playingSeq', chapter.seq);
     wx.setStorageSync('playingIndex', index);
+    wx.setStorageSync('playingCourse', JSON.stringify(this.globalData.playingCourse));
 
     // 通知所有组件章节变化
     this.notifyCallbacks('onChapterChange', {

@@ -247,11 +247,6 @@ Page({
     const favoriteChapters = this.data.favoriteChapters;
     if (favoriteChapters.length === 0) return;
 
-    const miniPlayer = this.selectComponent('#miniPlayer');
-    if (miniPlayer && favoriteChapters.some(ch => ch.isPlaying)) {
-      miniPlayer.saveProgress?.();
-    }
-
     const playlistData = favoriteChapters.map(ch => ({
       _id: ch._id, title: ch.title, duration: ch.duration,
       durationText: ch.durationText || this.formatDuration(ch.duration),
@@ -262,26 +257,11 @@ Page({
     }));
 
     const startChapterId = favoriteChapters[startIndex]._id;
+    const miniPlayer = this.selectComponent('#miniPlayer');
+    if (miniPlayer) {
+      miniPlayer.play(startChapterId, playlistData, null, 'asc');
+    }
     this.setData({ favoriteChapters: favoriteChapters.map(ch => ({ ...ch, isPlaying: ch._id === startChapterId })) });
-
-    const firstChapter = playlistData[startIndex];
-    Object.assign(app.globalData, {
-      playlistChaptersData: playlistData,
-      playingIndex: startIndex,
-      playingChapter: playlistData[startIndex],
-      playingSeq: playlistData[startIndex]?.seq,
-      playingCourse: {
-        _id: firstChapter.course,
-        title: firstChapter.courseTitle,
-        cover: firstChapter.courseCover,
-        author: firstChapter.author,
-        chapterCount: playlistData.length
-      },
-      miniPlayerActive: true,
-      miniPlayerIndexFadedIn: false
-    });
-
-    app.notifyCallbacks('onPlayFromList', { index: startIndex, chapters: playlistData });
   },
 
   async onRemoveTap(e) {
