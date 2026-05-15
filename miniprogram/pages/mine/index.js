@@ -24,8 +24,6 @@ Page({
     activeTab: 2, // 我的页为 tab 2
     refreshConfirmVisible: false, // 刷新图片确认弹窗
     logoutConfirmVisible: false, // 退出登录确认弹窗
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0,
     scrollHeight: 0
   },
@@ -37,8 +35,6 @@ Page({
     const headerHeight = statusBarHeight + navBarHeight;
     const tabH = 100 * windowWidth / 750;
     this.setData({
-      statusBarHeight,
-      navBarHeight,
       headerHeight,
       scrollHeight: windowHeight - headerHeight - tabH
     });
@@ -87,28 +83,7 @@ Page({
     return phone.replace(/(\d{3})\d{5}(\d{3})/, '$1*****$2');
   },
 
-  onBack() {
-    wx.navigateBack({ fail: () => {
-      wx.reLaunch({ url: '/pages/index/index' });
-    }});
-  },
-
   onShow() {
-    // 同步全局登录状态，避免 navigateBack 回来时 local state 仍是旧值
-    this.checkLoginStatus();
-    // 未登录时跳转到首页
-    if (!this.data.isLoggedIn) {
-      wx.reLaunch({ url: '/pages/index/index' });
-      return;
-    }
-    // 学习报告每次进入时刷新
-    this.loadUserStats();
-    // 同步图片时间戳变化
-    this.syncImageTimes();
-  },
-
-  // 同步图片时间戳（其他页面刷新后返回需要更新图片）
-  syncImageTimes() {
     const bt = app.globalData.bannerLoadTime;
 
     // 同步横幅时间戳

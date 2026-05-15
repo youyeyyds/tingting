@@ -12,8 +12,6 @@ Page({
     bannerSpeed: 5000,
     bannerHidden: false,
     loadTime: 0,
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0,
     scrollHeight: 0
   },
@@ -50,17 +48,9 @@ Page({
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
     this.setData({
-      statusBarHeight,
-      navBarHeight,
       headerHeight,
       scrollHeight: windowHeight - headerHeight
     });
-  },
-
-  onBack() {
-    wx.navigateBack({ fail: () => {
-      wx.reLaunch({ url: '/pages/index/index' });
-    }});
   },
 
   onShow() {
