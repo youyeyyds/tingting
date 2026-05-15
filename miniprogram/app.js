@@ -426,7 +426,7 @@ App({
     this.notifyCallbacks('onReset', {});
   },
 
-  // 退出登录
+// 退出登录（通用逻辑）
   logout() {
     this.resetPlayState();
     this.globalData.playlistSortOrder = 'asc';
