@@ -248,7 +248,11 @@ Page({
       progressText,
       durationText: duration > 0 ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '--',
       isPlaying: app.globalData.playingChapter?._id === chapter._id,
-      isFavorite: chapter.isFavorite || false
+      isFavorite: chapter.isFavorite || false,
+      // 注入课程信息，供 mini-player 使用
+      courseTitle: chapter.courseTitle || this.data.course.title || '',
+      courseCover: chapter.courseCover || this.data.course.cover || '',
+      author: chapter.author || this.data.course.author || ''
     };
   },
 
