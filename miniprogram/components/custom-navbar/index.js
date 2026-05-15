@@ -9,6 +9,14 @@ Component({
       type: Boolean,
       value: true
     },
+    showLoginBtn: {
+      type: Boolean,
+      value: false
+    },
+    loginText: {
+      type: String,
+      value: 'Log in'
+    },
     title: {
       type: String,
       value: ''
@@ -105,6 +113,10 @@ Component({
         url: '/pages/index/index'
       });
       this.triggerEvent('home');
+    },
+
+    onLogin() {
+      this.triggerEvent('login');
     }
   }
 });

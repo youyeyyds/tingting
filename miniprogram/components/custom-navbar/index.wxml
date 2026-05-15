@@ -5,14 +5,17 @@
 
   <!-- 导航栏内容区域 -->
   <view class="nav-content" style="height: {{navContentHeight}}px;">
-    <!-- 返回按钮 -->
-    <view class="nav-back-btn" bindtap="onBack" wx:if="{{showBack}}">
-      <image class="nav-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
+    <!-- 左侧按钮：返回 / 登录 -->
+    <view class="nav-left-btn {{showLoginBtn ? 'login-btn' : ''}}" bindtap="{{showLoginBtn ? 'onLogin' : 'onBack'}}" wx:if="{{showBack || showLoginBtn}}">
+      <block wx:if="{{showLoginBtn}}">
+        <text class="nav-login-text">{{loginText}}</text>
+      </block>
+      <block wx:else>
+        <image class="nav-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
+      </block>
     </view>
 
     <!-- 标题居中 -->
-    <view class="nav-title-center" wx:if="{{title}}">
-      <text class="nav-title-text">{{title}}</text>
-    </view>
+    <text class="nav-title-text" wx:if="{{title}}">{{title}}</text>
   </view>
 </view>

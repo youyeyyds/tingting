@@ -8,8 +8,6 @@ Page({
     bannerSpeed: 5000,
     loadTime: 0,
     activeTab: 2,
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0,
     scrollHeight: 0
   },
@@ -21,8 +19,6 @@ Page({
     const headerHeight = statusBarHeight + navBarHeight;
     const tabH = 100 * windowWidth / 750;
     this.setData({
-      statusBarHeight,
-      navBarHeight,
       headerHeight,
       scrollHeight: windowHeight - headerHeight - tabH
     });

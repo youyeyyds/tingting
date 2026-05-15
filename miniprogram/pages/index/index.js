@@ -5,8 +5,6 @@ const ANIMATION_DURATION = 300;
 Page({
   data: {
     activeTab: 0,
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0,
     scrollHeightNoTab: 0,
     scrollHeightWithTab: 0,
@@ -58,8 +56,6 @@ Page({
     const tabH = 100 * windowWidth / 750;
 
     this.setData({
-      statusBarHeight,
-      navBarHeight,
       headerHeight,
       scrollHeightNoTab: windowHeight - headerHeight,
       scrollHeightWithTab: windowHeight - headerHeight - tabH

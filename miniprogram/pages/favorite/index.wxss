@@ -7,51 +7,6 @@
   flex-direction: column;
 }
 
-/* 固定顶部 */
-.header-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: #fff;
-}
-
-/* 状态栏占位 */
-.status-bar {
-  background: #fff;
-}
-
-/* 标题栏 */
-.title-bar {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  position: relative;
-}
-
-.title-text {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #000;
-}
-
-.back-btn {
-  position: absolute;
-  left: 30rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-icon {
-  width: 44rpx;
-  height: 44rpx;
-}
-
 /* 内容区域 */
 .content {
   flex: 1;

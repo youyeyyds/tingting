@@ -14,8 +14,6 @@ Page({
     playlistState: { courseId: '', showUnfinishedOnly: false, sortOrder: 'asc' },
     hasPlaylist: false, // 当前课程是否有播放列表（用于决定显示哪个按钮）
     isPlaying: false, // 当前是否正在播放
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0,
     scrollHeight: 0
   },
@@ -166,8 +164,6 @@ Page({
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
     this.setData({
-      statusBarHeight,
-      navBarHeight,
       headerHeight,
       scrollHeight: windowHeight - headerHeight
     });

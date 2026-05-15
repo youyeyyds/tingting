@@ -4,8 +4,6 @@ Page({
     title: '',
     publishDate: '',
     description: '',
-    statusBarHeight: 0,
-    navBarHeight: 0,
     headerHeight: 0
   },
 
@@ -14,11 +12,7 @@ Page({
     const menu = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
     const headerHeight = statusBarHeight + navBarHeight;
-    this.setData({
-      statusBarHeight,
-      navBarHeight,
-      headerHeight
-    });
+    this.setData({ headerHeight });
   },
 
   onLoad(options) {
@@ -27,11 +21,5 @@ Page({
     const publishDate = decodeURIComponent(options.publishDate || '');
     const description = decodeURIComponent(options.description || '');
     this.setData({ title, publishDate, description });
-  },
-
-  onBack() {
-    wx.navigateBack({ fail: () => {
-      wx.reLaunch({ url: '/pages/index/index' });
-    }});
   }
 });

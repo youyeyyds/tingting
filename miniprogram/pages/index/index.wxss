@@ -7,48 +7,6 @@
   background: #f5f5f5;
 }
 
-/* 固定顶部 */
-.header-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: #fff;
-}
-
-/* 状态栏占位 */
-.status-bar {
-  background: #fff;
-}
-
-/* 标题栏 */
-.title-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  position: relative;
-}
-
-.login-btn {
-  position: absolute;
-  left: 30rpx;
-  width: 130rpx;
-}
-
-.login-text {
-  color: #FF6B00;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-.title-text {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #000;
-}
-
 /* 课程列表 */
 .course-list {
   flex: 1;

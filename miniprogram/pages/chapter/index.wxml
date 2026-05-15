@@ -1,16 +1,7 @@
 <!--chapter.wxml-->
 <view class="page-container">
-  <!-- 固定顶部区域 -->
-  <view class="header-fixed">
-    <!-- 状态栏占位 -->
-    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
-    <!-- 标题栏 -->
-    <view class="title-bar" style="height: {{navBarHeight}}px;">
-      <view class="back-btn" bindtap="onBack">
-        <image class="back-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
-      </view>
-    </view>
-  </view>
+  <!-- 导航栏 -->
+  <custom-navbar showBack="{{true}}" />
 
   <!-- 课程信息区 -->
   <view class="course-info-section" style="margin-top: {{headerHeight}}px;">
