@@ -538,6 +538,17 @@ App({
   // 保存播放进度（云端）
   saveProgress(chapterId, courseId, lastPlayTime, finished) {
     if (!chapterId || !lastPlayTime || !this.globalData.userId) return Promise.resolve();
+
+    // 同步更新playlistChaptersData中的章节状态
+    const chapters = this.globalData.playlistChaptersData;
+    const chapterIndex = chapters.findIndex(ch => ch._id === chapterId);
+    if (chapterIndex >= 0) {
+      chapters[chapterIndex].lastPlayTime = lastPlayTime;
+      if (finished !== undefined) {
+        chapters[chapterIndex].finished = finished === true;
+      }
+    }
+
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: {
