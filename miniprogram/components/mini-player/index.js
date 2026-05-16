@@ -194,6 +194,9 @@ Component({
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           this.setData({ currentTime, duration, progressPercent });
+          if (this.data.playerOverlayVisible) {
+            this._updateOverlayProgress();
+          }
         };
       }
       if (this.bgAudioManager.offTimeUpdate) this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
