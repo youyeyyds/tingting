@@ -105,12 +105,6 @@
       <view class="settings-arrow"></view>
     </view>
 
-    <!-- 版本介绍（单卡片） -->
-    <view class="settings-card settings-card-single" bindtap="handleVersionInfo">
-      <text class="settings-label">版本介绍</text>
-      <view class="settings-arrow"></view>
-    </view>
-
     <!-- 卡片组：卡牌和丽音 -->
     <view class="settings-card settings-card-group-first" bindtap="onCardTap">
       <text class="settings-label">卡牌</text>
@@ -119,6 +113,12 @@
 
     <view class="settings-card settings-card-group-last" bindtap="onCardTap">
       <text class="settings-label">丽音</text>
+      <view class="settings-arrow"></view>
+    </view>
+
+    <!-- 版本介绍（单卡片） -->
+    <view class="settings-card settings-card-single" bindtap="handleVersionInfo">
+      <text class="settings-label">版本介绍</text>
       <view class="settings-arrow"></view>
     </view>
 
