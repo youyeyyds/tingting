@@ -348,6 +348,11 @@ Page({
     this.setData({ refreshConfirmVisible: true });
   },
 
+  // 点击卡片
+  onCardTap() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
   // 取消刷新图片
   onRefreshCancel() {
     this.setData({ refreshConfirmVisible: false });
