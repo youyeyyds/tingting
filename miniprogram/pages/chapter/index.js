@@ -70,11 +70,13 @@ Page({
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
         const chapters = this.data.chapters.map(ch => {
           if (ch._id !== chapterId) return ch;
-          if (finished === true) return { ...ch, lastPlayTime, finished: true, progress: 100, progressText: '已学完' };
-          if (ch.finished) return { ...ch, lastPlayTime };
-          const progress = ch.duration > 0 ? Math.min(Math.round((lastPlayTime / ch.duration) * 100), 100) : 0;
+          if (ch.finished && finished !== true) return { ...ch, lastPlayTime };
+          const duration = Number(ch.duration) || 0;
+          let progress = 0;
+          if (finished === true) progress = 100;
+          else if (lastPlayTime > 0 && duration > 0) progress = Math.min(Math.round((lastPlayTime / duration) * 100), 100);
           const progressText = progress === 100 ? '已学完' : progress > 0 ? `已学${progress}%` : '未学习';
-          return { ...ch, lastPlayTime, progress, progressText };
+          return { ...ch, lastPlayTime, finished: finished === true, progress, progressText };
         });
         const courseProgress = chapters.length ? Math.round(chapters.reduce((s, c) => s + (c.progress || 0), 0) / chapters.length) : 0;
         this.setData({
@@ -104,36 +106,13 @@ Page({
   },
 
   onShow() {
-    // 不再每次都 loadCourseData，只在首次加载或需要刷新数据时
-    if (this.data.courseId && this.data.chapters.length === 0) {
+    if (this.data.courseId) {
       this.loadCourseData();
-    } else {
-      // 保持现有数据，只更新进度等动态信息
-      this.applyFilterAndSort();
     }
     // 同步图片时间戳变化
     this.syncImageTimes();
     // 同步播放状态
     this.updatePlayingState();
-    // 刷新用户设置（如上次播放章节）
-    this.reloadCourseSettings();
-  },
-
-  reloadCourseSettings() {
-    wx.cloud.callFunction({
-      name: 'courseFunctions',
-      data: { type: 'getCourseSettings', courseId: this.data.courseId, userId: app.globalData.userId }
-    }).then(settingsRes => {
-      if (settingsRes.result && settingsRes.result.success) {
-        const { sortOrder, showUnfinishedOnly, lastPlayedChapterId } = settingsRes.result.data;
-        this.setData({
-          sortOrder: sortOrder || 'asc',
-          showUnfinishedOnly: showUnfinishedOnly || false,
-          lastPlayedChapterId: lastPlayedChapterId || null
-        });
-        this.applyFilterAndSort();
-      }
-    });
   },
 
   // 更新当前播放状态

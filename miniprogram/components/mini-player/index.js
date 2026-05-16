@@ -96,7 +96,10 @@ Component({
         onPlayPause: () => {
           this.setData({ isPlaying: app.globalData.playingStatus });
         },
-        onEnded: () => {},
+        onEnded: () => {
+          // 音频自然结束时，由 app.js 的 onAudioEnded 调用 playChapter 来保存进度
+          // 这里不需要再次保存，避免 currentTime 已重置导致 lastPlayTime=0
+        },
         onLastChapterEnded: () => {
           this.setData({ isPlaying: false, currentTime: 0, duration: 0, progressPercent: 0 });
         },
@@ -428,11 +431,23 @@ Component({
       }, 300);
     },
 
-    _doSaveProgress() {
+    _doSaveProgress(isFinished = false) {
       const chapterId = this.data.currentChapter._id;
       if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
       const lastPlayTime = this.bgAudioManager.currentTime;
-      const finished = lastPlayTime >= this.bgAudioManager.duration - 10;
+      const duration = this.bgAudioManager.duration || 0;
+
+      // 已完成的章节不允许被标记为未完成
+      // 只有自然结束(isFinished=true)或真正播完(lastPlayTime>=duration-10)才更新为true
+      let finished;
+      if (this.data.currentChapter.finished === true) {
+        // 章节之前已完成，重播时不允许覆盖finished=true
+        finished = (isFinished || lastPlayTime >= duration - 10) ? true : undefined;
+      } else {
+        // 章节之前未完成，按正常逻辑
+        finished = isFinished ? true : (lastPlayTime >= duration - 10);
+      }
+
       return app.saveProgress(chapterId, this.data.currentChapter.course || this.data.course._id, lastPlayTime, finished);
     },
 

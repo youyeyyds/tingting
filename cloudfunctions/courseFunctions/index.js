@@ -388,31 +388,16 @@ const updateChapterProgress = async (event) => {
 
     // 播放完成时的处理
     let userPlayCountIncrease = 0;
-    let shouldMarkFinished = false;
 
-    // 手动设置完播（finished=true）
-    if (finished === true) {
+    // 手动设置完播（finished=true）或自动判断完播（播放时长>=时长）
+    if (finished === true || (finished !== false && duration > 0 && lastPlayTime >= duration - 10)) {
       userPlayCountIncrease = 1;
       userUpdateData.playCount = currentPlayCount + userPlayCountIncrease;
-      if (!currentFinished) {
-        userUpdateData.finished = true;
-      }
-      shouldMarkFinished = true;
+      userUpdateData.finished = true;
+      userUpdateData.lastPlayTime = 0;  // 完播后重置上次播放时长为0
     } else if (finished === false) {
-      // 手动设置为未完播
+      // 手动设置为未完播（暂停、停止、切换播放时）
       userUpdateData.finished = false;
-      shouldMarkFinished = false;
-    } else {
-      // finished 未传入时，自动完播判断（到达后10秒内）
-      const isCompleted = duration > 0 && lastPlayTime > duration - 10;
-      if (isCompleted) {
-        userPlayCountIncrease = 1;
-        userUpdateData.playCount = currentPlayCount + userPlayCountIncrease;
-        if (!currentFinished) {
-          userUpdateData.finished = true;
-        }
-      }
-      shouldMarkFinished = isCompleted;
     }
 
     // 更新或创建用户进度记录
@@ -433,8 +418,8 @@ const updateChapterProgress = async (event) => {
           courseId: courseId || chapter.course,
           duration,
           lastPlayTime: lastPlayTime,
-          finished: shouldMarkFinished,
-          playCount: shouldMarkFinished ? 1 : 0,
+          finished: false,
+          playCount: 0,
           isFavorite: false
         }
       });

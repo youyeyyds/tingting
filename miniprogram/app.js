@@ -219,6 +219,11 @@ App({
       return;
     }
 
+    // 播放结束时，保存当前章节进度（强制完播）
+    if (currentId) {
+      this.saveProgress(currentId, currentChapter.course || this.globalData.playingCourse?._id, this.bgAudioManager.duration, true);
+    }
+
     const nextIndex = currentIndex + 1;
     if (nextIndex < chapters.length) {
       this.playChapter(chapters[nextIndex]._id, chapters);
