@@ -120,7 +120,7 @@
     <view wx:if="{{refreshConfirmVisible}}" class="confirm-modal">
       <view class="confirm-mask" catchtap="onRefreshCancel"></view>
       <view class="confirm-content">
-        <text class="confirm-text">确定要刷新横幅和封面图片吗？</text>
+        <text class="confirm-text">确定要刷新图片吗？</text>
         <view class="confirm-buttons">
           <view class="confirm-btn cancel" catchtap="onRefreshCancel">取消</view>
           <view class="confirm-btn confirm" catchtap="onRefreshConfirm">确定</view>
