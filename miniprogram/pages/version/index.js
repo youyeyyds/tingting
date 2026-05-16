@@ -156,7 +156,7 @@ Page({
     const index = e.currentTarget.dataset.index;
     if (index == 2) return;
     if (index == 0) {
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.navigateTo({ url: '/pages/index/index' });
     } else {
       wx.navigateTo({ url: '/pages/favorite/index' });
     }
