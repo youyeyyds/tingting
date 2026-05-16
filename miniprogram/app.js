@@ -345,10 +345,9 @@ App({
     const lastPlayTime = Number(chapter.lastPlayTime) || 0;
     const duration = Number(chapter.duration) || 0;
     let startTime = lastPlayTime;
-    // 已完成的章节从头播放（lastPlayTime已在完播时重置为0，但playlistChaptersData可能未同步）
-    if (chapter.finished === true) {
-      startTime = 0;
-    } else if (lastPlayTime >= duration && duration > 0) {
+    // 只有lastPlayTime>=duration时才重置为0（避免异常情况）
+    // 已完成章节：如果lastPlayTime>0说明是重播中暂停（可以续播），如果lastPlayTime=0才是从头播
+    if (lastPlayTime >= duration && duration > 0) {
       startTime = 0;
     }
 
