@@ -399,6 +399,7 @@ const updateChapterProgress = async (event) => {
       // 手动设置为未完播（暂停、停止、切换播放时）
       userUpdateData.finished = false;
     }
+    // finished=undefined时：不修改finished，只更新lastPlayTime
 
     // 更新或创建用户进度记录
     if (existingProgress) {

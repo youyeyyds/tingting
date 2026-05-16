@@ -445,6 +445,7 @@ Component({
       let finished;
       if (this.data.currentChapter.finished === true) {
         // 章节之前已完成，重播时不允许覆盖finished=true
+        // 但要更新lastPlayTime（通过传入undefined，让云端只更新lastPlayTime不修改finished）
         finished = (isFinished || lastPlayTime >= duration - 10) ? true : undefined;
       } else {
         // 章节之前未完成，按正常逻辑
