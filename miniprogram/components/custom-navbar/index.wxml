@@ -1,5 +1,5 @@
 <!--custom-navbar/index.wxml-->
-<view class="custom-navbar" style="height: {{statusBarHeight + navContentHeight}}px;">
+<view class="custom-navbar {{showOverlayBtns ? 'transparent' : ''}}" style="height: {{statusBarHeight + navContentHeight}}px; background: {{showOverlayBtns ? 'transparent' : ''}};">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
 
@@ -13,6 +13,17 @@
       <block wx:else>
         <image class="nav-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
       </block>
+    </view>
+
+    <!-- 播放器overlay专用按钮组 -->
+    <view class="overlay-nav-btn-group" wx:if="{{showOverlayBtns}}" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; left: {{menuButtonLeftGap}}px;">
+      <view class="overlay-nav-btn" bindtap="onOverlayClose">
+        <image class="overlay-nav-icon" src="{{overlayCloseIcon}}" mode="aspectFit" />
+      </view>
+      <view class="overlay-nav-divider" style="height: {{menuButtonHeight * 0.6}}px;"></view>
+      <view class="overlay-nav-btn" bindtap="onOverlayHome">
+        <image class="overlay-nav-icon" src="{{overlayHomeIcon}}" mode="aspectFit" />
+      </view>
     </view>
 
     <!-- 标题居中 -->

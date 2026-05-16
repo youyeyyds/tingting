@@ -2,11 +2,15 @@
 
 .custom-navbar {
   width: 100%;
-  background: #fff;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 100;
+  background: #fff;
+}
+
+.custom-navbar.transparent {
+  background: transparent !important;
 }
 
 .status-bar {
@@ -44,4 +48,32 @@
   font-size: 34rpx;
   font-weight: 600;
   color: #000;
+}
+
+/* overlay按钮组样式 */
+.overlay-nav-btn-group {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 32rpx;
+}
+
+.overlay-nav-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-nav-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.overlay-nav-divider {
+  width: 1rpx;
+  background: rgba(255, 255, 255, 0.3);
 }

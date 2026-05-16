@@ -1,6 +1,7 @@
 {
   "component": true,
   "usingComponents": {
-    "playlist-panel": "/components/playlist-panel/index"
+    "playlist-panel": "/components/playlist-panel/index",
+    "custom-navbar": "/components/custom-navbar/index"
   }
 }

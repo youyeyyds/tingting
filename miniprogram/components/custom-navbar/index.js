@@ -20,6 +20,18 @@ Component({
     title: {
       type: String,
       value: ''
+    },
+    showOverlayBtns: {
+      type: Boolean,
+      value: false
+    },
+    overlayCloseIcon: {
+      type: String,
+      value: '/icons/svg/arrow-left.svg'
+    },
+    overlayHomeIcon: {
+      type: String,
+      value: '/icons/svg/home-white.svg'
     }
   },
 
@@ -117,6 +129,14 @@ Component({
 
     onLogin() {
       this.triggerEvent('login');
+    },
+
+    onOverlayClose() {
+      this.triggerEvent('overlayclose');
+    },
+
+    onOverlayHome() {
+      this.triggerEvent('overlayhome');
     }
   }
 });

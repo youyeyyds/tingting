@@ -64,16 +64,9 @@
     <view class="overlay-bg-overlay" wx:if="{{courseCover && !overlayBgCoverError}}"></view>
   </view>
 
-  <!-- 关闭按钮（胶囊样式） -->
-  <view class="overlay-nav-btn-group" style="width: {{menuButtonWidth}}px; height: {{menuButtonHeight}}px; top: {{statusBarHeight}}px; margin-left: {{menuButtonLeftGap}}px;">
-    <view class="overlay-nav-btn" bindtap="closePlayerOverlay">
-      <image class="overlay-nav-icon" src="/icons/svg/arrow-left.svg" mode="aspectFit" />
-    </view>
-    <view class="overlay-nav-divider" style="height: {{menuButtonHeight * 0.6}}px;"></view>
-    <view class="overlay-nav-btn" bindtap="goHome">
-      <image class="overlay-nav-icon" src="/icons/svg/home-white.svg" mode="aspectFit" />
-    </view>
-  </view>
+  <!-- 导航栏 -->
+  <custom-navbar showBack="{{false}}" title="" showOverlayBtns="{{true}}"
+    bind:overlayclose="closePlayerOverlay" bind:overlayhome="goHome" />
 
   <!-- 播放器容器 -->
   <view class="overlay-player-container">
