@@ -222,6 +222,12 @@ App({
     // 播放结束时，保存当前章节进度（强制完播）
     if (currentId) {
       this.saveProgress(currentId, currentChapter.course || this.globalData.playingCourse?._id, this.bgAudioManager.duration, true);
+      // 更新playlistChaptersData中的章节状态（以便playPrev时能读到更新后的finished状态）
+      const chapterIndex = chapters.findIndex(ch => ch._id === currentId);
+      if (chapterIndex >= 0) {
+        chapters[chapterIndex].finished = true;
+        chapters[chapterIndex].lastPlayTime = 0;
+      }
     }
 
     const nextIndex = currentIndex + 1;
