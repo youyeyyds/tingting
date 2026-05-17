@@ -593,7 +593,7 @@ app.get('/api/courses', async (req, res) => {
     const categoriesRes = await db.collection('categories').get();
 
     // 获取所有章节数量统计
-    const chaptersRes = await db.collection('chapters').get();
+    const chaptersRes = await db.collection('chapters').limit(1000).get();
     const chaptersCountMap = {};
     chaptersRes.data.forEach(chapter => {
       chaptersCountMap[chapter.course] = (chaptersCountMap[chapter.course] || 0) + 1;

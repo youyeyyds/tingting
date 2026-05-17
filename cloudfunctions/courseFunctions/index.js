@@ -188,7 +188,7 @@ const getMinimalCourses = async (event) => {
       .get();
 
     // 获取章节数
-    const chaptersRes = await db.collection("chapters").get();
+    const chaptersRes = await db.collection("chapters").limit(1000).get();
 
     // 关联章节数到课程
     const courses = coursesRes.data.map(course => {
@@ -290,6 +290,7 @@ const getCourseDetail = async (event) => {
     const chaptersRes = await db.collection("chapters")
       .where({ course: courseId })
       .orderBy("seq", "asc")
+      .limit(1000)
       .get();
 
     // 获取用户对该课程所有章节的进度 - 只用 userId 查询，不依赖 courseId
