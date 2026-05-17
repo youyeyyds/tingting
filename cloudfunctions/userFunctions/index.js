@@ -197,12 +197,23 @@ const getUserStats = async (event) => {
     // 获取每门课程的章节总数，计算毕业课程数
     const learnedCourseIds = Array.from(courseIdsWithProgress);
     let graduatedCourses = 0;
-    let learnedCourses = learnedCourseIds.length;
+    let learnedCourses = 0;
 
     if (learnedCourseIds.length > 0) {
+      // 获取这些课程的信息，过滤掉下架的课程
+      const coursesRes = await db.collection('courses')
+        .where({ _id: db.command.in(learnedCourseIds) })
+        .get();
+
+      // 过滤出已发布的课程
+      const publishedCourses = coursesRes.data.filter(c => c.status !== 'draft');
+      const publishedCourseIds = new Set(publishedCourses.map(c => c._id));
+
+      learnedCourses = publishedCourses.length;
+
       // 获取这些课程的章节总数
       const chaptersByCourseRes = await db.collection('chapters')
-        .where({ course: db.command.in(learnedCourseIds) })
+        .where({ course: db.command.in(Array.from(publishedCourseIds)) })
         .get();
 
       // 统计每门课程的章节总数
@@ -212,7 +223,7 @@ const getUserStats = async (event) => {
       });
 
       // 判断毕业：该课程所有章节都学完
-      for (const courseId of learnedCourseIds) {
+      for (const courseId of publishedCourseIds) {
         const totalChapters = courseChapterCounts[courseId] || 0;
         const finishedChapters = finishedChapterCounts[courseId] || 0;
         if (totalChapters > 0 && finishedChapters >= totalChapters) {
@@ -251,6 +262,10 @@ const getUserStats = async (event) => {
       favoriteChapters = chaptersRes.data.map(ch => {
         const progress = favoriteProgresses.find(p => p.chapterId === ch._id);
         const course = courseMap[ch.course] || {};
+        // 过滤掉下架的课程
+        if (course.status && course.status !== 'published') {
+          return null;
+        }
         return {
           ...ch,
           courseTitle: course.title || '',
@@ -258,7 +273,7 @@ const getUserStats = async (event) => {
           author: course.author || '',
           userProgress: progress
         };
-      });
+      }).filter(ch => ch !== null);
     }
 
     return {
