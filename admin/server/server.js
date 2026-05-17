@@ -924,11 +924,37 @@ app.get('/api/audios', async (req, res) => {
     const tcb = getTcbFromRequest(req);
     if (!tcb) return res.json(error('未登录'));
 
-    const db = tcb.database();
-    const result = await db.collection('audios').orderBy('_createTime', 'asc').get();
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const course = req.query.course || '';
+    const offset = (page - 1) * pageSize;
 
-    res.json(success(result.data));
+    console.log('audio list query:', { page, pageSize, course });
+
+    const db = tcb.database();
+    const collection = db.collection('audios');
+
+    let query = {};
+    if (course && course.trim()) {
+      query.course = course.trim();
+    }
+
+    console.log('query:', JSON.stringify(query));
+
+    const countResult = await collection.where(query).count();
+    const total = countResult.total;
+
+    let queryBuilder = collection.where(query).orderBy('_createTime', 'asc');
+    const result = await queryBuilder.skip(offset).limit(pageSize).get();
+
+    res.json(success({
+      data: result.data,
+      total: total,
+      page: page,
+      pageSize: pageSize
+    }));
   } catch (err) {
+    console.error('获取音频列表失败:', err);
     res.json(error(err.message));
   }
 });
@@ -1000,6 +1026,100 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
   }
 });
 
+// 批量上传音频
+app.post('/api/audios/batch-upload', upload.array('audios', 50), async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const files = req.files;
+
+    if (!files || files.length === 0) return res.json(error('请选择音频文件'));
+
+    const courseId = req.body.courseId || '';
+    if (!courseId) return res.json(error('请选择课程'));
+
+    // 获取该课程下最大的序号
+    const existingAudios = await db.collection('audios')
+      .where({ course: courseId })
+      .orderBy('seq', 'desc')
+      .limit(1)
+      .get();
+    let maxSeq = existingAudios.data.length > 0 ? existingAudios.data[0].seq : 0;
+
+    const results = [];
+    const errors = [];
+
+    for (const file of files) {
+      try {
+        // 解析文件名：序号.章节名称.mp3
+        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        const nameMatch = originalName.match(/^(\d+)\.\s*(.+)\.(mp3|m4a|wav|ogg|flac|aac)$/i);
+
+        if (!nameMatch) {
+          errors.push({ file: originalName, error: '文件名格式不正确，应为：序号.章节名称.mp3' });
+          continue;
+        }
+
+        const seq = maxSeq + parseInt(nameMatch[1]);
+        const title = nameMatch[2].trim();
+
+        // 获取音频元数据
+        const metadata = await musicMetadata.parseFile(file.path);
+        const duration = Math.round(metadata.format.duration || 0);
+        const fileSize = file.size;
+
+        const cloudPath = `${CLOUD_PATH_PREFIX}${Date.now()}_${originalName}`;
+        const fileContent = fs.readFileSync(file.path);
+        const uploadResult = await tcb.uploadFile({
+          cloudPath: cloudPath,
+          fileContent: fileContent
+        });
+
+        // 删除临时文件
+        fs.unlinkSync(file.path);
+
+        if (!uploadResult.fileID) {
+          errors.push({ file: originalName, error: '云存储上传失败' });
+          continue;
+        }
+
+        const audioResult = await db.collection('audios').add({
+          title: title,
+          course: courseId,
+          seq: seq,
+          audioFile: uploadResult.fileID,
+          duration: duration,
+          fileSize: fileSize,
+          createTime: new Date(),
+          _createTime: new Date()
+        });
+
+        results.push({
+          audioId: audioResult.id,
+          fileName: originalName,
+          title: title,
+          seq: seq
+        });
+
+        maxSeq = seq;
+      } catch (err) {
+        errors.push({ file: file.originalname, error: err.message });
+      }
+    }
+
+    res.json(success({
+      success: results.length,
+      failed: errors.length,
+      results: results,
+      errors: errors
+    }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // 删除音频
 app.delete('/api/audios/:id', async (req, res) => {
   try {
@@ -1033,6 +1153,29 @@ app.delete('/api/audios/:id', async (req, res) => {
     await db.collection('audios').doc(id).remove();
 
     res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 更新音频
+app.put('/api/audios/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+    const { seq, title, createTime } = req.body;
+
+    const updateData = {};
+    if (seq !== undefined) updateData.seq = seq;
+    if (title !== undefined) updateData.title = title;
+    if (createTime !== undefined) updateData.createTime = new Date(createTime);
+
+    await db.collection('audios').doc(id).update(updateData);
+
+    res.json(success({ updated: true }));
   } catch (err) {
     res.json(error(err.message));
   }

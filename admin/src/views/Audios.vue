@@ -7,8 +7,7 @@
           <div>
             <el-select
               v-model="selectedCourse"
-              placeholder="筛选课程"
-              clearable
+              placeholder="请选择课程"
               style="width: 200px; margin-right: 10px"
               @change="loadAudios"
             >
@@ -20,6 +19,7 @@
               />
             </el-select>
             <el-button type="primary" @click="showUploadDialog">上传音频</el-button>
+            <el-button type="success" @click="showBatchUploadDialog" style="margin-left: 10px">批量上传</el-button>
           </div>
         </div>
       </template>
@@ -46,11 +46,6 @@
             {{ row.chapterName || row.title || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="courseName" label="课程名称" width="150">
-          <template #default="{ row }">
-            {{ row.courseName || '-' }}
-          </template>
-        </el-table-column>
         <el-table-column prop="duration" label="时长" width="100">
           <template #default="{ row }">
             {{ formatDuration(row.duration) }}
@@ -66,13 +61,26 @@
             {{ formatDate(row.createTime || row._createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="playAudio(row)">播放</el-button>
+            <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+        v-if="total > 0 && selectedCourse"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="loadAudios"
+        @current-change="loadAudios"
+        style="margin-top: 20px; display: flex; justify-content: flex-end"
+      />
     </el-card>
 
     <!-- 上传弹窗 -->
@@ -89,7 +97,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="章节序号" prop="seq">
-          <el-input-number v-model="uploadForm.seq" :min="1" />
+          <el-input-number v-model="uploadForm.seq" :min="0" />
         </el-form-item>
         <el-form-item label="章节标题" prop="title">
           <el-input v-model="uploadForm.title" placeholder="请输入章节标题" />
@@ -133,6 +141,73 @@
         />
       </div>
     </el-dialog>
+
+    <!-- 批量上传弹窗 -->
+    <el-dialog v-model="batchUploadDialogVisible" title="批量上传音频" width="500px">
+      <el-form label-width="100px">
+        <el-form-item label="选择课程" required>
+          <el-select v-model="batchUploadForm.courseId" placeholder="请选择课程" style="width: 100%">
+            <el-option
+              v-for="course in courses"
+              :key="course._id"
+              :label="course.title"
+              :value="course._id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="音频文件">
+          <el-upload
+            ref="batchUploadRef"
+            :auto-upload="false"
+            :multiple="true"
+            accept=".mp3,.m4a,.wav,.ogg,.flac,.aac"
+            :on-change="handleBatchFileChange"
+          >
+            <el-button type="primary">选择文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">支持多选，文件名为：序号.章节名称.mp3</div>
+            </template>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="已选文件">
+          <div v-if="batchFiles.length > 0" class="file-list">
+            <div v-for="(file, index) in batchFiles" :key="index" class="file-item">
+              {{ file.name }}
+            </div>
+          </div>
+          <span v-else class="no-file">未选择文件</span>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="batchUploadDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchUploading" @click="handleBatchUpload">
+          开始导入
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog v-model="editDialogVisible" title="编辑音频" width="500px">
+      <el-form ref="editFormRef" :model="editForm" label-width="100px">
+        <el-form-item label="序号">
+          <el-input-number v-model="editForm.seq" :min="0" />
+        </el-form-item>
+        <el-form-item label="章节名称">
+          <el-input v-model="editForm.title" placeholder="请输入章节名称" />
+        </el-form-item>
+        <el-form-item label="上传时间">
+          <el-date-picker v-model="editForm.createTime" type="datetime" placeholder="选择上传时间" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="editSaving" @click="handleEditSave">
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -140,7 +215,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getAudios, uploadAudio, deleteAudio, getCourses, getChapters, batchUpdateSeq, getFileTempUrl } from '@/api/cloud'
+import { getAudios, uploadAudio, batchUploadAudio, deleteAudio, updateAudio, getCourses, getChapters, batchUpdateSeq, getFileTempUrl } from '@/api/cloud'
 
 const loading = ref(false)
 const uploading = ref(false)
@@ -157,6 +232,19 @@ const courses = ref([])
 const chapters = ref([])
 const currentAudio = ref(null)
 const selectedCourse = ref('')
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+
+const editDialogVisible = ref(false)
+const editSaving = ref(false)
+const editFormRef = ref(null)
+const editForm = reactive({
+  _id: '',
+  seq: 0,
+  title: '',
+  createTime: null
+})
 
 const uploadForm = reactive({
   courseId: '',
@@ -170,14 +258,29 @@ const uploadRules = {
   title: [{ required: true, message: '请输入章节标题', trigger: 'blur' }]
 }
 
+const batchUploadDialogVisible = ref(false)
+const batchUploadRef = ref(null)
+const batchUploading = ref(false)
+const batchFiles = ref([])
+
+const batchUploadForm = reactive({
+  courseId: ''
+})
+
 // 加载音频列表
 async function loadAudios() {
+  if (!selectedCourse.value) {
+    audios.value = []
+    total.value = 0
+    return
+  }
+
   loading.value = true
   try {
-    const res = await getAudios()
+    const res = await getAudios(1, pageSize.value, selectedCourse.value)
     if (res.success) {
-      // 关联课程和章节名称，并根据课程筛选
-      audios.value = res.data
+      // 关联课程和章节名称
+      audios.value = res.data.data
         .map(audio => {
           const course = courses.value.find(c => c._id === audio.course)
           const chapter = chapters.value.find(ch => ch.audio === audio._id || ch.audioUrl === audio.audioFile)
@@ -188,13 +291,8 @@ async function loadAudios() {
             seq: audio.seq || chapter?.seq || 0
           }
         })
-        .filter(audio => {
-          // 如果选择了课程，只显示该课程的音频
-          if (selectedCourse.value) {
-            return audio.course === selectedCourse.value
-          }
-          return true
-        })
+      total.value = res.data.total || 0
+      currentPage.value = 1
       initSortable()
     } else {
       ElMessage.error('加载音频失败: ' + res.error)
@@ -286,6 +384,90 @@ async function handleUpload() {
   }
 }
 
+// 显示批量上传弹窗
+function showBatchUploadDialog() {
+  batchUploadForm.courseId = ''
+  batchFiles.value = []
+  batchUploadDialogVisible.value = true
+}
+
+// 批量文件选择
+function handleBatchFileChange(file, fileList) {
+  batchFiles.value = fileList.map(f => f.raw)
+}
+
+// 批量上传
+async function handleBatchUpload() {
+  if (!batchUploadForm.courseId) {
+    ElMessage.warning('请选择课程')
+    return
+  }
+
+  if (batchFiles.value.length === 0) {
+    ElMessage.warning('请选择音频文件')
+    return
+  }
+
+  batchUploading.value = true
+  try {
+    const res = await batchUploadAudio(batchFiles.value, batchUploadForm.courseId)
+
+    if (res.success) {
+      const msg = `导入成功 ${res.data.success} 个，失败 ${res.data.failed} 个`
+      if (res.data.failed > 0) {
+        ElMessage.warning(msg)
+        const errors = res.data.errors.map(e => `${e.file}: ${e.error}`).join('；')
+        ElMessage.warning(errors)
+      } else {
+        ElMessage.success(msg)
+      }
+      batchUploadDialogVisible.value = false
+      batchUploadRef.value?.clearFiles()
+      batchFiles.value = []
+      await loadAudios()
+    } else {
+      ElMessage.error('导入失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('导入失败')
+  } finally {
+    batchUploading.value = false
+  }
+}
+
+// 显示编辑弹窗
+function showEditDialog(row) {
+  editForm._id = row._id
+  editForm.seq = row.seq || 0
+  editForm.title = row.chapterName || row.title || ''
+  editForm.createTime = row.createTime ? new Date(row.createTime) : (row._createTime ? new Date(row._createTime) : new Date())
+  editDialogVisible.value = true
+}
+
+// 保存编辑
+async function handleEditSave() {
+  editSaving.value = true
+  try {
+    const res = await updateAudio(editForm._id, {
+      seq: editForm.seq,
+      title: editForm.title,
+      createTime: editForm.createTime.toISOString()
+    })
+
+    if (res.success) {
+      ElMessage.success('保存成功')
+      editDialogVisible.value = false
+      await loadAudios()
+    } else {
+      ElMessage.error('保存失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('保存失败')
+  } finally {
+    editSaving.value = false
+  }
+}
+
 // 播放音频
 async function playAudio(row) {
   // 先设置基本信息
@@ -372,7 +554,7 @@ function initSortable() {
 
         const updates = audios.value.map((audio, index) => ({
           _id: audio._id,
-          seq: index + 1
+          seq: index
         }))
 
         try {
@@ -380,7 +562,7 @@ function initSortable() {
           if (res.success) {
             ElMessage.success('排序已保存')
             audios.value.forEach((audio, index) => {
-              audio.seq = index + 1
+              audio.seq = index
             })
           } else {
             ElMessage.error('保存排序失败')
@@ -427,7 +609,16 @@ function formatDate(dateStr) {
 onMounted(async () => {
   await loadCourses()
   await loadChapters()
-  await loadAudios()
+  // 默认选择最新的课程
+  if (courses.value.length > 0) {
+    const sorted = [...courses.value].sort((a, b) => {
+      const timeA = new Date(a._createTime || a.createTime || 0).getTime()
+      const timeB = new Date(b._createTime || b.createTime || 0).getTime()
+      return timeB - timeA
+    })
+    selectedCourse.value = sorted[0]._id
+    await loadAudios()
+  }
 })
 </script>
 
@@ -472,5 +663,24 @@ onMounted(async () => {
 
 .drag-handle:hover .drag-line {
   background: #FF6B00;
+}
+
+.file-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.file-item {
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.no-file {
+  color: #999;
+  font-size: 13px;
 }
 </style>

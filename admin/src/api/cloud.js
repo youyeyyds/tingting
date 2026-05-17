@@ -176,9 +176,14 @@ export async function deleteAudioFile(chapterId) {
 
 /**
  * 获取音频列表
+ * @param {number} page 页码
+ * @param {number} pageSize 每页数量
+ * @param {string} course 课程ID筛选
  */
-export async function getAudios() {
-  const response = await api.get('/audios')
+export async function getAudios(page = 1, pageSize = 20, course = '') {
+  const params = { page, pageSize }
+  if (course) params.course = course
+  const response = await api.get('/audios', { params })
   return response.data
 }
 
@@ -203,10 +208,36 @@ export async function uploadAudio(file, courseId, seq, title) {
 }
 
 /**
+ * 批量上传音频
+ * @param {File[]} files 音频文件数组
+ * @param {string} courseId 课程ID
+ */
+export async function batchUploadAudio(files, courseId) {
+  const formData = new FormData()
+  files.forEach(file => formData.append('audios', file))
+  formData.append('courseId', courseId)
+
+  const response = await api.post('/audios/batch-upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response.data
+}
+
+/**
  * 删除音频
  */
 export async function deleteAudio(id) {
   const response = await api.delete(`/audios/${id}`)
+  return response.data
+}
+
+/**
+ * 更新音频
+ * @param {string} id 音频ID
+ * @param {object} data 更新数据
+ */
+export async function updateAudio(id, data) {
+  const response = await api.put(`/audios/${id}`, data)
   return response.data
 }
 
