@@ -135,7 +135,7 @@
 
     <!-- 批量上传弹窗 -->
     <el-dialog v-model="batchUploadDialogVisible" title="批量上传音频" width="500px">
-      <div class="batch-upload-tip">已选 {{ batchFiles.length }} 个音频</div>
+      <div class="batch-upload-tip">已选 {{ batchFiles.length }} 条音频（支持400条批量上传）</div>
       <div class="batch-file-list" v-if="batchFiles.length > 0">
         <div v-for="(file, index) in batchFiles" :key="index" class="batch-file-item">
           <span>{{ file.name }}</span>

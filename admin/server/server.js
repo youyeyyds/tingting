@@ -1132,7 +1132,7 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
 });
 
 // 批量上传音频
-app.post('/api/audios/batch-upload', upload.array('audios', 50), async (req, res) => {
+app.post('/api/audios/batch-upload', upload.array('audios', 400), async (req, res) => {
   try {
     const tcb = getTcbFromRequest(req);
     if (!tcb) return res.json(error('未登录'));

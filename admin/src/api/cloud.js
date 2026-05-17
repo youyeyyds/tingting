@@ -11,7 +11,7 @@ const API_BASE = '/api'
 // 创建 axios 实例
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 300000
+  timeout: 600000
 })
 
 // 请求拦截器 - 只添加用户身份信息（不传递敏感凭证）
