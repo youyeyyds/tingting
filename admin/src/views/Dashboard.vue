@@ -156,21 +156,20 @@ async function loadStats() {
     ])
 
     if (coursesRes.success) {
-      stats.courses = coursesRes.data.length
-      recentCourses.value = coursesRes.data.slice(0, 5)
+      const coursesData = coursesRes.data.data || coursesRes.data
+      stats.courses = coursesData.length
+      recentCourses.value = coursesData.slice(0, 5)
     }
     if (chaptersRes.success) {
-      stats.chapters = chaptersRes.data.length
-      // 获取最近编辑的章节（按更新时间排序）
-      const sortedChapters = chaptersRes.data.sort((a, b) => {
-        const timeA = a._createTime ? new Date(a._createTime) : new Date(0)
-        const timeB = b._createTime ? new Date(b._createTime) : new Date(0)
-        return timeB - timeA
-      })
-      recentChapter.value = sortedChapters[0]
+      stats.chapters = chaptersRes.data.total || 0
     }
-    if (audiosRes.success) stats.audios = audiosRes.data.length
-    if (usersRes.success) stats.users = usersRes.data.length
+    if (audiosRes.success) {
+      stats.audios = audiosRes.data.total || 0
+    }
+    if (usersRes.success) {
+      const usersData = usersRes.data.data || usersRes.data
+      stats.users = usersData.length
+    }
 
   } catch (err) {
     console.error('加载统计数据失败:', err)

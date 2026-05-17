@@ -19,7 +19,7 @@
               />
             </el-select>
             <el-button type="primary" @click="showUploadDialog">上传音频</el-button>
-            <el-button type="success" @click="showBatchUploadDialog" style="margin-left: 10px">批量上传</el-button>
+            <el-button type="success" @click="handleBatchUploadClick" style="margin-left: 10px">批量上传</el-button>
           </div>
         </div>
       </template>
@@ -86,18 +86,9 @@
     <!-- 上传弹窗 -->
     <el-dialog v-model="uploadDialogVisible" title="上传音频" width="500px">
       <el-form ref="uploadFormRef" :model="uploadForm" :rules="uploadRules" label-width="100px">
-        <el-form-item label="选择课程" prop="courseId">
-          <el-select v-model="uploadForm.courseId" placeholder="请选择课程" style="width: 100%">
-            <el-option
-              v-for="course in courses"
-              :key="course._id"
-              :label="course.title"
-              :value="course._id"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="章节序号" prop="seq">
           <el-input-number v-model="uploadForm.seq" :min="0" />
+          <span class="seq-tip">当前课程最大序号：{{ maxSeqInCourse }}</span>
         </el-form-item>
         <el-form-item label="章节标题" prop="title">
           <el-input v-model="uploadForm.title" placeholder="请输入章节标题" />
@@ -144,43 +135,17 @@
 
     <!-- 批量上传弹窗 -->
     <el-dialog v-model="batchUploadDialogVisible" title="批量上传音频" width="500px">
-      <el-form label-width="100px">
-        <el-form-item label="选择课程" required>
-          <el-select v-model="batchUploadForm.courseId" placeholder="请选择课程" style="width: 100%">
-            <el-option
-              v-for="course in courses"
-              :key="course._id"
-              :label="course.title"
-              :value="course._id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="音频文件">
-          <el-upload
-            ref="batchUploadRef"
-            :auto-upload="false"
-            :multiple="true"
-            accept=".mp3,.m4a,.wav,.ogg,.flac,.aac"
-            :on-change="handleBatchFileChange"
-          >
-            <el-button type="primary">选择文件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">支持多选，文件名为：序号.章节名称.mp3</div>
-            </template>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="已选文件">
-          <div v-if="batchFiles.length > 0" class="file-list">
-            <div v-for="(file, index) in batchFiles" :key="index" class="file-item">
-              {{ file.name }}
-            </div>
-          </div>
-          <span v-else class="no-file">未选择文件</span>
-        </el-form-item>
-      </el-form>
+      <div class="batch-upload-tip">已选 {{ batchFiles.length }} 个音频</div>
+      <div class="batch-file-list" v-if="batchFiles.length > 0">
+        <div v-for="(file, index) in batchFiles" :key="index" class="batch-file-item">
+          <span>{{ file.name }}</span>
+          <el-button type="danger" size="small" link @click="removeBatchFile(index)">删除</el-button>
+        </div>
+      </div>
+      <div v-else class="no-file-tip">未选择文件</div>
 
       <template #footer>
-        <el-button @click="batchUploadDialogVisible = false">取消</el-button>
+        <el-button @click="cancelBatchUpload">{{ batchUploading ? '关闭' : '取消' }}</el-button>
         <el-button type="primary" :loading="batchUploading" @click="handleBatchUpload">
           开始导入
         </el-button>
@@ -235,6 +200,7 @@ const selectedCourse = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+const maxSeqInCourse = ref(0)
 
 const editDialogVisible = ref(false)
 const editSaving = ref(false)
@@ -247,14 +213,12 @@ const editForm = reactive({
 })
 
 const uploadForm = reactive({
-  courseId: '',
   seq: 1,
   title: '',
   file: null
 })
 
 const uploadRules = {
-  courseId: [{ required: true, message: '请选择课程', trigger: 'change' }],
   title: [{ required: true, message: '请输入章节标题', trigger: 'blur' }]
 }
 
@@ -262,10 +226,6 @@ const batchUploadDialogVisible = ref(false)
 const batchUploadRef = ref(null)
 const batchUploading = ref(false)
 const batchFiles = ref([])
-
-const batchUploadForm = reactive({
-  courseId: ''
-})
 
 // 加载音频列表
 async function loadAudios() {
@@ -277,10 +237,11 @@ async function loadAudios() {
 
   loading.value = true
   try {
-    const res = await getAudios(1, pageSize.value, selectedCourse.value)
+    const res = await getAudios(currentPage.value, pageSize.value, selectedCourse.value)
     if (res.success) {
       // 关联课程和章节名称
-      audios.value = res.data.data
+      const audioData = res.data.data || res.data;
+      audios.value = (audioData || [])
         .map(audio => {
           const course = courses.value.find(c => c._id === audio.course)
           const chapter = chapters.value.find(ch => ch.audio === audio._id || ch.audioUrl === audio.audioFile)
@@ -292,12 +253,12 @@ async function loadAudios() {
           }
         })
       total.value = res.data.total || 0
-      currentPage.value = 1
       initSortable()
     } else {
       ElMessage.error('加载音频失败: ' + res.error)
     }
   } catch (err) {
+    console.error('加载音频失败:', err)
     ElMessage.error('加载音频失败')
   } finally {
     loading.value = false
@@ -321,7 +282,7 @@ async function loadChapters() {
   try {
     const res = await getChapters()
     if (res.success) {
-      chapters.value = res.data
+      chapters.value = res.data.data || res.data
     }
   } catch (err) {
     console.error('加载章节失败:', err)
@@ -330,6 +291,13 @@ async function loadChapters() {
 
 // 显示上传弹窗
 function showUploadDialog() {
+  // 获取当前课程音频的最大序号
+  if (audios.value.length > 0) {
+    maxSeqInCourse.value = Math.max(...audios.value.map(a => a.seq ?? 0))
+  } else {
+    maxSeqInCourse.value = 0
+  }
+  uploadForm.seq = maxSeqInCourse.value + 1
   uploadDialogVisible.value = true
 }
 
@@ -362,7 +330,7 @@ async function handleUpload() {
   try {
     const res = await uploadAudio(
       selectedFile.value,
-      uploadForm.courseId,
+      selectedCourse.value,
       uploadForm.seq,
       uploadForm.title
     )
@@ -386,9 +354,36 @@ async function handleUpload() {
 
 // 显示批量上传弹窗
 function showBatchUploadDialog() {
-  batchUploadForm.courseId = ''
   batchFiles.value = []
   batchUploadDialogVisible.value = true
+}
+
+// 处理批量上传按钮点击 - 直接打开文件选择窗口，选完后再显示弹窗
+function handleBatchUploadClick() {
+  batchFiles.value = []
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.multiple = true
+  input.accept = '.mp3,.m4a,.wav,.ogg,.flac,.aac'
+  input.onchange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      batchFiles.value = files
+      batchUploadDialogVisible.value = true
+    }
+  }
+  input.click()
+}
+
+// 取消批量上传
+function cancelBatchUpload() {
+  batchUploadDialogVisible.value = false
+  batchFiles.value = []
+}
+
+// 删除单个批量文件
+function removeBatchFile(index) {
+  batchFiles.value.splice(index, 1)
 }
 
 // 批量文件选择
@@ -396,21 +391,28 @@ function handleBatchFileChange(file, fileList) {
   batchFiles.value = fileList.map(f => f.raw)
 }
 
+// 删除批量文件
+function handleBatchFileRemove(file, fileList) {
+  batchFiles.value = fileList.map(f => f.raw)
+}
+
 // 批量上传
 async function handleBatchUpload() {
-  if (!batchUploadForm.courseId) {
-    ElMessage.warning('请选择课程')
-    return
-  }
-
   if (batchFiles.value.length === 0) {
     ElMessage.warning('请选择音频文件')
     return
   }
 
+  const loading = ElMessage({
+    message: '正在导入音频数据，请稍候...',
+    duration: 0
+  })
+
   batchUploading.value = true
   try {
-    const res = await batchUploadAudio(batchFiles.value, batchUploadForm.courseId)
+    const res = await batchUploadAudio(batchFiles.value, selectedCourse.value)
+
+    loading.close()
 
     if (res.success) {
       const msg = `导入成功 ${res.data.success} 个，失败 ${res.data.failed} 个`
@@ -424,11 +426,13 @@ async function handleBatchUpload() {
       batchUploadDialogVisible.value = false
       batchUploadRef.value?.clearFiles()
       batchFiles.value = []
-      await loadAudios()
+      try { await loadAudios() } catch (e) { console.error('刷新音频失败', e) }
     } else {
-      ElMessage.error('导入失败: ' + res.error)
+      loading.close()
+      ElMessage.error('导入失败: ' + (res.error || '未知错误'))
     }
   } catch (err) {
+    loading.close()
     ElMessage.error('导入失败')
   } finally {
     batchUploading.value = false
@@ -457,7 +461,8 @@ async function handleEditSave() {
     if (res.success) {
       ElMessage.success('保存成功')
       editDialogVisible.value = false
-      await loadAudios()
+      try { await loadChapters() } catch (e) { console.error('刷新章节失败', e) }
+      try { await loadAudios() } catch (e) { console.error('刷新音频失败', e) }
     } else {
       ElMessage.error('保存失败: ' + res.error)
     }
@@ -682,5 +687,67 @@ onMounted(async () => {
 .no-file {
   color: #999;
   font-size: 13px;
+}
+
+.seq-tip {
+  margin-left: 10px;
+  color: #999;
+  font-size: 13px;
+}
+
+:deep(.el-upload-list) {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+:deep(.el-dialog__body) {
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.batch-file-list {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.batch-file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  overflow-x: hidden;
+  word-break: break-all;
+}
+
+.batch-file-item:last-child {
+  border-bottom: none;
+}
+
+.batch-file-item span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.batch-upload-tip {
+  color: #999;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.no-file-tip {
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
 }
 </style>

@@ -141,6 +141,9 @@ function getCategoryCourseCount(categoryId) {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
+  // 自动计算下一个序号
+  const maxSeq = categories.value.length > 0 ? Math.max(...categories.value.map(c => c.seq || 0)) : 0
+  form.seq = maxSeq + 1
   dialogVisible.value = true
 }
 

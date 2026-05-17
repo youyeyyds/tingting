@@ -255,9 +255,9 @@ async function loadCourses() {
 // 加载章节列表（用于计算课程学习进度）
 async function loadChapters() {
   try {
-    const res = await getChapters()
+    const res = await getChapters(null, 1, 1000)  // 获取足够多的章节
     if (res.success) {
-      let chaptersData = res.data
+      let chaptersData = res.data.data || res.data
 
       // 加载当前用户进度
       const currentUser = getCurrentUser()
@@ -447,21 +447,31 @@ async function handleSubmit() {
 // 删除课程
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除课程 "${row.title}" 吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除课程 "${row.title}" 吗？删除后会级联删除该课程下的所有章节和音频文件。`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
 
+    const loading = ElMessage({
+      message: '正在删除课程及关联数据，请稍候...',
+      duration: 0
+    })
+
     const res = await deleteCourse(row._id)
+
+    loading.close()
+
     if (res.success) {
+      await loadCourses()
       ElMessage.success('删除成功')
-      loadCourses()
     } else {
-      ElMessage.error('删除失败: ' + res.error)
+      loading.close()
+      ElMessage.error('删除失败: ' + (res.error || '未知错误'))
     }
   } catch {
     // 用户取消
+    loading.close()
   }
 }
 

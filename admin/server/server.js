@@ -683,6 +683,65 @@ app.delete('/api/courses/:id', async (req, res) => {
     const db = tcb.database();
     const id = req.params.id;
 
+    // 获取该课程下的所有章节
+    const chapters = await db.collection('chapters').where({ course: id }).get();
+    const chapterIds = chapters.data.map(ch => ch._id);
+
+    // 收集需要删除的音频文件ID
+    const audioFileIds = [];
+    for (const chapter of chapters.data) {
+      if (chapter.audioUrl) {
+        audioFileIds.push(chapter.audioUrl);
+      }
+    }
+
+    // 获取该课程下的所有音频记录
+    const audios = await db.collection('audios').where({ course: id }).get();
+    for (const audio of audios.data) {
+      if (audio.audioFile) {
+        audioFileIds.push(audio.audioFile);
+      }
+    }
+
+    // 删除云存储中的音频文件（每次最多50个）
+    if (audioFileIds.length > 0) {
+      for (let i = 0; i < audioFileIds.length; i += 50) {
+        const batch = audioFileIds.slice(i, i + 50)
+        try {
+          await tcb.deleteFile({ fileList: batch })
+        } catch (e) {
+          console.error('删除云存储文件失败:', e.message)
+        }
+      }
+    }
+
+    // 删除该课程下的所有音频记录
+    if (audios.data.length > 0) {
+      for (const audio of audios.data) {
+        await db.collection('audios').doc(audio._id).remove();
+      }
+    }
+
+    // 删除关联的用户进度记录
+    if (chapterIds.length > 0) {
+      // 删除 userProgress (注意大小写)
+      for (const chapterId of chapterIds) {
+        const progressList = await db.collection('userProgress').where({ chapterId: chapterId }).get();
+        if (progressList.data.length > 0) {
+          for (const progress of progressList.data) {
+            await db.collection('userProgress').doc(progress._id).remove();
+          }
+        }
+        // 删除 userChapterSettings (注意大小写)
+        const settingsList = await db.collection('userChapterSettings').where({ chapterId: chapterId }).get();
+        if (settingsList.data.length > 0) {
+          for (const settings of settingsList.data) {
+            await db.collection('userChapterSettings').doc(settings._id).remove();
+          }
+        }
+      }
+    }
+
     // 删除关联的章节
     await db.collection('chapters').where({ course: id }).remove();
 
@@ -705,13 +764,19 @@ app.get('/api/chapters', async (req, res) => {
 
     const db = tcb.database();
     const courseId = req.query.courseId;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const offset = (page - 1) * pageSize;
 
     let query = db.collection('chapters');
     if (courseId) {
       query = query.where({ course: courseId });
     }
 
-    const result = await query.orderBy('seq', 'asc').get();
+    const countResult = await query.count();
+    const total = countResult.total;
+
+    const result = await query.orderBy('seq', 'asc').skip(offset).limit(pageSize).get();
 
     // 为旧数据添加 finished 字段（默认 false）
     const chapters = result.data.map(ch => ({
@@ -719,7 +784,12 @@ app.get('/api/chapters', async (req, res) => {
       finished: ch.finished !== undefined ? ch.finished : false
     }));
 
-    res.json(success(chapters));
+    res.json(success({
+      data: chapters,
+      total: total,
+      page: page,
+      pageSize: pageSize
+    }));
   } catch (err) {
     res.json(error(err.message));
   }
@@ -1013,6 +1083,41 @@ app.post('/api/audios/upload', upload.single('audio'), async (req, res) => {
       _createTime: new Date()
     });
 
+    // 同步创建或更新 chapters 集合中的章节
+    // 查找是否已存在相同课程和序号的章节
+    const existingChapter = await db.collection('chapters')
+      .where({ course: courseId, seq: seq })
+      .get();
+
+    if (existingChapter.data.length > 0) {
+      // 更新现有章节的音频信息
+      await db.collection('chapters').doc(existingChapter.data[0]._id).update({
+        audioUrl: uploadResult.fileID,
+        audioFileSize: fileSize,
+        duration: duration
+      });
+    } else {
+      // 创建新章节
+      const chapterResult = await db.collection('chapters').add({
+        course: courseId,
+        seq: seq,
+        title: audioTitle,
+        audioUrl: uploadResult.fileID,
+        audioFileSize: fileSize,
+        duration: duration,
+        lastPlayTime: 0,
+        playCount: 0,
+        favorite: false,
+        finished: false,
+        createTime: new Date(),
+        _createTime: new Date()
+      });
+      // 更新章节的 audio 字段指向 audios 记录
+      await db.collection('chapters').doc(chapterResult.id).update({
+        audio: audioResult.id
+      });
+    }
+
     // 返回音频信息
     res.json(success({
       audioId: audioResult.id,
@@ -1048,45 +1153,56 @@ app.post('/api/audios/batch-upload', upload.array('audios', 50), async (req, res
       .get();
     let maxSeq = existingAudios.data.length > 0 ? existingAudios.data[0].seq : 0;
 
+    // 解析文件名，提取序号用于排序
+    const fileInfos = files.map(file => {
+      const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      const nameMatch = originalName.match(/^(\d+)\.\s*(.+)\.(mp3|m4a|wav|ogg|flac|aac)$/i);
+      return {
+        file,
+        originalName,
+        seqInName: nameMatch ? parseInt(nameMatch[1]) : 0,
+        title: nameMatch ? nameMatch[2].trim() : originalName
+      };
+    });
+
+    // 按文件名中的序号排序
+    fileInfos.sort((a, b) => a.seqInName - b.seqInName);
+
     const results = [];
     const errors = [];
 
-    for (const file of files) {
+    for (const info of fileInfos) {
+      let currentSeq = maxSeq + results.length + 1;
       try {
-        // 解析文件名：序号.章节名称.mp3
-        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-        const nameMatch = originalName.match(/^(\d+)\.\s*(.+)\.(mp3|m4a|wav|ogg|flac|aac)$/i);
+        const seq = currentSeq;
 
-        if (!nameMatch) {
-          errors.push({ file: originalName, error: '文件名格式不正确，应为：序号.章节名称.mp3' });
-          continue;
+        // 获取音频元数据（跳过耗时过长的解析）
+        let duration = 0;
+        let fileSize = info.file.size;
+        try {
+          const metadata = await musicMetadata.parseFile(info.file.path);
+          duration = Math.round(metadata.format.duration || 0);
+        } catch (metadataErr) {
+          console.error('获取音频元数据失败:', info.originalName, metadataErr.message);
+          // 不阻断流程，继续上传
         }
 
-        const seq = maxSeq + parseInt(nameMatch[1]);
-        const title = nameMatch[2].trim();
-
-        // 获取音频元数据
-        const metadata = await musicMetadata.parseFile(file.path);
-        const duration = Math.round(metadata.format.duration || 0);
-        const fileSize = file.size;
-
-        const cloudPath = `${CLOUD_PATH_PREFIX}${Date.now()}_${originalName}`;
-        const fileContent = fs.readFileSync(file.path);
+        const cloudPath = `${CLOUD_PATH_PREFIX}${Date.now()}_${info.originalName}`;
+        const fileContent = fs.readFileSync(info.file.path);
         const uploadResult = await tcb.uploadFile({
           cloudPath: cloudPath,
           fileContent: fileContent
         });
 
         // 删除临时文件
-        fs.unlinkSync(file.path);
+        try { fs.unlinkSync(info.file.path); } catch (e) { /* ignore */ }
 
-        if (!uploadResult.fileID) {
-          errors.push({ file: originalName, error: '云存储上传失败' });
-          continue;
+        if (!uploadResult || !uploadResult.fileID) {
+          throw new Error('云存储上传失败');
         }
 
         const audioResult = await db.collection('audios').add({
-          title: title,
+          title: info.title,
           course: courseId,
           seq: seq,
           audioFile: uploadResult.fileID,
@@ -1096,16 +1212,52 @@ app.post('/api/audios/batch-upload', upload.array('audios', 50), async (req, res
           _createTime: new Date()
         });
 
+        // 同步创建或更新 chapters 集合中的章节
+        try {
+          const existingChapter = await db.collection('chapters')
+            .where({ course: courseId, seq: seq })
+            .get();
+
+          if (existingChapter.data.length > 0) {
+            await db.collection('chapters').doc(existingChapter.data[0]._id).update({
+              audioUrl: uploadResult.fileID,
+              audioFileSize: fileSize,
+              duration: duration
+            });
+          } else {
+            const chapterResult = await db.collection('chapters').add({
+              course: courseId,
+              seq: seq,
+              title: info.title,
+              audioUrl: uploadResult.fileID,
+              audioFileSize: fileSize,
+              duration: duration,
+              lastPlayTime: 0,
+              playCount: 0,
+              favorite: false,
+              finished: false,
+              createTime: new Date(),
+              _createTime: new Date()
+            });
+            await db.collection('chapters').doc(chapterResult.id).update({
+              audio: audioResult.id
+            });
+          }
+        } catch (chapterErr) {
+          console.error('同步章节失败:', chapterErr.message);
+          // 不阻断主流程
+        }
+
         results.push({
           audioId: audioResult.id,
-          fileName: originalName,
-          title: title,
+          fileName: info.originalName,
+          title: info.title,
           seq: seq
         });
 
-        maxSeq = seq;
       } catch (err) {
-        errors.push({ file: file.originalname, error: err.message });
+        console.error('处理文件失败:', info.originalName, err.message);
+        errors.push({ file: info.originalName, error: err.message });
       }
     }
 
@@ -1116,7 +1268,8 @@ app.post('/api/audios/batch-upload', upload.array('audios', 50), async (req, res
       errors: errors
     }));
   } catch (err) {
-    res.json(error(err.message));
+    console.error('批量上传失败:', err.message);
+    res.json(error('批量上传失败: ' + err.message));
   }
 });
 
@@ -1174,6 +1327,22 @@ app.put('/api/audios/:id', async (req, res) => {
     if (createTime !== undefined) updateData.createTime = new Date(createTime);
 
     await db.collection('audios').doc(id).update(updateData);
+
+    // 同步更新 chapters 集合中的章节名称
+    if (title !== undefined) {
+      const audio = await db.collection('audios').doc(id).get();
+      if (audio.data.length > 0) {
+        const audioData = audio.data[0];
+        const chapters = await db.collection('chapters')
+          .where({ course: audioData.course, seq: audioData.seq })
+          .get();
+        if (chapters.data.length > 0) {
+          await db.collection('chapters').doc(chapters.data[0]._id).update({
+            title: title
+          });
+        }
+      }
+    }
 
     res.json(success({ updated: true }));
   } catch (err) {

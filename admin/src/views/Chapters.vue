@@ -97,6 +97,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+        v-if="total > 0"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="loadChapters"
+        @current-change="loadChapters"
+        style="margin-top: 20px; display: flex; justify-content: flex-end"
+      />
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
@@ -268,6 +280,9 @@ const courseTitle = computed(() => {
 
 const chapters = ref([])
 const courses = ref([])
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
 
 const form = reactive({
   course: '',
@@ -462,10 +477,10 @@ async function loadChapters() {
   try {
     // 优先使用路由中的课程ID，否则使用筛选的课程
     const filterCourseId = courseId.value || selectedCourse.value || null
-    const res = await getChapters(filterCourseId)
+    const res = await getChapters(filterCourseId, currentPage.value, pageSize.value)
     if (res.success) {
       // 关联课程名称
-      let chaptersData = res.data.map(chapter => {
+      let chaptersData = res.data.data.map(chapter => {
         const course = courses.value.find(c => c._id === chapter.course)
         return {
           ...chapter,
@@ -498,6 +513,7 @@ async function loadChapters() {
       }
 
       chapters.value = chaptersData
+      total.value = res.data.total || 0
       initSortable()
     } else {
       ElMessage.error('加载章节失败: ' + res.error)
@@ -525,7 +541,7 @@ async function loadCourses() {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
-  // 自动计算下一个序号
+  // 自动计算下一个序号（基于当前课程所有章节的最大序号）
   const maxSeq = chapters.value.length > 0 ? Math.max(...chapters.value.map(c => c.seq || 0)) : 0
   form.seq = maxSeq + 1
   // 如果从课程页面进入，预设课程ID

@@ -11,7 +11,7 @@ const API_BASE = '/api'
 // 创建 axios 实例
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000
+  timeout: 300000
 })
 
 // 请求拦截器 - 只添加用户身份信息（不传递敏感凭证）
@@ -133,8 +133,9 @@ export async function batchUpdateSeq(collection, updates) {
  * 获取章节列表
  * @param {string} courseId 课程ID（可选）
  */
-export async function getChapters(courseId = null) {
-  const params = courseId ? { courseId } : {}
+export async function getChapters(courseId = null, page = 1, pageSize = 20) {
+  const params = { page, pageSize }
+  if (courseId) params.courseId = courseId
   const response = await api.get('/chapters', { params })
   return response.data
 }
