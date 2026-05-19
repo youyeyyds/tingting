@@ -683,8 +683,8 @@ app.delete('/api/courses/:id', async (req, res) => {
     const db = tcb.database();
     const id = req.params.id;
 
-    // 获取该课程下的所有章节
-    const chapters = await db.collection('chapters').where({ course: id }).get();
+    // 获取该课程下的所有章节（加limit避免默认100条限制）
+    const chapters = await db.collection('chapters').where({ course: id }).limit(1000).get();
     const chapterIds = chapters.data.map(ch => ch._id);
 
     // 收集需要删除的音频文件ID
