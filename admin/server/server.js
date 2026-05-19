@@ -695,8 +695,8 @@ app.delete('/api/courses/:id', async (req, res) => {
       }
     }
 
-    // 获取该课程下的所有音频记录
-    const audios = await db.collection('audios').where({ course: id }).get();
+    // 获取该课程下的所有音频记录（加limit避免默认100条限制）
+    const audios = await db.collection('audios').where({ course: id }).limit(1000).get();
     for (const audio of audios.data) {
       if (audio.audioFile) {
         audioFileIds.push(audio.audioFile);
