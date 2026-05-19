@@ -371,9 +371,8 @@ async function loadCategories() {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
-  // 计算下一个序号
-  const maxSeq = courses.value.length > 0 ? Math.max(...courses.value.map(c => c.seq || 0)) : 0
-  form.seq = maxSeq + 1
+  // 计算下一个序号（课程数量即为下一个序号）
+  form.seq = courses.value.length + 1
   updateCoverUrl()
   dialogVisible.value = true
 }

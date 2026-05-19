@@ -87,7 +87,7 @@
     <el-dialog v-model="uploadDialogVisible" title="上传音频" width="500px">
       <el-form ref="uploadFormRef" :model="uploadForm" :rules="uploadRules" label-width="100px">
         <el-form-item label="章节序号" prop="seq">
-          <el-input-number v-model="uploadForm.seq" :min="0" />
+          <el-input-number v-model="uploadForm.seq" :min="1" />
           <span class="seq-tip">当前课程最大序号：{{ maxSeqInCourse }}</span>
         </el-form-item>
         <el-form-item label="章节标题" prop="title">
@@ -156,7 +156,7 @@
     <el-dialog v-model="editDialogVisible" title="编辑音频" width="500px">
       <el-form ref="editFormRef" :model="editForm" label-width="100px">
         <el-form-item label="序号">
-          <el-input-number v-model="editForm.seq" :min="0" />
+          <el-input-number v-model="editForm.seq" :min="1" />
         </el-form-item>
         <el-form-item label="章节名称">
           <el-input v-model="editForm.title" placeholder="请输入章节名称" />
@@ -291,12 +291,8 @@ async function loadChapters() {
 
 // 显示上传弹窗
 function showUploadDialog() {
-  // 获取当前课程音频的最大序号
-  if (audios.value.length > 0) {
-    maxSeqInCourse.value = Math.max(...audios.value.map(a => a.seq ?? 0))
-  } else {
-    maxSeqInCourse.value = 0
-  }
+  // 使用总数作为下一个序号（因为seq是连续的）
+  maxSeqInCourse.value = total.value > 0 ? total.value : 0
   uploadForm.seq = maxSeqInCourse.value + 1
   uploadDialogVisible.value = true
 }
@@ -557,9 +553,11 @@ function initSortable() {
         const movedItem = audios.value.splice(oldIndex, 1)[0]
         audios.value.splice(newIndex, 0, movedItem)
 
+        // 计算基础序号（考虑分页偏移）
+        const baseSeq = (currentPage.value - 1) * pageSize.value + 1
         const updates = audios.value.map((audio, index) => ({
           _id: audio._id,
-          seq: index
+          seq: baseSeq + index
         }))
 
         try {
@@ -567,7 +565,7 @@ function initSortable() {
           if (res.success) {
             ElMessage.success('排序已保存')
             audios.value.forEach((audio, index) => {
-              audio.seq = index
+              audio.seq = baseSeq + index
             })
           } else {
             ElMessage.error('保存排序失败')

@@ -130,7 +130,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="序号" prop="seq">
-          <el-input-number v-model="form.seq" :min="0" style="width: 120px" />
+          <el-input-number v-model="form.seq" :min="1" style="width: 120px" />
         </el-form-item>
         <el-form-item label="章节名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入章节名称" style="width: 280px" />
@@ -480,7 +480,7 @@ async function loadChapters() {
     const res = await getChapters(filterCourseId, currentPage.value, pageSize.value)
     if (res.success) {
       // 关联课程名称
-      let chaptersData = res.data.data.map(chapter => {
+      let chaptersData = (res.data.data || res.data).map(chapter => {
         const course = courses.value.find(c => c._id === chapter.course)
         return {
           ...chapter,
@@ -541,9 +541,8 @@ async function loadCourses() {
 function showAddDialog() {
   isEdit.value = false
   resetForm()
-  // 自动计算下一个序号（基于当前课程所有章节的最大序号）
-  const maxSeq = chapters.value.length > 0 ? Math.max(...chapters.value.map(c => c.seq || 0)) : 0
-  form.seq = maxSeq + 1
+  // 使用总数作为下一个序号（因为seq是连续的）
+  form.seq = total.value > 0 ? total.value + 1 : 1
   // 如果从课程页面进入，预设课程ID
   if (courseId.value) {
     form.course = courseId.value
@@ -801,10 +800,11 @@ function initSortable() {
         const movedItem = chapters.value.splice(oldIndex, 1)[0]
         chapters.value.splice(newIndex, 0, movedItem)
 
-        // 更新序号
+        // 计算基础序号（考虑分页偏移）
+        const baseSeq = (currentPage.value - 1) * pageSize.value + 1
         const updates = chapters.value.map((chapter, index) => ({
           _id: chapter._id,
-          seq: index + 1
+          seq: baseSeq + index
         }))
 
         // 调用批量更新API
@@ -813,7 +813,7 @@ function initSortable() {
           if (res.success) {
             ElMessage.success('排序已保存')
             chapters.value.forEach((chapter, index) => {
-              chapter.seq = index + 1
+              chapter.seq = baseSeq + index
             })
           } else {
             ElMessage.error('保存排序失败')
