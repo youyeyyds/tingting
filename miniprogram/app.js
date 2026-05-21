@@ -536,7 +536,7 @@ App({
   },
 
   // 保存播放进度（云端）
-  saveProgress(chapterId, courseId, lastPlayTime, finished) {
+  saveProgress(chapterId, courseId, lastPlayTime, finished, isFavoriteList = false) {
     if (!chapterId || !lastPlayTime || !this.globalData.userId) return Promise.resolve();
 
     // 同步更新playlistChaptersData中的章节状态
@@ -560,7 +560,17 @@ App({
         userId: this.globalData.userId
       }
     }).then(() => {
+      // 从收藏列表播放时更新该课程的总进度
+      if (isFavoriteList && courseId) {
+        this._updateCourseProgressCache(courseId);
+      }
       this.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
     }).catch(err => console.error('保存进度失败:', err));
+  },
+
+  // 更新课程进度缓存（收藏列表播放后调用）
+  _updateCourseProgressCache(courseId) {
+    // 清除首页课程缓存，下次onShow会重新加载
+    this.globalData.homePageCourses = [];
   }
 });

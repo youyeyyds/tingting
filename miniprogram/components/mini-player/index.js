@@ -452,7 +452,7 @@ Component({
         finished = isFinished ? true : (lastPlayTime >= duration - 10);
       }
 
-      return app.saveProgress(chapterId, this.data.currentChapter.course || this.data.course._id, lastPlayTime, finished);
+      return app.saveProgress(chapterId, this.data.currentChapter.course || this.data.course?._id, lastPlayTime, finished, true);
     },
 
     preventMove() {
