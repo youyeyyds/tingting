@@ -46,6 +46,14 @@ Page({
         this.setData({ courses });
       });
     });
+
+    // 监听播放进度更新
+    app.registerMiniPlayer?.({
+      onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
+        // 清除课程缓存，首页下次显示时会重新加载最新进度（课程平均进度）
+        app.globalData.homePageCourses = [];
+      }
+    });
   },
 
   initLayout() {
@@ -101,6 +109,13 @@ Page({
 
   onShow() {
     this.setData({ activeTab: 0 });
+
+    // 如果课程缓存被清除（进度更新），重新加载以获取最新课程进度
+    if (!app.globalData.homePageCourses?.length && app.globalData.isLoggedIn) {
+      this._realCourses = null;
+      this.loadCourses();
+    }
+
     // logout 后恢复脱敏数据（从mine页退出登录时触发）
     if (app.globalData.needRestoreMaskedData && !app.globalData.loginFlag) {
       app.globalData.needRestoreMaskedData = false;
