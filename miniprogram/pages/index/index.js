@@ -50,8 +50,11 @@ Page({
     // 监听播放进度更新
     app.registerMiniPlayer?.({
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
+        console.log('[index] onProgressUpdate received:', { chapterId, lastPlayTime, finished });
+        console.log('[index] homePageCourses before:', app.globalData.homePageCourses?.length);
         // 清除课程缓存，首页下次显示时会重新加载最新进度（课程平均进度）
         app.globalData.homePageCourses = [];
+        console.log('[index] homePageCourses after clear:', app.globalData.homePageCourses?.length);
       }
     });
   },
@@ -109,9 +112,11 @@ Page({
 
   onShow() {
     this.setData({ activeTab: 0 });
+    console.log('[index] onShow called, homePageCourses length:', app.globalData.homePageCourses?.length);
 
     // 如果课程缓存被清除（进度更新），重新加载以获取最新课程进度
     if (!app.globalData.homePageCourses?.length && app.globalData.isLoggedIn) {
+      console.log('[index] onShow: reloading courses due to empty cache');
       this._realCourses = null;
       this.loadCourses();
     }
@@ -246,6 +251,7 @@ Page({
   },
 
   loadCourses() {
+    console.log('[index] loadCourses called');
     return wx.cloud.callFunction({
       name: 'courseFunctions',
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
