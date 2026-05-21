@@ -117,7 +117,7 @@ const getCourses = async (event) => {
     const categoriesRes = await db.collection("categories").get();
 
     // 获取章节列表
-    const chaptersRes = await db.collection("chapters").get();
+    const chaptersRes = await db.collection("chapters").limit(1000).get();
 
     // 获取用户所有进度记录
     const userProgressRes = await db.collection("userProgress")
