@@ -256,11 +256,13 @@ Page({
       name: 'courseFunctions',
       data: { type: 'getCourses', limit: 20, filterDraft: true, userId: app.globalData.userId }
     }).then(res => {
+      console.log('[index] loadCourses result:', res.result);
       if (res.result.success) {
         const courses = res.result.data.map(c => ({
           ...c,
           cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
         }));
+        console.log('[index] courses loaded, count:', courses.length, 'first course progress:', courses[0]?.progress);
         this._realCourses = courses;
         app.globalData.homePageCourses = courses;
         wx.setStorageSync('indexCourses', courses);
