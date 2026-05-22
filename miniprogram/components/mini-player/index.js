@@ -436,8 +436,6 @@ Component({
 
     _doSaveProgress(isFinished = false) {
       const chapterId = this.data.currentChapter._id;
-      console.log('[_doSaveProgress] currentChapter:', this.data.currentChapter);
-      console.log('[_doSaveProgress] course:', this.data.course);
       if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
       const lastPlayTime = this.bgAudioManager.currentTime;
       const duration = this.bgAudioManager.duration || 0;

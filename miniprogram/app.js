@@ -537,7 +537,6 @@ App({
 
   // 保存播放进度（云端）
   saveProgress(chapterId, courseId, lastPlayTime, finished, isFavoriteList = false) {
-    console.log('[saveProgress] called with:', { chapterId, courseId, lastPlayTime, finished, isFavoriteList });
     if (!chapterId || !lastPlayTime || !this.globalData.userId) return Promise.resolve();
 
     // 同步更新playlistChaptersData中的章节状态
@@ -561,10 +560,8 @@ App({
         userId: this.globalData.userId
       }
     }).then((res) => {
-      console.log('[saveProgress] cloud function result:', res);
       // 从收藏列表播放时更新该课程的总进度
       if (isFavoriteList && courseId) {
-        console.log('[saveProgress] clearing homePageCourses for course:', courseId);
         this._updateCourseProgressCache(courseId);
       }
       this.notifyCallbacks('onProgressUpdate', { chapterId, lastPlayTime, finished });
