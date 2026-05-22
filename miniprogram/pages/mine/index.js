@@ -95,6 +95,12 @@ Page({
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
     }
+
+    // 用户已登录时，刷新头像临时URL和学习报告
+    if (app.globalData.isLoggedIn) {
+      this.refreshAvatarTempUrl();
+      this.loadUserStats();
+    }
   },
 
   // 重新获取用户信息（刷新头像临时URL）

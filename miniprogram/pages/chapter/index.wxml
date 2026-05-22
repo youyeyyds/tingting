@@ -3,6 +3,35 @@
   <!-- 导航栏 -->
   <custom-navbar showBack="{{true}}" />
 
+  <!-- 骨架屏加载状态 -->
+  <block wx:if="{{loading}}">
+    <view class="skeleton-section" style="margin-top: {{headerHeight}}px;">
+      <view class="skeleton-info">
+        <view class="skeleton-cover skeleton-shimmer"></view>
+        <view class="skeleton-details">
+          <view class="skeleton-title skeleton-shimmer"></view>
+          <view class="skeleton-author skeleton-shimmer"></view>
+          <view class="skeleton-meta skeleton-shimmer"></view>
+        </view>
+      </view>
+    </view>
+    <view class="filter-bar">
+      <view class="skeleton-switch skeleton-shimmer" style="width: 120rpx; height: 44rpx;"></view>
+      <view class="skeleton-sort skeleton-shimmer" style="width: 80rpx; height: 44rpx;"></view>
+    </view>
+    <view class="chapter-list">
+      <view class="skeleton-chapter-card" wx:for="{{[1,2,3,4,5,6,7,8]}}" wx:key="index">
+        <view class="skeleton-chapter-info">
+          <view class="skeleton-chapter-title skeleton-shimmer"></view>
+          <view class="skeleton-chapter-meta skeleton-shimmer"></view>
+        </view>
+        <view class="skeleton-chapter-actions skeleton-shimmer"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 真实内容 -->
+  <block wx:else>
   <!-- 课程信息区 -->
   <view class="course-info-section" style="margin-top: {{headerHeight}}px;">
     <image class="course-cover" src="{{course.cover}}" mode="aspectFill" />
@@ -84,6 +113,7 @@
       <text class="footer-text">— 随时随地，学习成长 —</text>
     </view>
   </view>
+  </block>
 </view>
 
 <!-- 迷你播放器 -->
