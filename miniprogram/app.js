@@ -33,6 +33,13 @@ App({
     this.loadDefaultCover();
   },
 
+  onShow() {
+    // 重新进入小程序时，关闭音频并隐藏mini-player
+    if (this.bgAudioManager && this.globalData.miniPlayerActive) {
+      this.resetPlayState();
+    }
+  },
+
   // 加载默认封面
   loadDefaultCover() {
     // 优先从本地缓存读取
