@@ -29,6 +29,11 @@ Page({
     this.initTimes();
     this.loadData();
 
+    // 预加载登录页版权信息
+    if (!app.globalData.loginCopyright?.copyrightLines) {
+      this.preloadCopyright();
+    }
+
     // 监听其他页面刷新图片
     app.registerCallback?.('onCoverRefresh', (data) => {
       app.globalData.coverLoadTime = data.coverLoadTime;
@@ -263,6 +268,21 @@ Page({
         this.setData({ loading: false });
       }
     }).catch(() => this.setData({ loading: false }));
+  },
+
+  // 预加载登录页版权信息
+  preloadCopyright() {
+    return wx.cloud.callFunction({
+      name: 'courseFunctions',
+      data: { type: 'getCopyright' }
+    }).then(res => {
+      if (res.result.success) {
+        const data = res.result.data || {};
+        const text = data.copyrightText || 'youyeyyds\nPowered by Claude Code\n版本号：v0.1.0';
+        const copyrightLines = text.split('\n').filter(l => l.trim());
+        app.globalData.loginCopyright = { copyrightLines, icpNumber: data.icpNumber || '' };
+      }
+    }).catch(e => console.error('预加载版权信息失败', e));
   },
 
   // 加载武功数据
