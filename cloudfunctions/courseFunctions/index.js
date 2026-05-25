@@ -731,6 +731,25 @@ const updateCourseSettings = async (event) => {
   }
 };
 
+// 获取卡牌列表
+const getCards = async (event) => {
+  try {
+    const cardsRes = await db.collection("cards")
+      .orderBy('seq', 'asc')
+      .get();
+
+    return {
+      success: true,
+      data: cardsRes.data || []
+    };
+  } catch (e) {
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 
 // 获取武功列表（用于首页脱敏）
@@ -850,6 +869,8 @@ exports.main = async (event, context) => {
       return await updateCourseSettings(event);
     case "getMartialArts":
       return await getMartialArts(event);
+    case "getCards":
+      return await getCards(event);
     case "getMinimalCourses":
       return await getMinimalCourses(event);
     default:

@@ -746,4 +746,61 @@ export async function importMartialArtsBaseData(data) {
   return response.data
 }
 
+// ========== 卡牌 API ==========
+
+/**
+ * 获取卡牌列表
+ */
+export async function getCards() {
+  const response = await api.get('/cards')
+  return response.data
+}
+
+/**
+ * 创建卡牌
+ */
+export async function createCard(data) {
+  const response = await api.post('/cards', data)
+  return response.data
+}
+
+/**
+ * 更新卡牌
+ */
+export async function updateCard(id, data) {
+  const response = await api.put(`/cards/${id}`, data)
+  return response.data
+}
+
+/**
+ * 删除卡牌
+ */
+export async function deleteCard(id) {
+  const response = await api.delete(`/cards/${id}`)
+  return response.data
+}
+
+/**
+ * 上传卡牌图片
+ * @param {File} file 图片文件
+ */
+export async function uploadCardImage(file) {
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const response = await api.post('/cards/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response.data
+}
+
+/**
+ * 删除卡牌图片
+ * @param {string} fileID 云存储文件ID
+ */
+export async function deleteCardImage(fileID) {
+  const response = await api.delete('/cards/image', { data: { fileID } })
+  return response.data
+}
+
 export default api

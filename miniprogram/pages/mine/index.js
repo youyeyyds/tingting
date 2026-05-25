@@ -354,9 +354,9 @@ Page({
     this.setData({ refreshConfirmVisible: true });
   },
 
-  // 点击卡片
+  // 点击卡片 - 卡牌
   onCardTap() {
-    wx.showToast({ title: '功能开发中', icon: 'none' });
+    wx.navigateTo({ url: '/pages/cards/index' });
   },
 
   // 取消刷新图片

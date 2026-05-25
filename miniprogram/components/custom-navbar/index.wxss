@@ -50,6 +50,10 @@
   color: #000;
 }
 
+.nav-title-text.white-title {
+  color: #fff;
+}
+
 /* overlay按钮组样式 */
 .overlay-nav-btn-group {
   position: absolute;

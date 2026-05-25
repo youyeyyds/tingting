@@ -3706,6 +3706,184 @@ app.delete('/api/martial-arts/:id', async (req, res) => {
   }
 });
 
+// ========== 卡牌 API ==========
+
+// 获取卡牌列表
+app.get('/api/cards', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const cardsRes = await db.collection('cards').orderBy('seq', 'asc').get();
+    res.json(success(cardsRes.data));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 创建卡牌
+app.post('/api/cards', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const data = req.body;
+
+    const result = await db.collection('cards').add({
+      seq: data.seq || 1,
+      character: data.character,
+      faction: data.faction,
+      quote: data.quote,
+      image: data.image,
+      imageFileID: data.imageFileID,
+      status: data.status || 'published'
+    });
+
+    res.json(success({ id: result.id }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 更新卡牌
+app.put('/api/cards/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+    const data = req.body;
+
+    await db.collection('cards').doc(id).update({
+      seq: data.seq,
+      character: data.character,
+      faction: data.faction,
+      quote: data.quote,
+      image: data.image,
+      imageFileID: data.imageFileID,
+      status: data.status
+    });
+
+    res.json(success({ updated: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 删除卡牌
+app.delete('/api/cards/:id', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const id = req.params.id;
+
+    // 获取卡牌信息以删除云端图片
+    const card = await db.collection('cards').doc(id).get();
+    if (card.data[0] && card.data[0].imageFileID) {
+      try {
+        await tcb.deleteFile({ fileList: [card.data[0].imageFileID] });
+      } catch (e) {
+        console.error('删除云存储文件失败:', e.message);
+      }
+    }
+
+    await db.collection('cards').doc(id).remove();
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 批量更新卡牌排序
+app.post('/api/cards/batch-update-seq', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const updates = req.body;
+
+    for (const item of updates) {
+      await db.collection('cards').doc(item._id).update({
+        seq: item.seq
+      });
+    }
+
+    res.json(success({ updated: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 上传卡牌图片
+app.post('/api/cards/upload', upload.single('image'), async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const file = req.file;
+    if (!file) return res.json(error('请选择图片文件'));
+
+    if (!fs.existsSync(file.path)) {
+      return res.json(error('文件保存失败'));
+    }
+
+    // 上传到云存储（只用时间戳做文件名，避免中文路径导致403）
+    const ext = path.extname(file.originalname);
+    const cloudPath = `cards/${Date.now()}${ext}`;
+    const fileContent = fs.readFileSync(file.path);
+
+    const uploadResult = await tcb.uploadFile({
+      cloudPath: cloudPath,
+      fileContent: fileContent
+    });
+
+    // 删除临时文件
+    fs.unlinkSync(file.path);
+
+    if (!uploadResult.fileID) {
+      return res.json(error('云存储上传失败'));
+    }
+
+    // 获取临时链接
+    const urlResult = await tcb.getTempFileURL({
+      fileList: [uploadResult.fileID],
+      maxAge: 7 * 24 * 60 * 60
+    });
+
+    const tempUrl = urlResult.fileList?.[0]?.tempFileURL || '';
+
+    res.json(success({
+      localUrl: `/cards/${file.filename}`,
+      fileID: uploadResult.fileID,
+      tempUrl: tempUrl
+    }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 删除卡牌图片
+app.delete('/api/cards/image', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const { fileID } = req.body;
+    if (!fileID) return res.json(error('缺少文件ID'));
+
+    await tcb.deleteFile({ fileList: [fileID] });
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // ========== 启动服务器 ==========
 
 const PORT = process.env.SERVER_PORT || 3002;

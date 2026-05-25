@@ -32,6 +32,18 @@ Component({
     overlayHomeIcon: {
       type: String,
       value: '/icons/svg/home-white.svg'
+    },
+    iconColor: {
+      type: String,
+      value: 'black'
+    },
+    titleColor: {
+      type: String,
+      value: 'black'
+    },
+    transparent: {
+      type: Boolean,
+      value: false
     }
   },
 

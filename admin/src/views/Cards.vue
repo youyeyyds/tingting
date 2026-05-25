@@ -1,0 +1,446 @@
+<template>
+  <div class="cards-page">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>卡牌列表</span>
+          <el-button type="primary" @click="showAddDialog">
+            <el-icon><Plus /></el-icon>
+            新增卡牌
+          </el-button>
+        </div>
+      </template>
+
+      <el-table
+        :data="cards"
+        v-loading="loading"
+        stripe
+        ref="tableRef"
+        row-key="_id"
+      >
+        <el-table-column label="" width="50">
+          <template #default>
+            <span class="drag-handle" @click.stop>
+              <span class="drag-line"></span>
+              <span class="drag-line"></span>
+              <span class="drag-line"></span>
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="seq" label="序号" width="80" />
+        <el-table-column prop="image" label="卡面" width="100">
+          <template #default="{ row }">
+            <div @click.stop>
+              <el-image
+                v-if="row.image"
+                :src="row.image"
+                style="width: 80px; height: 80px"
+                fit="cover"
+              />
+              <span v-else>-</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="character" label="人物" min-width="150" />
+        <el-table-column prop="faction" label="势力" width="120" />
+        <el-table-column prop="quote" label="台词" min-width="200">
+          <template #default="{ row }">
+            <span class="quote-text">{{ row.quote || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'published' ? 'success' : 'info'">
+              {{ row.status === 'published' ? '已发布' : '草稿' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <div @click.stop>
+              <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
+              <el-button size="small" :type="row.status === 'published' ? '' : 'success'" @click="toggleStatus(row)">
+                {{ row.status === 'published' ? '下架' : '发布' }}
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑卡牌' : '新增卡牌'"
+      width="600px"
+      :before-close="handleDialogClose"
+    >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="序号" prop="seq">
+          <el-input-number v-model="form.seq" :min="1" />
+        </el-form-item>
+        <el-form-item label="卡面" prop="image">
+          <div class="image-upload-wrapper">
+            <el-input v-model="form.image" readonly placeholder="请上传卡面图片" />
+            <el-upload
+              v-if="!form.image"
+              :show-file-list="false"
+              :http-request="handleImageUpload"
+            >
+              <el-button type="primary" :loading="uploading">上传图片</el-button>
+            </el-upload>
+            <el-button v-else type="danger" :loading="uploading" @click="deleteImage">
+              删除图片
+            </el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="人物" prop="character">
+          <el-input v-model="form.character" placeholder="请输入人物名称" />
+        </el-form-item>
+        <el-form-item label="势力" prop="faction">
+          <el-input v-model="form.faction" placeholder="请输入势力" />
+        </el-form-item>
+        <el-form-item label="台词" prop="quote">
+          <el-input
+            v-model="form.quote"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入台词"
+          />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="form.status">
+            <el-radio value="published">已发布</el-radio>
+            <el-radio value="draft">草稿</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import Sortable from 'sortablejs'
+import { getCards, createCard, updateCard, deleteCard, batchUpdateSeq, uploadCardImage, deleteCardImage } from '@/api/cloud'
+
+const loading = ref(false)
+const submitLoading = ref(false)
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentId = ref('')
+const formRef = ref(null)
+const tableRef = ref(null)
+const uploading = ref(false)
+
+const cards = ref([])
+
+const form = reactive({
+  seq: 1,
+  image: '',
+  imageFileID: '',
+  character: '',
+  faction: '',
+  quote: '',
+  status: 'published'
+})
+
+const rules = {
+  character: [{ required: true, message: '请输入人物名称', trigger: 'blur' }],
+  faction: [{ required: true, message: '请输入势力', trigger: 'blur' }]
+}
+
+// 加载卡牌列表
+async function loadCards() {
+  loading.value = true
+  try {
+    const res = await getCards()
+    if (res.success) {
+      cards.value = res.data
+    } else {
+      ElMessage.error('加载卡牌失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('加载卡牌失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 显示新增弹窗
+function showAddDialog() {
+  isEdit.value = false
+  resetForm()
+  form.seq = cards.value.length + 1
+  dialogVisible.value = true
+}
+
+// 显示编辑弹窗
+function showEditDialog(row) {
+  isEdit.value = true
+  currentId.value = row._id
+  Object.assign(form, {
+    seq: row.seq || 1,
+    image: row.image || '',
+    imageFileID: row.imageFileID || '',
+    character: row.character || '',
+    faction: row.faction || '',
+    quote: row.quote || '',
+    status: row.status || 'published'
+  })
+  dialogVisible.value = true
+}
+
+// 重置表单
+function resetForm() {
+  Object.assign(form, {
+    seq: 1,
+    image: '',
+    imageFileID: '',
+    character: '',
+    faction: '',
+    quote: '',
+    status: 'published'
+  })
+}
+
+// 弹窗关闭前检查
+async function handleDialogClose(done) {
+  if (uploading.value) {
+    ElMessage.warning('图片正在上传中，请等待上传完成')
+    return
+  }
+  done()
+}
+
+// 取消按钮
+function handleCancel() {
+  if (uploading.value) {
+    ElMessage.warning('图片正在上传中，请等待上传完成')
+    return
+  }
+  handleDialogClose(() => {
+    dialogVisible.value = false
+  })
+}
+
+// 提交表单
+async function handleSubmit() {
+  if (uploading.value) {
+    ElMessage.warning('图片正在上传中，请等待上传完成')
+    return
+  }
+
+  try {
+    await formRef.value.validate()
+  } catch {
+    return
+  }
+
+  submitLoading.value = true
+  try {
+    let res
+    if (isEdit.value) {
+      res = await updateCard(currentId.value, form)
+    } else {
+      res = await createCard(form)
+    }
+
+    if (res.success) {
+      ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
+      dialogVisible.value = false
+      loadCards()
+    } else {
+      ElMessage.error('操作失败: ' + res.error)
+    }
+  } catch (err) {
+    ElMessage.error('操作失败')
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// 删除卡牌
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定要删除卡牌 "${row.character}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const loading = ElMessage({
+      message: '正在删除，请稍候...',
+      duration: 0
+    })
+
+    const res = await deleteCard(row._id)
+
+    loading.close()
+
+    if (res.success) {
+      await loadCards()
+      ElMessage.success('删除成功')
+    } else {
+      loading.close()
+      ElMessage.error('删除失败: ' + (res.error || '未知错误'))
+    }
+  } catch {
+    // 用户取消
+  }
+}
+
+// 切换卡牌状态（发布/下架）
+async function toggleStatus(row) {
+  const newStatus = row.status === 'published' ? 'draft' : 'published'
+  const actionText = newStatus === 'published' ? '发布' : '下架'
+
+  try {
+    const res = await updateCard(row._id, { ...row, status: newStatus })
+    if (res.success) {
+      ElMessage.success(`${actionText}成功`)
+      loadCards()
+    } else {
+      ElMessage.error(`${actionText}失败: ` + res.error)
+    }
+  } catch (err) {
+    ElMessage.error(`${actionText}失败`)
+  }
+}
+
+// 处理图片上传
+async function handleImageUpload(options) {
+  const { file } = options
+  uploading.value = true
+  try {
+    const res = await uploadCardImage(file)
+    if (res.success) {
+      form.image = res.data.tempUrl || res.data.localUrl
+      form.imageFileID = res.data.fileID
+      ElMessage.success('图片上传成功')
+    } else {
+      ElMessage.error('图片上传失败: ' + (res.error || '未知错误'))
+    }
+  } catch (err) {
+    ElMessage.error('图片上传失败')
+  } finally {
+    uploading.value = false
+  }
+}
+
+// 删除图片
+async function deleteImage() {
+  if (form.imageFileID) {
+    try {
+      await deleteCardImage(form.imageFileID)
+    } catch (err) {
+      console.error('删除云端图片失败:', err)
+    }
+  }
+  form.image = ''
+  form.imageFileID = ''
+  ElMessage.success('图片已删除')
+}
+
+// 初始化拖拽排序
+function initSortable() {
+  nextTick(() => {
+    if (!tableRef.value) return
+
+    const tbody = tableRef.value.$el.querySelector('.el-table__body-wrapper tbody')
+    if (!tbody) return
+
+    Sortable.create(tbody, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: async (evt) => {
+        const { oldIndex, newIndex } = evt
+
+        if (oldIndex === newIndex) return
+
+        const movedItem = cards.value.splice(oldIndex, 1)[0]
+        cards.value.splice(newIndex, 0, movedItem)
+
+        const updates = cards.value.map((card, index) => ({
+          _id: card._id,
+          seq: index + 1
+        }))
+
+        try {
+          const res = await batchUpdateSeq('cards', updates)
+          if (res.success) {
+            ElMessage.success('排序已保存')
+            cards.value.forEach((card, index) => {
+              card.seq = index + 1
+            })
+          } else {
+            ElMessage.error('保存排序失败')
+            loadCards()
+          }
+        } catch (err) {
+          ElMessage.error('保存排序失败')
+          loadCards()
+        }
+      }
+    })
+  })
+}
+
+onMounted(async () => {
+  await loadCards()
+  initSortable()
+})
+</script>
+
+<style scoped>
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drag-handle {
+  cursor: move;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.drag-line {
+  width: 18px;
+  height: 2px;
+  background: #ccc;
+  margin: 1px 0;
+}
+
+.quote-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: #666;
+}
+
+.image-upload-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.image-upload-wrapper .el-input {
+  flex: 1;
+}
+</style>

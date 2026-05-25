@@ -1,5 +1,5 @@
 <!--custom-navbar/index.wxml-->
-<view class="custom-navbar {{showOverlayBtns ? 'transparent' : ''}}" style="height: {{statusBarHeight + navContentHeight}}px; background: {{showOverlayBtns ? 'transparent' : ''}};">
+<view class="custom-navbar {{transparent ? 'transparent' : ''}}" style="height: {{statusBarHeight + navContentHeight}}px; background: {{transparent ? 'transparent' : ''}};">
   <!-- 状态栏占位 -->
   <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
 
@@ -11,7 +11,7 @@
         <text class="nav-login-text">{{loginText}}</text>
       </block>
       <block wx:else>
-        <image class="nav-icon" src="/icons/svg/arrow-left-black.svg" mode="aspectFit" />
+        <image class="nav-icon" src="{{iconColor === 'white' ? '/icons/svg/arrow-left-white.svg' : '/icons/svg/arrow-left-black.svg'}}" mode="aspectFit" />
       </block>
     </view>
 
@@ -27,6 +27,6 @@
     </view>
 
     <!-- 标题居中 -->
-    <text class="nav-title-text" wx:if="{{title}}">{{title}}</text>
+    <text class="nav-title-text {{titleColor === 'white' ? 'white-title' : ''}}" wx:if="{{title}}">{{title}}</text>
   </view>
 </view>

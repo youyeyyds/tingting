@@ -72,7 +72,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection } from '@element-plus/icons-vue'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection, Postcard } from '@element-plus/icons-vue'
 import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
@@ -99,7 +99,8 @@ const menuLabels = {
   versions: '版本管理',
   users: '用户管理',
   roles: '角色管理',
-  system: '系统配置'
+  system: '系统配置',
+  cards: '卡牌管理'
 }
 
 const menuIcons = {
@@ -111,10 +112,11 @@ const menuIcons = {
   versions: InfoFilled,
   users: User,
   roles: Lock,
-  system: Setting
+  system: Setting,
+  cards: Postcard
 }
 
-const menuOrder = ref(['courses', 'audios', 'headlines', 'martial-arts', 'categories', 'versions', 'users', 'roles', 'system'])
+const menuOrder = ref(['courses', 'audios', 'headlines', 'martial-arts', 'categories', 'versions', 'users', 'roles', 'cards', 'system'])
 
 // 获取头像URL（兼容新旧格式）
 function getAvatarUrl(avatarUrl) {
