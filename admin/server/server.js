@@ -3716,7 +3716,27 @@ app.get('/api/cards', async (req, res) => {
 
     const db = tcb.database();
     const cardsRes = await db.collection('cards').orderBy('seq', 'asc').get();
-    res.json(success(cardsRes.data));
+    let cards = cardsRes.data || [];
+
+    // 重新获取云存储文件的临时链接，避免签名过期
+    // 使用 imageFileID（cloud://格式）而不是 image（完整URL）
+    const fileList = cards.map(card => card.imageFileID).filter(Boolean);
+    if (fileList.length > 0) {
+      const urlResult = await tcb.getTempFileURL({ fileList });
+      const tempUrlMap = {};
+      (urlResult.fileList || []).forEach((item, index) => {
+        if (fileList[index]) {
+          tempUrlMap[fileList[index]] = item.tempFileURL || fileList[index];
+        }
+      });
+      // 替换为新的临时URL
+      cards = cards.map(card => ({
+        ...card,
+        image: card.imageFileID && tempUrlMap[card.imageFileID] ? tempUrlMap[card.imageFileID] : card.image
+      }));
+    }
+
+    res.json(success(cards));
   } catch (err) {
     res.json(error(err.message));
   }

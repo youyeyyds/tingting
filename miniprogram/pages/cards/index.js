@@ -32,7 +32,9 @@ Page({
         data: { type: 'getCards' }
       });
       if (res.result.success) {
-        const cards = res.result.data || [];
+        let cards = res.result.data || [];
+        // 重新获取图片签名，避免过期
+        cards = await this.refreshCardImageUrls(cards);
         this.setData({
           cards,
           currentCard: cards[0] || null,
@@ -43,6 +45,30 @@ Page({
       console.error('获取卡牌失败', err);
     } finally {
       this.setData({ loading: false });
+    }
+  },
+
+  // 刷新卡牌图片URL（获取新的临时签名）
+  async refreshCardImageUrls(cards) {
+    if (!cards || cards.length === 0) return cards;
+    // 使用 imageFileID（cloud://格式）获取新签名
+    const fileList = cards.map(card => card.imageFileID).filter(Boolean);
+    if (fileList.length === 0) return cards;
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList });
+      const urlMap = {};
+      (res.fileList || []).forEach((item, index) => {
+        if (fileList[index]) {
+          urlMap[fileList[index]] = item.tempFileURL || fileList[index];
+        }
+      });
+      return cards.map(card => ({
+        ...card,
+        image: card.imageFileID && urlMap[card.imageFileID] ? urlMap[card.imageFileID] : card.image
+      }));
+    } catch (err) {
+      console.error('刷新卡牌图片URL失败', err);
+      return cards;
     }
   },
 

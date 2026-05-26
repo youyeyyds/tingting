@@ -738,9 +738,29 @@ const getCards = async (event) => {
       .orderBy('seq', 'asc')
       .get();
 
+    let cards = cardsRes.data || [];
+
+    // 重新获取云存储文件的临时链接，避免签名过期
+    // 使用 imageFileID（cloud://格式）获取新签名
+    const fileList = cards.map(card => card.imageFileID).filter(Boolean);
+    if (fileList.length > 0) {
+      const tempUrlResult = await cloud.getTempFileURL({ fileList });
+      const tempUrlMap = {};
+      (tempUrlResult.fileList || []).forEach((item, index) => {
+        if (fileList[index]) {
+          tempUrlMap[fileList[index]] = item.tempFileURL || fileList[index];
+        }
+      });
+      // 替换为新的临时URL
+      cards = cards.map(card => ({
+        ...card,
+        image: card.imageFileID && tempUrlMap[card.imageFileID] ? tempUrlMap[card.imageFileID] : card.image
+      }));
+    }
+
     return {
       success: true,
-      data: cardsRes.data || []
+      data: cards
     };
   } catch (e) {
     return {
