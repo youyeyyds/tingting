@@ -35,31 +35,6 @@
   border-radius: 20rpx;
 }
 
-.skeleton-nav {
-  display: flex;
-  align-items: center;
-  gap: 80rpx;
-  margin-top: 60rpx;
-}
-
-.skeleton-btn {
-  width: 80rpx;
-  height: 80rpx;
-  background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 40rpx;
-}
-
-.skeleton-indicator {
-  width: 120rpx;
-  height: 40rpx;
-  background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8rpx;
-}
-
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -129,7 +104,7 @@
   align-items: center;
   justify-content: center;
   gap: 80rpx;
-  padding: 40rpx 0;
+  padding: 20rpx 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -150,6 +125,9 @@
 }
 
 .card-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 120rpx;
   text-align: center;
 }
