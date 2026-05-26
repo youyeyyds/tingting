@@ -49,7 +49,7 @@
     </el-card>
 
     <!-- 菜单排序 -->
-    <el-card>
+    <el-card style="margin-top: 20px">
       <template #header>
         <span>菜单排序</span>
       </template>

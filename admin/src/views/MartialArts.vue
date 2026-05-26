@@ -874,7 +874,6 @@ watch(activeBaseTab, () => {
 
 <style scoped>
 .martial-arts-page {
-  padding: 20px;
 }
 
 .card-header {
