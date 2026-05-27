@@ -9,7 +9,9 @@ Page({
     isFlipped: false,
     loading: true,
     headerHeight: 0,
-    defaultCardFace: null
+    defaultCardFace: null,
+    cardAnimation: 'center', // center | left-out | right-in | right-out | left-in
+    isTransitioning: false
   },
 
   onLoad() {
@@ -42,12 +44,29 @@ Page({
           currentIndex: 0,
           defaultCardFace: res.result.defaultCardFace || null
         });
+        // 预加载前几张卡牌图片
+        this.preloadImages(0);
       }
     } catch (err) {
       console.error('获取卡牌失败', err);
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  // 预加载卡牌图片
+  preloadImages(currentIndex) {
+    const { cards } = this.data;
+    if (!cards || cards.length === 0) return;
+
+    // 预加载当前、前后各一张
+    const toPreload = [currentIndex - 1, currentIndex + 1, currentIndex + 2];
+    toPreload.forEach(index => {
+      if (index >= 0 && index < cards.length && cards[index]) {
+        const img = wx.createImage();
+        img.src = cards[index].image;
+      }
+    });
   },
 
   // 刷新卡牌图片URL（获取新的临时签名）
@@ -75,27 +94,42 @@ Page({
   },
 
   onCardTap() {
+    if (this.data.isTransitioning) return;
     this.setData({ isFlipped: !this.data.isFlipped });
   },
 
   onPrev() {
-    if (this.data.currentIndex <= 0) return;
-    const newIndex = this.data.currentIndex - 1;
-    this.setData({
-      currentIndex: newIndex,
-      currentCard: this.data.cards[newIndex],
-      isFlipped: false
-    });
+    if (this.data.currentIndex <= 0 || this.data.isTransitioning) return;
+    this.playTransition('left');
   },
 
   onNext() {
-    if (this.data.currentIndex >= this.data.cards.length - 1) return;
-    const newIndex = this.data.currentIndex + 1;
-    this.setData({
-      currentIndex: newIndex,
-      currentCard: this.data.cards[newIndex],
-      isFlipped: false
-    });
+    if (this.data.currentIndex >= this.data.cards.length - 1 || this.data.isTransitioning) return;
+    this.playTransition('right');
+  },
+
+  playTransition(direction) {
+    const outAnim = direction === 'right' ? 'left-out' : 'right-out';
+    const inAnim = direction === 'right' ? 'right-in' : 'left-in';
+
+    this.setData({ cardAnimation: outAnim, isTransitioning: true });
+
+    setTimeout(() => {
+      const newIndex = direction === 'right'
+        ? this.data.currentIndex + 1
+        : this.data.currentIndex - 1;
+      this.setData({
+        currentIndex: newIndex,
+        currentCard: this.data.cards[newIndex],
+        cardAnimation: inAnim,
+        isFlipped: false
+      });
+
+      setTimeout(() => {
+        this.setData({ cardAnimation: 'center', isTransitioning: false });
+        this.preloadImages(newIndex);
+      }, 300);
+    }, 300);
   },
 
   onImageLoad() {

@@ -116,6 +116,43 @@
   z-index: 1;
 }
 
+/* 卡牌切换动画 */
+.card-flip.left-out {
+  animation: leftOut 0.3s ease forwards;
+}
+
+.card-flip.right-in {
+  animation: rightIn 0.3s ease forwards;
+}
+
+.card-flip.right-out {
+  animation: rightOut 0.3s ease forwards;
+}
+
+.card-flip.left-in {
+  animation: leftIn 0.3s ease forwards;
+}
+
+@keyframes leftOut {
+  from { transform: translateX(0) scale(1); opacity: 1; }
+  to { transform: translateX(-150%) scale(0.8); opacity: 0; }
+}
+
+@keyframes rightIn {
+  from { transform: translateX(150%) scale(0.8); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes rightOut {
+  from { transform: translateX(0) scale(1); opacity: 1; }
+  to { transform: translateX(150%) scale(0.8); opacity: 0; }
+}
+
+@keyframes leftIn {
+  from { transform: translateX(-150%) scale(0.8); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
 /* 导航按钮 */
 .nav-buttons {
   display: flex;

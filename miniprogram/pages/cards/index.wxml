@@ -12,7 +12,7 @@
     <!-- 卡牌内容 -->
     <view wx:else class="card-wrapper">
       <!-- 卡牌翻转区域 -->
-      <view class="card-flip {{isFlipped ? 'flipped' : ''}}" bindtap="onCardTap">
+      <view class="card-flip {{isFlipped ? 'flipped' : ''}} {{cardAnimation}}" bindtap="onCardTap">
         <!-- 正面 - 卡面图片 -->
         <view class="card-face card-front">
           <image class="card-image" src="{{currentCard.image}}" mode="aspectFit" bindload="onImageLoad" binderror="onImageError" />
