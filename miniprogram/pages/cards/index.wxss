@@ -107,15 +107,13 @@
 }
 
 .card-quote {
-  font-size: 38rpx;
-  color: #e8d5b7;
-  line-height: 1.8;
+  font-size: 36rpx;
+  color: #fff;
+  line-height: 1.6;
   text-align: left;
   word-break: break-all;
   position: relative;
   z-index: 1;
-  font-family: "STKaiti", "KaiTi", "FangSong", "SimSun", serif;
-  text-shadow: 1rpx 1rpx 2rpx rgba(0, 0, 0, 0.5);
 }
 
 /* 导航按钮 */
