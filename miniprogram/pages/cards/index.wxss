@@ -102,7 +102,7 @@
   background: inherit;
   background-size: cover;
   background-position: center;
-  filter: brightness(0.4);
+  filter: brightness(0.7);
   z-index: 0;
 }
 
