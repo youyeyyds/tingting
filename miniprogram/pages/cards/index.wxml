@@ -18,7 +18,7 @@
           <image class="card-image" src="{{currentCard.image}}" mode="aspectFit" bindload="onImageLoad" binderror="onImageError" />
         </view>
         <!-- 背面 - 台词 -->
-        <view class="card-face card-back">
+        <view class="card-face card-back" style="background-image: url({{defaultCardFace}});">
           <text class="card-quote">{{currentCard.quote}}</text>
         </view>
       </view>

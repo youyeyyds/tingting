@@ -758,9 +758,25 @@ const getCards = async (event) => {
       }));
     }
 
+    // 获取默认卡面配置
+    let defaultCardFace = null;
+    try {
+      const configRes = await db.collection("config").where({ key: "defaultCardFace" }).limit(1).get();
+      if (configRes.data.length > 0 && configRes.data[0].value && configRes.data[0].value.fileID) {
+        const fileID = configRes.data[0].value.fileID;
+        const tempUrlRes = await cloud.getTempFileURL({ fileList: [fileID] });
+        if (tempUrlRes.fileList && tempUrlRes.fileList[0]) {
+          defaultCardFace = tempUrlRes.fileList[0].tempFileURL || fileID;
+        }
+      }
+    } catch (e) {
+      console.error('获取默认卡面失败', e.message);
+    }
+
     return {
       success: true,
-      data: cards
+      data: cards,
+      defaultCardFace
     };
   } catch (e) {
     return {

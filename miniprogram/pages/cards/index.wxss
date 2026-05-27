@@ -87,7 +87,23 @@
 
 .card-back {
   background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+  background-size: cover;
+  background-position: center;
   transform: rotateY(180deg);
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.4);
+  z-index: 0;
 }
 
 .card-quote {
@@ -96,6 +112,8 @@
   line-height: 1.6;
   text-align: left;
   word-break: break-all;
+  position: relative;
+  z-index: 1;
 }
 
 /* 导航按钮 */

@@ -8,7 +8,8 @@ Page({
     currentCard: null,
     isFlipped: false,
     loading: true,
-    headerHeight: 0
+    headerHeight: 0,
+    defaultCardFace: null
   },
 
   onLoad() {
@@ -38,7 +39,8 @@ Page({
         this.setData({
           cards,
           currentCard: cards[0] || null,
-          currentIndex: 0
+          currentIndex: 0,
+          defaultCardFace: res.result.defaultCardFace || null
         });
       }
     } catch (err) {
