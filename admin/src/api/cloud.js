@@ -581,6 +581,39 @@ export async function deleteDefaultCover() {
   return response.data
 }
 
+/**
+ * 获取默认卡面配置
+ * @returns {Promise<object>}
+ */
+export async function getDefaultCardFace() {
+  const response = await api.get('/default-card-face')
+  return response.data
+}
+
+/**
+ * 上传默认卡面
+ * @param {File} file 图片文件
+ * @returns {Promise<object>}
+ */
+export async function uploadDefaultCardFace(file) {
+  const formData = new FormData()
+  formData.append('cardFace', file)
+
+  const response = await api.post('/default-card-face/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response.data
+}
+
+/**
+ * 删除默认卡面
+ * @returns {Promise<object>}
+ */
+export async function deleteDefaultCardFace() {
+  const response = await api.delete('/default-card-face')
+  return response.data
+}
+
 // ========== 武功 API ==========
 
 /**

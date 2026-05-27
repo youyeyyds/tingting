@@ -28,6 +28,7 @@ const CLOUD_PATH_PREFIX = 'audio/';
 const AVATAR_LOCAL_PATH = path.join(__dirname, 'uploads', 'avatars');
 const UPLOADS_PATH = path.join(__dirname, 'uploads');
 const COVER_LOCAL_PATH = path.join(__dirname, 'uploads', 'covers');
+const CARD_LOCAL_PATH = path.join(__dirname, 'uploads', 'cardfaces');
 
 // ========== 初始化 ==========
 
@@ -42,6 +43,9 @@ if (!fs.existsSync(AVATAR_LOCAL_PATH)) {
 }
 if (!fs.existsSync(COVER_LOCAL_PATH)) {
   fs.mkdirSync(COVER_LOCAL_PATH, { recursive: true });
+}
+if (!fs.existsSync(CARD_LOCAL_PATH)) {
+  fs.mkdirSync(CARD_LOCAL_PATH, { recursive: true });
 }
 
 // 配置 multer 正确处理中文文件名（使用绝对路径）
@@ -105,6 +109,35 @@ const coverStorage = multer.diskStorage({
 
 const coverUpload = multer({
   storage: coverStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024  // 限制5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('只支持 JPG/PNG/WebP/GIF 格式的图片'));
+    }
+  }
+});
+
+// 默认卡面上传专用配置
+const cardFaceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(CARD_LOCAL_PATH)) {
+      fs.mkdirSync(CARD_LOCAL_PATH, { recursive: true });
+    }
+    cb(null, CARD_LOCAL_PATH);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(Buffer.from(file.originalname, 'latin1').toString('utf8'));
+    cb(null, `default_card_face_${Date.now()}${ext}`);
+  }
+});
+
+const cardFaceUpload = multer({
+  storage: cardFaceStorage,
   limits: {
     fileSize: 5 * 1024 * 1024  // 限制5MB
   },
@@ -245,6 +278,9 @@ app.use('/covers', async (req, res, next) => {
 
 // 静态文件服务：封面目录
 app.use('/covers', express.static(COVER_LOCAL_PATH));
+
+// 静态文件服务：卡面目录
+app.use('/cardfaces', express.static(CARD_LOCAL_PATH));
 
 // 从请求头获取用户身份并初始化云开发（统一使用环境变量凭证）
 function getTcbFromRequest(req) {
@@ -2596,6 +2632,173 @@ app.delete('/api/default-cover', async (req, res) => {
         }
       }
       // 删除数据库配置
+      await db.collection('config').doc(result.data[0]._id).remove();
+    }
+
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 获取默认卡面配置
+app.get('/api/default-card-face', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    try {
+      const result = await db.collection('config').where({ key: 'defaultCardFace' }).limit(1).get();
+      if (result.data.length > 0) {
+        const config = result.data[0].value;
+        res.json(success({
+          coverUrl: config.localUrl || null,
+          fileID: config.fileID || null
+        }));
+      } else {
+        res.json(success({ coverUrl: null, fileID: null }));
+      }
+    } catch (e) {
+      if (e.message && e.message.includes('not exist')) {
+        res.json(success({ coverUrl: null, fileID: null }));
+      } else {
+        throw e;
+      }
+    }
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 上传默认卡面
+app.post('/api/default-card-face/upload', async (req, res, next) => {
+  console.log('=== 收到默认卡面上传请求 ===');
+  next();
+}, cardFaceUpload.single('cardFace'), async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const file = req.file;
+    if (!file) return res.json(error('请选择图片文件'));
+
+    if (!fs.existsSync(file.path)) {
+      console.error('文件不存在:', file.path);
+      return res.json(error('文件保存失败'));
+    }
+
+    // 上传到云存储
+    const cloudPath = `cardfaces/${file.filename}`;
+    const fileContent = fs.readFileSync(file.path);
+
+    console.log('开始上传云端:', cloudPath);
+    const uploadResult = await tcb.uploadFile({
+      cloudPath: cloudPath,
+      fileContent: fileContent
+    });
+
+    if (!uploadResult.fileID) {
+      fs.unlinkSync(file.path);
+      return res.json(error('云存储上传失败'));
+    }
+
+    // 删除旧卡面（云端 + 本地）
+    const db = tcb.database();
+    try {
+      const oldResult = await db.collection('config').where({ key: 'defaultCardFace' }).limit(1).get();
+      if (oldResult.data.length > 0 && oldResult.data[0].value && oldResult.data[0].value.fileID) {
+        try {
+          await tcb.deleteFile({ fileList: [oldResult.data[0].value.fileID] });
+        } catch (e) {
+          console.error('删除云端旧卡面失败:', e.message);
+        }
+        const oldFilename = oldResult.data[0].value.localUrl?.replace('/cardfaces/', '');
+        if (oldFilename) {
+          const oldLocalPath = path.join(CARD_LOCAL_PATH, oldFilename);
+          if (fs.existsSync(oldLocalPath)) {
+            fs.unlinkSync(oldLocalPath);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('查询旧卡面失败:', e.message);
+    }
+
+    // 保存配置到数据库
+    const localUrl = `/cardfaces/${file.filename}`;
+    const configValue = {
+      localUrl: localUrl,
+      fileID: uploadResult.fileID,
+      updateTime: new Date()
+    };
+
+    let existing = null;
+    try {
+      const result = await db.collection('config').where({ key: 'defaultCardFace' }).limit(1).get();
+      existing = result.data.length > 0 ? result.data[0] : null;
+    } catch (e) {
+      if (e.message && e.message.includes('not exist')) {
+        try {
+          await db.createCollection('config');
+        } catch (createErr) {
+          console.log('创建集合失败:', createErr.message);
+        }
+      }
+    }
+
+    if (existing) {
+      await db.collection('config').doc(existing._id).update({
+        value: configValue,
+        updateTime: new Date()
+      });
+    } else {
+      await db.collection('config').add({
+        key: 'defaultCardFace',
+        value: configValue,
+        createTime: new Date()
+      });
+    }
+
+    console.log('上传成功，返回:', localUrl);
+    res.json(success({
+      localUrl: localUrl,
+      fileID: uploadResult.fileID
+    }));
+  } catch (err) {
+    console.error('上传默认卡面出错:', err.message);
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.json(error(err.message));
+  }
+});
+
+// 删除默认卡面
+app.delete('/api/default-card-face', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+    const result = await db.collection('config').where({ key: 'defaultCardFace' }).limit(1).get();
+
+    if (result.data.length > 0) {
+      const config = result.data[0].value;
+      if (config.fileID) {
+        try {
+          await tcb.deleteFile({ fileList: [config.fileID] });
+        } catch (e) {
+          console.error('删除云端卡面失败:', e.message);
+        }
+      }
+      if (config.localUrl) {
+        const filename = config.localUrl.replace('/cardfaces/', '');
+        const localPath = path.join(CARD_LOCAL_PATH, filename);
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
+      }
       await db.collection('config').doc(result.data[0]._id).remove();
     }
 

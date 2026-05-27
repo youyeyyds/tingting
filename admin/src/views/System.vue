@@ -609,6 +609,11 @@ async function handleReset() {
   object-fit: cover;
 }
 
+.card-face-preview {
+  width: 200px;
+  height: 350px;
+}
+
 .cover-placeholder {
   display: flex;
   flex-direction: column;

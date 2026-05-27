@@ -69,6 +69,54 @@
       </el-table>
     </el-card>
 
+    <!-- 默认卡面配置 -->
+    <el-card style="margin-top: 20px">
+      <template #header>
+        <div class="card-header">
+          <span>默认卡面</span>
+          <el-button @click="loadDefaultCardFace" :loading="loadingCardFace">
+            刷新
+          </el-button>
+        </div>
+      </template>
+
+      <div class="cover-config">
+        <div class="cover-preview card-face-preview">
+          <img v-if="defaultCardFaceUrl" :src="defaultCardFaceUrl" class="cover-image" />
+          <div v-else class="cover-placeholder">
+            <el-icon size="40"><Picture /></el-icon>
+            <span>暂无默认卡面</span>
+          </div>
+        </div>
+
+        <div class="cover-right">
+          <div class="cover-actions">
+            <el-upload
+              :show-file-list="false"
+              :before-upload="beforeCardFaceUpload"
+              :http-request="handleCardFaceUpload"
+              accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
+            >
+              <el-button type="primary" :loading="uploadingCardFace">
+                上传卡面
+              </el-button>
+            </el-upload>
+            <el-button
+              v-if="defaultCardFaceUrl"
+              type="danger"
+              :loading="deletingCardFace"
+              @click="handleDeleteCardFace"
+            >
+              删除
+            </el-button>
+          </div>
+          <div class="cover-tip">
+            建议尺寸：390x682 像素（等比），支持 JPG/PNG/WebP/GIF 格式，最大 5MB
+          </div>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
@@ -130,8 +178,9 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Picture } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
-import { getCards, createCard, updateCard, deleteCard, batchUpdateSeq, uploadCardImage, deleteCardImage } from '@/api/cloud'
+import { getCards, createCard, updateCard, deleteCard, batchUpdateSeq, uploadCardImage, deleteCardImage, getDefaultCardFace, uploadDefaultCardFace, deleteDefaultCardFace } from '@/api/cloud'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -141,6 +190,10 @@ const currentId = ref('')
 const formRef = ref(null)
 const tableRef = ref(null)
 const uploading = ref(false)
+const defaultCardFaceUrl = ref(null)
+const loadingCardFace = ref(false)
+const uploadingCardFace = ref(false)
+const deletingCardFace = ref(false)
 
 const cards = ref([])
 
@@ -351,6 +404,73 @@ async function deleteImage() {
   ElMessage.success('图片已删除')
 }
 
+// 加载默认卡面
+async function loadDefaultCardFace() {
+  loadingCardFace.value = true
+  try {
+    const result = await getDefaultCardFace()
+    if (result.success) {
+      defaultCardFaceUrl.value = result.data.coverUrl || null
+    } else {
+      defaultCardFaceUrl.value = null
+    }
+  } catch (err) {
+    defaultCardFaceUrl.value = null
+  } finally {
+    loadingCardFace.value = false
+  }
+}
+
+// 卡面上传前校验
+function beforeCardFaceUpload(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('只支持 JPG/PNG/WebP/GIF 格式的图片')
+    return false
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+// 上传卡面
+async function handleCardFaceUpload({ file }) {
+  uploadingCardFace.value = true
+  try {
+    const result = await uploadDefaultCardFace(file)
+    if (result.success) {
+      defaultCardFaceUrl.value = result.data.localUrl
+      ElMessage.success('默认卡面已更新')
+    } else {
+      ElMessage.error('上传失败: ' + result.error)
+    }
+  } catch (err) {
+    ElMessage.error('上传失败: ' + (err.message || '未知错误'))
+  } finally {
+    uploadingCardFace.value = false
+  }
+}
+
+// 删除卡面
+async function handleDeleteCardFace() {
+  deletingCardFace.value = true
+  try {
+    const result = await deleteDefaultCardFace()
+    if (result.success) {
+      defaultCardFaceUrl.value = null
+      ElMessage.success('默认卡面已删除')
+    } else {
+      ElMessage.error('删除失败: ' + result.error)
+    }
+  } catch (err) {
+    ElMessage.error('删除失败: ' + (err.message || '未知错误'))
+  } finally {
+    deletingCardFace.value = false
+  }
+}
+
 // 初始化拖拽排序
 function initSortable() {
   nextTick(() => {
@@ -397,6 +517,7 @@ function initSortable() {
 
 onMounted(async () => {
   await loadCards()
+  await loadDefaultCardFace()
   initSortable()
 })
 </script>
@@ -442,5 +563,54 @@ onMounted(async () => {
 
 .image-upload-wrapper .el-input {
   flex: 1;
+}
+
+.cover-config {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.cover-preview {
+  width: 200px;
+  height: 200px;
+  border: 1px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cover-preview .cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #999;
+}
+
+.cover-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.cover-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
+}
+
+.card-face-preview {
+  width: 200px;
+  height: 350px;
 }
 </style>

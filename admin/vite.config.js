@@ -24,6 +24,10 @@ export default defineConfig({
       '/covers': {
         target: 'http://localhost:3002',
         changeOrigin: true
+      },
+      '/cardfaces': {
+        target: 'http://localhost:3002',
+        changeOrigin: true
       }
     },
     watch: {
