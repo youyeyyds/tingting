@@ -27,8 +27,8 @@
 }
 
 .skeleton-card {
-  width: 500rpx;
-  height: 700rpx;
+  width: 600rpx;
+  height: 850rpx;
   background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
