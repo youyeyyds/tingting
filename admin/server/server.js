@@ -3793,6 +3793,22 @@ app.put('/api/cards/:id', async (req, res) => {
   }
 });
 
+// 删除卡牌图片
+app.delete('/api/cards/image', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const { fileID } = req.body;
+    if (!fileID) return res.json(error('缺少文件ID'));
+
+    const result = await tcb.deleteFile({ fileList: [fileID] });
+    res.json(success({ deleted: true }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
 // 删除卡牌
 app.delete('/api/cards/:id', async (req, res) => {
   try {
@@ -3888,16 +3904,26 @@ app.post('/api/cards/upload', upload.single('image'), async (req, res) => {
   }
 });
 
-// 删除卡牌图片
-app.delete('/api/cards/image', async (req, res) => {
+// 删除卡牌
+app.delete('/api/cards/:id', async (req, res) => {
   try {
     const tcb = getTcbFromRequest(req);
     if (!tcb) return res.json(error('未登录'));
 
-    const { fileID } = req.body;
-    if (!fileID) return res.json(error('缺少文件ID'));
+    const db = tcb.database();
+    const id = req.params.id;
 
-    await tcb.deleteFile({ fileList: [fileID] });
+    // 获取卡牌信息以删除云端图片
+    const card = await db.collection('cards').doc(id).get();
+    if (card.data[0] && card.data[0].imageFileID) {
+      try {
+        await tcb.deleteFile({ fileList: [card.data[0].imageFileID] });
+      } catch (e) {
+        console.error('删除云存储文件失败:', e.message);
+      }
+    }
+
+    await db.collection('cards').doc(id).remove();
     res.json(success({ deleted: true }));
   } catch (err) {
     res.json(error(err.message));
