@@ -67,6 +67,29 @@ Page({
     if (cachedHeadlines.length === 0) {
       this.loadHeadlines();
     }
+    this.preloadCards();
+  },
+
+  // 预加载卡牌图片
+  async preloadCards() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'courseFunctions',
+        data: { type: 'getCards' }
+      });
+      if (res.result.success && res.result.data) {
+        // 预加载前几张卡牌图片
+        const cards = res.result.data;
+        cards.slice(0, 3).forEach(card => {
+          if (card.imageFileID) {
+            const img = wx.createImage();
+            img.src = card.imageFileID;
+          }
+        });
+      }
+    } catch (err) {
+      console.error('预加载卡牌失败', err);
+    }
   },
 
   formatMinutesToObj(minutes) {
