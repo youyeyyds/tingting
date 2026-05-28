@@ -12,7 +12,7 @@
       </template>
 
       <el-table
-        :data="cards"
+        :data="paginatedCards"
         v-loading="loading"
         stripe
         ref="tableRef"
@@ -67,6 +67,16 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+        v-if="cards.length > 0"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="cards.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        style="margin-top: 20px; justify-content: flex-end"
+      />
     </el-card>
 
     <!-- 默认卡面配置 -->
@@ -176,7 +186,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
 import Sortable from 'sortablejs'
@@ -196,6 +206,19 @@ const uploadingCardFace = ref(false)
 const deletingCardFace = ref(false)
 
 const cards = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const paginatedCards = ref([])
+
+function updatePaginatedCards() {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  paginatedCards.value = cards.value.slice(start, end)
+}
+
+watch([currentPage, pageSize], () => {
+  updatePaginatedCards()
+})
 
 const form = reactive({
   seq: 1,
@@ -219,6 +242,7 @@ async function loadCards() {
     const res = await getCards()
     if (res.success) {
       cards.value = res.data
+      updatePaginatedCards()
     } else {
       ElMessage.error('加载卡牌失败: ' + res.error)
     }
@@ -610,7 +634,7 @@ onMounted(async () => {
 }
 
 .card-face-preview {
-  width: 200px;
-  height: 350px;
+  width: 120px;
+  height: 213px;
 }
 </style>
