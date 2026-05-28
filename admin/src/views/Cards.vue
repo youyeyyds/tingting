@@ -111,7 +111,7 @@
             </el-button>
           </div>
           <div class="cover-tip">
-            建议尺寸：390x682 像素（等比），支持 JPG/PNG/WebP/GIF 格式，最大 5MB
+            建议尺寸：1080x1920 像素（9:16），支持 JPG/PNG/WebP/GIF 格式，最大 5MB
           </div>
         </div>
       </div>
