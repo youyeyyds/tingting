@@ -44,29 +44,12 @@ Page({
           currentIndex: 0,
           defaultCardFace: res.result.defaultCardFace || null
         });
-        // 预加载前几张卡牌图片
-        this.preloadImages(0);
       }
     } catch (err) {
       console.error('获取卡牌失败', err);
     } finally {
       this.setData({ loading: false });
     }
-  },
-
-  // 预加载卡牌图片
-  preloadImages(currentIndex) {
-    const { cards } = this.data;
-    if (!cards || cards.length === 0) return;
-
-    // 预加载当前、前后各一张
-    const toPreload = [currentIndex - 1, currentIndex + 1, currentIndex + 2];
-    toPreload.forEach(index => {
-      if (index >= 0 && index < cards.length && cards[index]) {
-        const img = wx.createImage();
-        img.src = cards[index].image;
-      }
-    });
   },
 
   // 刷新卡牌图片URL（获取新的临时签名）
@@ -127,7 +110,6 @@ Page({
 
       setTimeout(() => {
         this.setData({ cardAnimation: 'center', isTransitioning: false });
-        this.preloadImages(newIndex);
       }, 300);
     }, 300);
   },
