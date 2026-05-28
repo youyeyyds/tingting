@@ -34,7 +34,7 @@
               <el-image
                 v-if="row.image"
                 :src="row.image"
-                style="width: 60px; height: 107px"
+                style="width: 45px; height: 80px"
                 fit="cover"
               />
               <span v-else>-</span>
