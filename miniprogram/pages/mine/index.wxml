@@ -106,12 +106,12 @@
     </view>
 
     <!-- 卡片组：卡牌和丽音 -->
-    <view class="settings-card settings-card-group-first" bindtap="onCardTap">
+    <view class="settings-card settings-card-group-first" bindtap="onCardTap" data-type="cards">
       <text class="settings-label">卡牌</text>
       <view class="settings-arrow"></view>
     </view>
 
-    <view class="settings-card settings-card-group-last" bindtap="onCardTap">
+    <view class="settings-card settings-card-group-last" bindtap="onCardTap" data-type="liyin">
       <text class="settings-label">丽音</text>
       <view class="settings-arrow"></view>
     </view>

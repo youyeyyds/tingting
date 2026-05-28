@@ -354,9 +354,14 @@ Page({
     this.setData({ refreshConfirmVisible: true });
   },
 
-  // 点击卡片 - 卡牌
-  onCardTap() {
-    wx.navigateTo({ url: '/pages/cards/index' });
+  // 点击卡片 - 卡牌/丽音
+  onCardTap(e) {
+    const type = e.currentTarget.dataset.type;
+    if (type === 'liyin') {
+      wx.navigateTo({ url: '/pages/liyin/index' });
+    } else {
+      wx.navigateTo({ url: '/pages/cards/index' });
+    }
   },
 
   // 取消刷新图片
