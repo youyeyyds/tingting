@@ -249,7 +249,8 @@ Component({
         currentTime,
         duration,
         progressPercent,
-        playbackRate
+        playbackRate,
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0
       };
 
       if (isTabBarPage && !app.globalData.miniPlayerIndexFadedIn) {
@@ -566,6 +567,7 @@ Component({
         const { miniCoverRotationAngle, playlistSortOrder } = this.data;
         const newAngle = playlistSortOrder === 'asc' ? miniCoverRotationAngle + 1.5 : miniCoverRotationAngle - 1.5;
         this.setData({ miniCoverRotationAngle: newAngle, overlayCoverRotationAngle: newAngle });
+        app.globalData.miniCoverRotationAngle = newAngle;
       }, 50);
     },
 
@@ -573,6 +575,7 @@ Component({
       if (this._miniRotationTimer) {
         clearInterval(this._miniRotationTimer);
         this._miniRotationTimer = null;
+        app.globalData.miniCoverRotationAngle = this.data.miniCoverRotationAngle;
       }
     },
 

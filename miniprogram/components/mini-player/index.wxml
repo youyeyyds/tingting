@@ -65,7 +65,7 @@
   </view>
 
   <!-- 导航栏 -->
-  <custom-navbar showBack="{{false}}" title="" showOverlayBtns="{{true}}"
+  <custom-navbar showBack="{{false}}" title="" transparent="{{true}}" showOverlayBtns="{{true}}"
     bind:overlayclose="closePlayerOverlay" bind:overlayhome="goHome" />
 
   <!-- 播放器容器 -->
