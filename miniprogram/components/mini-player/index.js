@@ -323,7 +323,8 @@ Component({
       this.setData({
         chapters, course, currentChapter: chapter, currentIndex: index,
         courseCover, courseName: chapter.courseTitle || '收藏列表',
-        playlistSortOrder: 'asc', isFavoriteList: true, coverLoadTime
+        playlistSortOrder: 'asc', isFavoriteList: true, coverLoadTime,
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0
       });
 
       Object.assign(app.globalData, {
@@ -385,7 +386,8 @@ Component({
       this.setData({
         chapters, course, currentChapter: chapter, currentIndex: index,
         courseCover, courseName: course.title || '',
-        playlistSortOrder: order, isFavoriteList: false, coverLoadTime
+        playlistSortOrder: order, isFavoriteList: false, coverLoadTime,
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0
       });
 
       Object.assign(app.globalData, {
@@ -498,6 +500,7 @@ Component({
     closePlayerOverlay() {
       const currentOverlayAngle = this.data.overlayCoverRotationAngle;
       this._stopOverlayRotation();
+      app.globalData.miniCoverRotationAngle = currentOverlayAngle;
       this.setData({ overlayFadeClass: 'fade-out', miniCoverRotationAngle: currentOverlayAngle });
       setTimeout(() => {
         this.setData({ playerOverlayVisible: false, overlayFadeClass: '' });
@@ -546,10 +549,14 @@ Component({
     },
 
     _startOverlayRotation() {
-      if (this._overlayRotationTimer) return;
+      if (this._overlayRotationTimer) {
+        clearInterval(this._overlayRotationTimer);
+        this._overlayRotationTimer = null;
+      }
       this._overlayRotationTimer = setInterval(() => {
-        const { overlayCoverRotationAngle, playlistSortOrder } = this.data;
-        const newAngle = playlistSortOrder === 'asc' ? overlayCoverRotationAngle + 1.5 : overlayCoverRotationAngle - 1.5;
+        const { overlayCoverRotationAngle } = this.data;
+        const sortOrder = app.globalData.playlistSortOrder || 'asc';
+        const newAngle = sortOrder === 'asc' ? overlayCoverRotationAngle + 1.5 : overlayCoverRotationAngle - 1.5;
         this.setData({ overlayCoverRotationAngle: newAngle });
       }, 50);
     },
@@ -562,10 +569,16 @@ Component({
     },
 
     _startMiniRotation() {
-      if (this._miniRotationTimer) return;
+      if (this._miniRotationTimer) {
+        clearInterval(this._miniRotationTimer);
+        this._miniRotationTimer = null;
+      }
+      const startAngle = app.globalData.miniCoverRotationAngle || 0;
+      this.setData({ miniCoverRotationAngle: startAngle, overlayCoverRotationAngle: startAngle });
       this._miniRotationTimer = setInterval(() => {
-        const { miniCoverRotationAngle, playlistSortOrder } = this.data;
-        const newAngle = playlistSortOrder === 'asc' ? miniCoverRotationAngle + 1.5 : miniCoverRotationAngle - 1.5;
+        const { miniCoverRotationAngle } = this.data;
+        const sortOrder = app.globalData.playlistSortOrder || 'asc';
+        const newAngle = sortOrder === 'asc' ? miniCoverRotationAngle + 1.5 : miniCoverRotationAngle - 1.5;
         this.setData({ miniCoverRotationAngle: newAngle, overlayCoverRotationAngle: newAngle });
         app.globalData.miniCoverRotationAngle = newAngle;
       }, 50);
@@ -730,7 +743,8 @@ Component({
         playlistSortOrder: newOrder,
         chapters: reversed,
         currentIndex: newIndex >= 0 ? newIndex : 0,
-        currentChapter: newCurrentChapter || currentChapter
+        currentChapter: newCurrentChapter || currentChapter,
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle
       }, () => this._updateOverlayNextChapterInfo());
       wx.showToast({ title: newOrder === 'asc' ? '正序' : '倒序', icon: 'none' });
     },
@@ -873,7 +887,7 @@ Component({
       const currentId = this.data.currentChapter._id;
       const newIndex = chapters.findIndex(ch => ch._id === currentId);
       const currentChapter = chapters[newIndex];
-      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder });
+      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder, miniCoverRotationAngle: app.globalData.miniCoverRotationAngle });
       app.globalData.playingIndex = newIndex;
       app.globalData.playingSeq = currentChapter?.seq;
       app.globalData.playlistChaptersData = chapters;
