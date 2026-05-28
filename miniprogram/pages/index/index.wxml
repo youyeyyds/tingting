@@ -17,7 +17,7 @@
 
       <!-- 骨架屏加载状态 -->
       <view class="skeleton-card {{index === 0 && headlines.length === 0 ? 'first-card' : ''}}" wx:for="{{[1,2,3]}}" wx:key="*this" wx:if="{{loading}}">
-        <view class="skeleton-image"></view>
+        <view class="skeleton-image skeleton-shimmer"></view>
         <view class="skeleton-info">
           <view class="skeleton-title"></view>
           <view class="skeleton-author"></view>
