@@ -42,7 +42,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="character" label="人物" min-width="150" />
-        <el-table-column prop="faction" label="势力" width="120" />
+        <el-table-column prop="faction" label="阵营" width="120" />
         <el-table-column prop="quote" label="台词" min-width="200">
           <template #default="{ row }">
             <span class="quote-text">{{ row.quote || '-' }}</span>
@@ -146,8 +146,8 @@
         <el-form-item label="人物" prop="character">
           <el-input v-model="form.character" placeholder="请输入人物名称" />
         </el-form-item>
-        <el-form-item label="势力" prop="faction">
-          <el-input v-model="form.faction" placeholder="请输入势力" />
+        <el-form-item label="阵营" prop="faction">
+          <el-input v-model="form.faction" placeholder="请输入阵营" />
         </el-form-item>
         <el-form-item label="台词" prop="quote">
           <el-input
@@ -209,7 +209,7 @@ const form = reactive({
 
 const rules = {
   character: [{ required: true, message: '请输入人物名称', trigger: 'blur' }],
-  faction: [{ required: true, message: '请输入势力', trigger: 'blur' }]
+  faction: [{ required: true, message: '请输入阵营', trigger: 'blur' }]
 }
 
 // 加载卡牌列表
