@@ -42,8 +42,12 @@
 .chapter-cover {
   width: 70rpx;
   height: 70rpx;
-  border-radius: 10rpx;
+  border-radius: 35rpx;
   flex-shrink: 0;
+}
+
+.mini-player .chapter-cover.playing {
+  transition: transform 0.05s linear;
 }
 
 .chapter-info {

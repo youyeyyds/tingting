@@ -3,7 +3,7 @@
   <!-- 左边可点击区域：封面和信息 -->
   <view class="left-area" bindtap="openPlayerPanel">
     <!-- 封面 -->
-    <image class="chapter-cover" src="{{courseCover}}" mode="aspectFill" binderror="onCoverError" />
+    <image class="chapter-cover {{isPlaying ? 'playing' : ''}}" style="transform: rotate({{miniCoverRotationAngle}}deg);" src="{{courseCover}}" mode="aspectFill" binderror="onCoverError" />
 
     <!-- 信息 -->
     <view class="chapter-info">

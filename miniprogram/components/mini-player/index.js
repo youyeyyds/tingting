@@ -34,6 +34,7 @@ Component({
     playerOverlayVisible: false,
     overlayFadeClass: '',
     overlayCoverRotationAngle: 0,
+    miniCoverRotationAngle: 0,
     overlaySpeedIndicatorPos: 70,
     overlayCurrentTimeText: '0:00',
     overlayRemainingTimeText: '-0:00',
@@ -53,6 +54,7 @@ Component({
       this.bgAudioManager = app.bgAudioManager;
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this._overlayRotationTimer = null;
+      this._miniRotationTimer = null;
       this._initNavButtonData();
       this.audioCallback = {
         onChapterChange: ({ chapterId, chapter, index }) => {
@@ -85,6 +87,8 @@ Component({
           this.setData({ isPlaying: app.globalData.playingStatus });
           if (this.data.playerOverlayVisible) this._startOverlayRotation();
           else this._stopOverlayRotation();
+          if (!this.data.playerOverlayVisible && this.data.visible) this._startMiniRotation();
+          else this._stopMiniRotation();
         },
         onPause: () => {
           if (this.data.currentChapter._id && app.globalData.playingStatus === false) {
@@ -92,6 +96,7 @@ Component({
           }
           this.setData({ isPlaying: app.globalData.playingStatus });
           this._stopOverlayRotation();
+          this._stopMiniRotation();
         },
         onPlayPause: () => {
           this.setData({ isPlaying: app.globalData.playingStatus });
@@ -248,10 +253,16 @@ Component({
       };
 
       if (isTabBarPage && !app.globalData.miniPlayerIndexFadedIn) {
-        this.setData({ visible: true, fadeInClass: 'fade-in', ...data });
+        this.setData({ visible: true, fadeInClass: 'fade-in', ...data }, () => {
+          if (this.data.isPlaying) this._startMiniRotation();
+          else this._stopMiniRotation();
+        });
         app.globalData.miniPlayerIndexFadedIn = true;
       } else {
-        this.setData({ visible: true, fadeInClass: '', ...data });
+        this.setData({ visible: true, fadeInClass: '', ...data }, () => {
+          if (this.data.isPlaying) this._startMiniRotation();
+          else this._stopMiniRotation();
+        });
       }
     },
 
@@ -329,7 +340,10 @@ Component({
 
       this._savePlayStateCache(course, chapter, 'asc', 'sequence');
       app.playChapter(chapter._id, chapters);
-      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() });
+      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() }, () => {
+        if (this.data.isPlaying) this._startMiniRotation();
+        else this._stopMiniRotation();
+      });
     },
 
     // 播放章节（外部调用入口）
@@ -388,7 +402,10 @@ Component({
 
       this._savePlayStateCache(course, chapter, order, app.globalData.playMode);
       app.playChapter(chapter._id, chapters);
-      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() });
+      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() }, () => {
+        if (this.data.isPlaying) this._startMiniRotation();
+        else this._stopMiniRotation();
+      });
     },
 
     _resetState() {
@@ -469,17 +486,21 @@ Component({
     },
 
     openPlayerPanel() {
+      const currentMiniAngle = this.data.miniCoverRotationAngle;
+      this._stopMiniRotation();
       this._syncOverlayState();
-      this.setData({ playerOverlayVisible: true, overlayFadeClass: 'fade-in' });
+      this.setData({ playerOverlayVisible: true, overlayFadeClass: 'fade-in', overlayCoverRotationAngle: currentMiniAngle });
       if (this.data.isPlaying) this._startOverlayRotation();
       this.checkOverlayFavoriteStatus();
     },
 
     closePlayerOverlay() {
+      const currentOverlayAngle = this.data.overlayCoverRotationAngle;
       this._stopOverlayRotation();
-      this.setData({ overlayFadeClass: 'fade-out' });
+      this.setData({ overlayFadeClass: 'fade-out', miniCoverRotationAngle: currentOverlayAngle });
       setTimeout(() => {
         this.setData({ playerOverlayVisible: false, overlayFadeClass: '' });
+        if (this.data.isPlaying && this.data.visible) this._startMiniRotation();
       }, 300);
     },
 
@@ -498,7 +519,7 @@ Component({
     },
 
     _syncOverlayState() {
-      const { currentTime, duration, playbackRate } = this.data;
+      const { currentTime, duration, playbackRate, miniCoverRotationAngle } = this.data;
       const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
       const currentTimeText = this._formatTime(currentTime);
       const showTotalTime = this.data.overlayShowTotalTime || false;
@@ -509,7 +530,8 @@ Component({
       const setData = {
         overlayCurrentTimeText: currentTimeText,
         overlayRemainingTimeText: remainingTimeText,
-        overlaySpeedIndicatorPos: speedIndicatorPos
+        overlaySpeedIndicatorPos: speedIndicatorPos,
+        overlayCoverRotationAngle: miniCoverRotationAngle
       };
       // 只有在还没有切换到默认封面时，才更新原始封面
       if (!this.data.overlayUsingDefaultCover) {
@@ -535,6 +557,22 @@ Component({
       if (this._overlayRotationTimer) {
         clearInterval(this._overlayRotationTimer);
         this._overlayRotationTimer = null;
+      }
+    },
+
+    _startMiniRotation() {
+      if (this._miniRotationTimer) return;
+      this._miniRotationTimer = setInterval(() => {
+        const { miniCoverRotationAngle, playlistSortOrder } = this.data;
+        const newAngle = playlistSortOrder === 'asc' ? miniCoverRotationAngle + 1.5 : miniCoverRotationAngle - 1.5;
+        this.setData({ miniCoverRotationAngle: newAngle, overlayCoverRotationAngle: newAngle });
+      }, 50);
+    },
+
+    _stopMiniRotation() {
+      if (this._miniRotationTimer) {
+        clearInterval(this._miniRotationTimer);
+        this._miniRotationTimer = null;
       }
     },
 
