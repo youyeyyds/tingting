@@ -82,8 +82,7 @@ Page({
         const cards = res.result.data;
         cards.slice(0, 3).forEach(card => {
           if (card.imageFileID) {
-            const img = wx.createImage();
-            img.src = card.imageFileID;
+            wx.downloadFile({ url: card.imageFileID });
           }
         });
       }
