@@ -358,7 +358,7 @@ Page({
   onCardTap(e) {
     const type = e.currentTarget.dataset.type;
     if (type === 'liyin') {
-      wx.navigateTo({ url: '/pages/liyin/index' });
+      wx.showToast({ title: '功能开发中', icon: 'none' });
     } else {
       wx.navigateTo({ url: '/pages/cards/index' });
     }
