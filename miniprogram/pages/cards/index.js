@@ -120,7 +120,21 @@ Page({
   },
 
   onImageLoad() {
-    // 图片加载完成
+    // 图片加载完成时预加载其他卡牌
+    this.preloadNearbyCards();
+  },
+
+  // 预加载当前卡牌附近的几张卡牌图片
+  preloadNearbyCards() {
+    const { cards, currentIndex } = this.data;
+    if (!cards || cards.length === 0) return;
+    // 预加载当前、前后各一张
+    const toPreload = [currentIndex - 1, currentIndex + 1, currentIndex + 2];
+    toPreload.forEach(index => {
+      if (index >= 0 && index < cards.length && cards[index] && cards[index].image) {
+        wx.downloadFile({ url: cards[index].image });
+      }
+    });
   },
 
   onImageError() {
