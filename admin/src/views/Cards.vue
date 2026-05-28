@@ -546,13 +546,10 @@ onMounted(async () => {
 }
 
 .quote-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-size: 13px;
   color: #666;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .image-upload-wrapper {
