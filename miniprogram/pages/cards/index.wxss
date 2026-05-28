@@ -75,7 +75,7 @@
 }
 
 .card-front {
-  background: #000;
+  background: transparent;
 }
 
 .card-image {
