@@ -30,11 +30,11 @@
         <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="image" label="卡面" width="100">
           <template #default="{ row }">
-            <div @click.stop>
+            <div @click.stop class="card-image-preview">
               <el-image
                 v-if="row.image"
                 :src="row.image"
-                style="width: 80px; height: 80px"
+                style="width: 80px; height: 142px"
                 fit="cover"
               />
               <span v-else>-</span>
