@@ -101,9 +101,14 @@ Page({
       const newIndex = direction === 'right'
         ? this.data.currentIndex + 1
         : this.data.currentIndex - 1;
+      const newCard = this.data.cards[newIndex];
+      // 如果没有图片则使用默认卡面
+      if (!newCard.image) {
+        newCard.image = this.data.defaultCardFace;
+      }
       this.setData({
         currentIndex: newIndex,
-        currentCard: this.data.cards[newIndex],
+        currentCard: newCard,
         cardAnimation: inAnim,
         isFlipped: false
       });
