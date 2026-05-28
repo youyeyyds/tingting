@@ -14,7 +14,7 @@ const musicMetadata = require('music-metadata');
 const cloudbase = require('@cloudbase/node-sdk');
 const tencentcloud = require('tencentcloud-sdk-nodejs');
 const bcrypt = require('bcryptjs');
-const { pinyin, Pinyin } = require('pinyin');
+const { pinyin } = require('pinyin');
 const CamClient = tencentcloud.cam.v20190116.Client;
 
 // ========== 配置 ==========
@@ -165,7 +165,6 @@ app.use('/avatars', async (req, res, next) => {
   }
 
   // 本地文件不存在，尝试从云端下载
-  console.log('本地头像不存在，从云端下载:', filename);
 
   try {
     // 使用默认凭证初始化 tcb
@@ -178,12 +177,10 @@ app.use('/avatars', async (req, res, next) => {
     // 从文件名中提取 userId（格式：userId_timestamp.ext）
     const match = filename.match(/^([^_]+)_\d+\.(.+)$/);
     if (!match) {
-      console.error('无法从文件名提取 userId:', filename);
       return res.status(404).send('头像不存在');
     }
 
     const userId = match[1];
-    console.log('提取的 userId:', userId);
 
     // 从数据库查询用户的真实 avatarFileID
     const db = tcb.database();
@@ -191,12 +188,10 @@ app.use('/avatars', async (req, res, next) => {
     const user = userResult.data[0];
 
     if (!user || !user.avatarFileID) {
-      console.error('用户没有云端头像:', userId);
       return res.status(404).send('头像不存在');
     }
 
     const fileID = user.avatarFileID;
-    console.log('数据库中的 avatarFileID:', fileID);
 
     // 获取临时下载链接
     const urlResult = await tcb.getTempFileURL({
@@ -204,15 +199,12 @@ app.use('/avatars', async (req, res, next) => {
       maxAge: 3600
     });
 
-    console.log('获取临时链接结果:', JSON.stringify(urlResult.fileList));
 
     if (urlResult.fileList && urlResult.fileList[0]?.tempFileURL && urlResult.fileList[0].code !== 'STORAGE_FILE_NONEXIST') {
       const tempUrl = urlResult.fileList[0].tempFileURL;
-      console.log('临时链接获取成功:', tempUrl);
 
       // 下载文件
       const response = await fetch(tempUrl);
-      console.log('下载响应状态:', response.status);
 
       if (response.ok) {
         const buffer = await response.arrayBuffer();
@@ -224,18 +216,14 @@ app.use('/avatars', async (req, res, next) => {
 
         // 保存到本地
         fs.writeFileSync(localPath, Buffer.from(buffer));
-        console.log('云端头像已下载到本地:', filename);
 
         // 继续响应静态文件
         return next();
       } else {
-        console.error('下载失败:', response.status);
       }
     } else {
-      console.error('获取临时链接失败:', JSON.stringify(urlResult.fileList));
     }
   } catch (e) {
-    console.error('从云端下载头像失败:', e.message);
   }
 
   // 云端下载也失败，返回404
@@ -255,22 +243,22 @@ app.use('/covers', async (req, res, next) => {
   }
 
   // 本地文件不存在，尝试从云端下载
-  console.log('本地封面不存在，从云端下载:', filename);
   try {
-    const tcb = getGlobalTcb();
-    if (tcb) {
-      const result = await tcb.database().collection('config').where({ key: 'defaultCover' }).limit(1).get();
-      if (result.data.length > 0 && result.data[0].value && result.data[0].value.fileID) {
-        const downloadResult = await tcb.downloadFile({ fileID: result.data[0].value.fileID });
-        if (downloadResult.fileContent) {
-          fs.writeFileSync(localPath, downloadResult.fileContent);
-          console.log('封面从云端下载成功:', filename);
-          return next();
-        }
+    // 使用默认凭证初始化 tcb
+    const tcb = cloudbase.init({
+      env: ENV_ID,
+      secretId: DEFAULT_SECRET_ID,
+      secretKey: DEFAULT_SECRET_KEY
+    });
+    const result = await tcb.database().collection('config').where({ key: 'defaultCover' }).limit(1).get();
+    if (result.data.length > 0 && result.data[0].value && result.data[0].value.fileID) {
+      const downloadResult = await tcb.downloadFile({ fileID: result.data[0].value.fileID });
+      if (downloadResult.fileContent) {
+        fs.writeFileSync(localPath, downloadResult.fileContent);
+        return next();
       }
     }
   } catch (e) {
-    console.error('从云端下载封面失败:', e.message);
   }
 
   res.status(404).send('封面不存在');
@@ -292,7 +280,6 @@ function getTcbFromRequest(req) {
 
   // 统一使用环境变量中的凭证
   if (!DEFAULT_SECRET_ID || !DEFAULT_SECRET_KEY) {
-    console.error('环境变量未配置凭证');
     return null;
   }
 
@@ -433,7 +420,6 @@ app.post('/api/auth/login', async (req, res) => {
             }
           }
         } catch (e) {
-          console.error('从云端下载头像失败:', e.message);
         }
       }
     }
@@ -746,7 +732,6 @@ app.delete('/api/courses/:id', async (req, res) => {
         try {
           await tcb.deleteFile({ fileList: batch })
         } catch (e) {
-          console.error('删除云存储文件失败:', e.message)
         }
       }
     }
@@ -869,8 +854,6 @@ app.put('/api/chapters/:id', async (req, res) => {
     const id = req.params.id;
     const data = req.body;
 
-    console.log('更新章节 ID:', id);
-    console.log('更新数据:', JSON.stringify(data));
 
     // 判断是完整编辑还是只更新 finished（完播/重置按钮）
     if (data.finished !== undefined && data.seq === undefined) {
@@ -918,22 +901,17 @@ app.put('/api/chapters/:id', async (req, res) => {
 
       // 自动完播规则：
       // 上次播放 >= 时长 > 0 → 自动完播，播放量+1（基于用户输入的值）
-      console.log('自动完播检查:', { duration, lastPlayTime, currentFinished, inputPlayCount: data.playCount });
       if (duration > 0 && lastPlayTime >= duration) {
         const newPlayCount = Number(data.playCount) + 1;
-        console.log('触发完播逻辑, playCount:', data.playCount, '+1 =', newPlayCount);
         updateData.finished = true;
         updateData.playCount = newPlayCount;
       }
 
-      console.log('实际更新字段:', JSON.stringify(updateData));
-      const updateResult = await db.collection('chapters').doc(id).update(updateData);
-      console.log('数据库更新结果:', JSON.stringify(updateResult));
+      await db.collection('chapters').doc(id).update(updateData);
     }
 
     res.json(success({ updated: true }));
   } catch (err) {
-    console.error('更新章节失败:', err.message);
     res.json(error(err.message));
   }
 });
@@ -955,9 +933,7 @@ app.delete('/api/chapters/:id', async (req, res) => {
     if (chapterData && chapterData.audioUrl) {
       try {
         await tcb.deleteFile({ fileList: [chapterData.audioUrl] });
-        console.log('已删除音频文件:', chapterData.audioUrl);
       } catch (e) {
-        console.error('删除云存储文件失败:', e);
         // 继续删除章节，不中断流程
       }
 
@@ -966,7 +942,6 @@ app.delete('/api/chapters/:id', async (req, res) => {
       if (audios.data.length > 0) {
         for (const audio of audios.data) {
           await db.collection('audios').doc(audio._id).remove();
-          console.log('已删除 audios 记录:', audio._id);
         }
       }
     }
@@ -998,7 +973,6 @@ app.delete('/api/chapters/:id/audio', async (req, res) => {
       try {
         await tcb.deleteFile({ fileList: [chapterData.audioUrl] });
       } catch (e) {
-        console.error('删除云存储文件失败:', e);
       }
 
       // 更新章节，清除音频信息
@@ -1035,7 +1009,6 @@ app.get('/api/audios', async (req, res) => {
     const course = req.query.course || '';
     const offset = (page - 1) * pageSize;
 
-    console.log('audio list query:', { page, pageSize, course });
 
     const db = tcb.database();
     const collection = db.collection('audios');
@@ -1045,7 +1018,6 @@ app.get('/api/audios', async (req, res) => {
       query.course = course.trim();
     }
 
-    console.log('query:', JSON.stringify(query));
 
     const countResult = await collection.where(query).count();
     const total = countResult.total;
@@ -1060,7 +1032,6 @@ app.get('/api/audios', async (req, res) => {
       pageSize: pageSize
     }));
   } catch (err) {
-    console.error('获取音频列表失败:', err);
     res.json(error(err.message));
   }
 });
@@ -1219,7 +1190,6 @@ app.post('/api/audios/batch-upload', upload.array('audios', 400), async (req, re
           const metadata = await musicMetadata.parseFile(info.file.path);
           duration = Math.round(metadata.format.duration || 0);
         } catch (metadataErr) {
-          console.error('获取音频元数据失败:', info.originalName, metadataErr.message);
           // 不阻断流程，继续上传
         }
 
@@ -1280,7 +1250,6 @@ app.post('/api/audios/batch-upload', upload.array('audios', 400), async (req, re
             });
           }
         } catch (chapterErr) {
-          console.error('同步章节失败:', chapterErr.message);
           // 不阻断主流程
         }
 
@@ -1292,7 +1261,6 @@ app.post('/api/audios/batch-upload', upload.array('audios', 400), async (req, re
         });
 
       } catch (err) {
-        console.error('处理文件失败:', info.originalName, err.message);
         errors.push({ file: info.originalName, error: err.message });
       }
     }
@@ -1304,7 +1272,6 @@ app.post('/api/audios/batch-upload', upload.array('audios', 400), async (req, re
       errors: errors
     }));
   } catch (err) {
-    console.error('批量上传失败:', err.message);
     res.json(error('批量上传失败: ' + err.message));
   }
 });
@@ -1762,15 +1729,9 @@ app.delete('/api/versions/:id', async (req, res) => {
 
 // 上传头像（云端 + 本地同步）
 app.post('/api/users/avatar', (req, res, next) => {
-  console.log('=== 收到头像上传请求 ===');
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('X-Upload-User-Id:', req.headers['x-upload-user-id']);
-  console.log('X-User-Id:', req.headers['x-user-id']);
   next();
 }, avatarUpload.single('avatar'), async (req, res) => {
   try {
-    console.log('=== multer 处理完成 ===');
-    console.log('req.file:', req.file ? { path: req.file.path, filename: req.file.filename, size: req.file.size } : null);
 
     const tcb = getTcbFromRequest(req);
     if (!tcb) return res.json(error('未登录'));
@@ -1783,7 +1744,6 @@ app.post('/api/users/avatar', (req, res, next) => {
 
     // 检查文件是否存在
     if (!fs.existsSync(file.path)) {
-      console.error('文件不存在:', file.path);
       return res.json(error('文件保存失败'));
     }
 
@@ -1791,13 +1751,11 @@ app.post('/api/users/avatar', (req, res, next) => {
     const cloudPath = `avatars/${file.filename}`;
     const fileContent = fs.readFileSync(file.path);
 
-    console.log('开始上传云端:', cloudPath);
     const uploadResult = await tcb.uploadFile({
       cloudPath: cloudPath,
       fileContent: fileContent
     });
 
-    console.log('云端上传结果:', uploadResult.fileID ? '成功' : '失败');
 
     if (!uploadResult.fileID) {
       // 云端上传失败，删除本地文件
@@ -1813,10 +1771,8 @@ app.post('/api/users/avatar', (req, res, next) => {
     if (oldUser && oldUser.avatarFileID && oldUser.avatarFileID !== uploadResult.fileID) {
       // 删除云端旧文件
       try {
-        console.log('删除云端旧头像:', oldUser.avatarFileID);
         await tcb.deleteFile({ fileList: [oldUser.avatarFileID] });
       } catch (e) {
-        console.error('删除云端旧头像失败:', e.message);
       }
     }
 
@@ -1828,26 +1784,21 @@ app.post('/api/users/avatar', (req, res, next) => {
         if (f.startsWith(userId + '_') && f !== file.filename) {
           const oldPath = path.join(AVATAR_LOCAL_PATH, f);
           try {
-            console.log('删除本地旧头像:', oldPath);
             fs.unlinkSync(oldPath);
           } catch (e) {
-            console.error('删除本地旧头像失败:', e.message);
           }
         }
       });
     } catch (e) {
-      console.error('读取本地头像目录失败:', e.message);
     }
 
     // 返回本地路径和云端 fileID
     const localUrl = `/avatars/${file.filename}`;
-    console.log('上传成功，返回:', localUrl);
     res.json(success({
       localUrl: localUrl,
       fileID: uploadResult.fileID
     }));
   } catch (err) {
-    console.error('上传头像出错:', err.message);
     // 只在出错时清理本地文件（云端上传失败时文件已被删除）
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
@@ -1930,15 +1881,12 @@ app.get('/api/user-progress', async (req, res) => {
     if (!tcb) return res.json(error('未登录'));
 
     const { userId, courseId } = req.query;
-    console.log('获取用户进度请求:', { userId, courseId });
     if (!userId) return res.json(error('缺少用户ID'));
 
     const db = tcb.database();
 
     // 只按 userId 查询，不做 courseId 筛选
     const result = await db.collection('userProgress').where({ userId }).get();
-    console.log('查询进度结果条数:', result.data?.length);
-    console.log('查询进度结果详情:', JSON.stringify(result.data, null, 2));
     res.json(success(result.data));
   } catch (err) {
     res.json(error(err.message));
@@ -1952,7 +1900,6 @@ app.put('/api/user-progress', async (req, res) => {
     if (!tcb) return res.json(error('未登录'));
 
     const { userId, chapterId, lastPlayTime, finished, isFavorite, playCount } = req.body;
-    console.log('更新用户进度请求:', { userId, chapterId, lastPlayTime, finished, playCount });
     if (!userId || !chapterId) return res.json(error('缺少参数'));
 
     const db = tcb.database();
@@ -1961,10 +1908,8 @@ app.put('/api/user-progress', async (req, res) => {
     const chapterRes = await db.collection('chapters').doc(chapterId).get();
     // doc查询可能返回数组或对象，统一处理
     const chapter = Array.isArray(chapterRes.data) ? chapterRes.data[0] : chapterRes.data;
-    console.log('完整章节信息:', chapter);
     const duration = Number(chapter?.duration) || 0;
     const chapterTotalPlayCount = Number(chapter?.playCount) || 0;
-    console.log('章节信息:', { duration, chapterTotalPlayCount });
 
     // 查询现有记录 - 尝试多种查询方式确保能找到记录
     let existing = null;
@@ -1974,15 +1919,12 @@ app.put('/api/user-progress', async (req, res) => {
       .where({ userId, chapterId })
       .limit(1)
       .get();
-    console.log('查询方式1 (userId+chapterId):', query1.data?.length);
 
     if (query1.data?.length > 0) {
       existing = query1.data[0];
     } else {
       // 方式2: 只按 userId 查询，再过滤 chapterId
       const query2 = await db.collection('userProgress').where({ userId }).get();
-      console.log('查询方式2 (只userId):', query2.data?.length);
-      console.log('查询方式2详情:', JSON.stringify(query2.data, null, 2));
 
       // 手动过滤
       const matched = query2.data?.find(r =>
@@ -1992,14 +1934,11 @@ app.put('/api/user-progress', async (req, res) => {
       );
       if (matched) {
         existing = matched;
-        console.log('方式2找到匹配记录:', matched);
       }
     }
 
-    console.log('最终找到的现有记录:', existing);
     const currentFinished = existing?.finished || false;
     const currentPlayCount = existing?.playCount || 0;
-    console.log('现有进度:', { currentFinished, currentPlayCount });
 
     const updateData = {};
 
@@ -2008,13 +1947,6 @@ app.put('/api/user-progress', async (req, res) => {
     if (lastPlayTime !== undefined && finished !== true) {
       shouldAutoFinish = !currentFinished && duration > 0 && lastPlayTime > duration - 10;
     }
-    console.log('自动完播判断:', {
-      lastPlayTime,
-      duration,
-      threshold: duration - 10,
-      currentFinished,
-      shouldAutoFinish
-    });
 
     if (lastPlayTime !== undefined) updateData.lastPlayTime = lastPlayTime;
 
@@ -2034,7 +1966,6 @@ app.put('/api/user-progress', async (req, res) => {
     if (playCount !== undefined && !shouldAutoFinish) updateData.playCount = playCount;
 
     // 更新或创建用户进度记录
-    console.log('准备更新的数据:', updateData);
     if (existing) {
       // 如果旧记录没有 courseId 或 duration，补充上
       if (!existing.courseId && chapter?.course) {
@@ -2044,11 +1975,9 @@ app.put('/api/user-progress', async (req, res) => {
         updateData.duration = duration;
       }
       // TCB update 需要使用 { data: ... } 格式
-      const updateResult = await db.collection('userProgress').doc(existing._id).update(updateData);
-      console.log('用户进度更新结果:', updateResult);
+      await db.collection('userProgress').doc(existing._id).update(updateData);
     } else {
-      console.log('准备新增用户进度记录, courseId:', chapter?.course);
-      const addResult = await db.collection('userProgress').add({
+      await db.collection('userProgress').add({
         userId,
         chapterId,
         courseId: chapter?.course,
@@ -2058,7 +1987,6 @@ app.put('/api/user-progress', async (req, res) => {
         isFavorite: isFavorite || false,
         playCount: (finished || shouldAutoFinish) ? 1 : (playCount || 0)
       });
-      console.log('用户进度添加结果:', addResult);
     }
 
     // 如果触发自动完播，更新章节总播放量
@@ -2066,7 +1994,6 @@ app.put('/api/user-progress', async (req, res) => {
       const chapterUpdateResult = await db.collection('chapters').doc(chapterId).update({
         data: { playCount: chapterTotalPlayCount + 1 }
       });
-      console.log('章节播放量更新结果:', chapterUpdateResult);
     }
 
     // 如果是收藏操作，更新章节的 favoriteCount
@@ -2191,7 +2118,6 @@ app.delete('/api/users/:id', async (req, res) => {
         try {
           await tcb.deleteFile({ fileList: [userData.avatarFileID] });
         } catch (e) {
-          console.error('删除云端头像失败:', e.message);
         }
       }
 
@@ -2203,7 +2129,6 @@ app.delete('/api/users/:id', async (req, res) => {
           try {
             fs.unlinkSync(localPath);
           } catch (e) {
-            console.error('删除本地头像失败:', e.message);
           }
         }
       });
@@ -2370,12 +2295,9 @@ app.post('/api/menu-config', async (req, res) => {
     } catch (e) {
       // 集合不存在，尝试创建集合
       if (e.message && e.message.includes('not exist')) {
-        console.log('config集合不存在，尝试创建...');
         try {
           await db.createCollection('config');
-          console.log('config集合创建成功');
         } catch (createErr) {
-          console.log('创建集合失败:', createErr.message);
         }
       }
     }
@@ -2409,7 +2331,7 @@ app.get('/api/env-config', async (req, res) => {
     res.json(success({
       envId: ENV_ID,
       secretId: DEFAULT_SECRET_ID,
-      secretKey: DEFAULT_SECRET_KEY
+      secretKey: DEFAULT_SECRET_KEY ? '******' : ''
     }));
   } catch (err) {
     res.json(error(err.message));
@@ -2500,7 +2422,6 @@ app.get('/api/default-cover', async (req, res) => {
 
 // 上传默认封面
 app.post('/api/default-cover/upload', async (req, res, next) => {
-  console.log('=== 收到默认封面上传请求 ===');
   next();
 }, coverUpload.single('cover'), async (req, res) => {
   try {
@@ -2511,7 +2432,6 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
     if (!file) return res.json(error('请选择图片文件'));
 
     if (!fs.existsSync(file.path)) {
-      console.error('文件不存在:', file.path);
       return res.json(error('文件保存失败'));
     }
 
@@ -2519,7 +2439,6 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
     const cloudPath = `covers/${file.filename}`;
     const fileContent = fs.readFileSync(file.path);
 
-    console.log('开始上传云端:', cloudPath);
     const uploadResult = await tcb.uploadFile({
       cloudPath: cloudPath,
       fileContent: fileContent
@@ -2539,7 +2458,6 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
         try {
           await tcb.deleteFile({ fileList: [oldResult.data[0].value.fileID] });
         } catch (e) {
-          console.error('删除云端旧封面失败:', e.message);
         }
         // 删除本地旧文件
         const oldFilename = oldResult.data[0].value.localUrl?.replace('/covers/', '');
@@ -2551,7 +2469,6 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
         }
       }
     } catch (e) {
-      console.error('查询旧封面失败:', e.message);
     }
 
     // 保存配置到数据库
@@ -2572,7 +2489,6 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
         try {
           await db.createCollection('config');
         } catch (createErr) {
-          console.log('创建集合失败:', createErr.message);
         }
       }
     }
@@ -2590,13 +2506,11 @@ app.post('/api/default-cover/upload', async (req, res, next) => {
       });
     }
 
-    console.log('上传成功，返回:', localUrl);
     res.json(success({
       localUrl: localUrl,
       fileID: uploadResult.fileID
     }));
   } catch (err) {
-    console.error('上传默认封面出错:', err.message);
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
@@ -2620,7 +2534,6 @@ app.delete('/api/default-cover', async (req, res) => {
         try {
           await tcb.deleteFile({ fileList: [config.fileID] });
         } catch (e) {
-          console.error('删除云端封面失败:', e.message);
         }
       }
       // 删除本地文件
@@ -2673,7 +2586,6 @@ app.get('/api/default-card-face', async (req, res) => {
 
 // 上传默认卡面
 app.post('/api/default-card-face/upload', async (req, res, next) => {
-  console.log('=== 收到默认卡面上传请求 ===');
   next();
 }, cardFaceUpload.single('cardFace'), async (req, res) => {
   try {
@@ -2684,7 +2596,6 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
     if (!file) return res.json(error('请选择图片文件'));
 
     if (!fs.existsSync(file.path)) {
-      console.error('文件不存在:', file.path);
       return res.json(error('文件保存失败'));
     }
 
@@ -2692,7 +2603,6 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
     const cloudPath = `cardfaces/${file.filename}`;
     const fileContent = fs.readFileSync(file.path);
 
-    console.log('开始上传云端:', cloudPath);
     const uploadResult = await tcb.uploadFile({
       cloudPath: cloudPath,
       fileContent: fileContent
@@ -2711,7 +2621,6 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
         try {
           await tcb.deleteFile({ fileList: [oldResult.data[0].value.fileID] });
         } catch (e) {
-          console.error('删除云端旧卡面失败:', e.message);
         }
         const oldFilename = oldResult.data[0].value.localUrl?.replace('/cardfaces/', '');
         if (oldFilename) {
@@ -2722,7 +2631,6 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
         }
       }
     } catch (e) {
-      console.error('查询旧卡面失败:', e.message);
     }
 
     // 保存配置到数据库
@@ -2742,7 +2650,6 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
         try {
           await db.createCollection('config');
         } catch (createErr) {
-          console.log('创建集合失败:', createErr.message);
         }
       }
     }
@@ -2760,13 +2667,11 @@ app.post('/api/default-card-face/upload', async (req, res, next) => {
       });
     }
 
-    console.log('上传成功，返回:', localUrl);
     res.json(success({
       localUrl: localUrl,
       fileID: uploadResult.fileID
     }));
   } catch (err) {
-    console.error('上传默认卡面出错:', err.message);
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
@@ -2789,7 +2694,6 @@ app.delete('/api/default-card-face', async (req, res) => {
         try {
           await tcb.deleteFile({ fileList: [config.fileID] });
         } catch (e) {
-          console.error('删除云端卡面失败:', e.message);
         }
       }
       if (config.localUrl) {
@@ -4027,7 +3931,6 @@ app.delete('/api/cards/:id', async (req, res) => {
       try {
         await tcb.deleteFile({ fileList: [card.data[0].imageFileID] });
       } catch (e) {
-        console.error('删除云存储文件失败:', e.message);
       }
     }
 
@@ -4122,7 +4025,6 @@ app.delete('/api/cards/:id', async (req, res) => {
       try {
         await tcb.deleteFile({ fileList: [card.data[0].imageFileID] });
       } catch (e) {
-        console.error('删除云存储文件失败:', e.message);
       }
     }
 
@@ -4137,6 +4039,4 @@ app.delete('/api/cards/:id', async (req, res) => {
 
 const PORT = process.env.SERVER_PORT || 3002;
 app.listen(PORT, () => {
-  console.log(`后台服务已启动: http://localhost:${PORT}`);
-  console.log('请确保前端服务也在运行 (npm run dev)');
 });

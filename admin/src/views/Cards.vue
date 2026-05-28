@@ -420,7 +420,6 @@ async function deleteImage() {
     try {
       await deleteCardImage(form.imageFileID)
     } catch (err) {
-      console.error('删除云端图片失败:', err)
     }
   }
   form.image = ''

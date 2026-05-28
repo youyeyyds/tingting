@@ -196,7 +196,6 @@ function getCurrentUser() {
         return data
       }
     } catch (e) {
-      console.error('解析用户信息失败:', e)
     }
   }
   return null
@@ -280,7 +279,6 @@ async function loadChapters() {
       chapters.value = chaptersData
     }
   } catch (err) {
-    console.error('加载章节失败:', err)
   }
 }
 
@@ -363,7 +361,6 @@ async function loadCategories() {
       categories.value = res.data
     }
   } catch (err) {
-    console.error('加载分类失败:', err)
   }
 }
 

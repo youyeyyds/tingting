@@ -202,7 +202,6 @@ async function loadRoles() {
       roles.value = res.data
     }
   } catch (err) {
-    console.error('加载角色失败:', err)
   }
 }
 

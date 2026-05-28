@@ -402,7 +402,6 @@ async function handleAudioChange(file) {
 
     ElMessage.success(`音频解析成功，时长: ${formatDuration(audioDuration.value)}`)
   } catch (err) {
-    console.error('解析音频失败:', err)
     ElMessage.error('解析音频失败，请检查文件格式')
     clearAudio()
   } finally {
@@ -533,7 +532,6 @@ async function loadCourses() {
       courses.value = res.data
     }
   } catch (err) {
-    console.error('加载课程失败:', err)
   }
 }
 
@@ -694,7 +692,6 @@ async function handleSubmit() {
           existingAudioName.value = ''
           existingAudioFileSize.value = 0
         } catch (err) {
-          console.error('删除原有音频失败:', err)
           // 继续上传新音频，不中断流程
         }
       }

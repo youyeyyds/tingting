@@ -397,7 +397,8 @@ import {
   exportMartialArts,
   importMartialArts,
   exportMartialArtsBaseData,
-  importMartialArtsBaseData
+  importMartialArtsBaseData,
+  batchUpdateSeq
 } from '@/api/cloud'
 
 const loading = ref(false)
@@ -606,7 +607,6 @@ async function loadOptions() {
     if (novelsRes.success) novels.value = novelsRes.data
     if (charactersRes.success) characters.value = charactersRes.data
   } catch (err) {
-    console.error('加载选项失败:', err)
   }
 }
 
@@ -621,7 +621,6 @@ async function loadAvailableFilters() {
     if (typesRes.success) availableTypes.value = typesRes.data
     if (factionsRes.success) availableFactions.value = factionsRes.data
   } catch (err) {
-    console.error('加载筛选选项失败:', err)
   }
 }
 
@@ -754,7 +753,6 @@ async function handleImportFile(e) {
       let msg = `导入完成：新建 ${created} 条，更新 ${updated} 条`
       if (errors && errors.length > 0) {
         msg += `，${errors.length} 条出错`
-        console.error('导入错误:', errors)
       }
       ElMessage.success(msg)
       loadMartialArts()
@@ -814,7 +812,6 @@ async function handleBaseImportFile(e) {
       let msg = `导入完成：新建 ${created} 条，更新 ${updated} 条`
       if (errors && errors.length > 0) {
         msg += `，${errors.length} 条出错`
-        console.error('导入错误:', errors)
       }
       ElMessage.success(msg)
       await loadOptions()
@@ -844,8 +841,12 @@ function initSortable() {
         _id: item._id,
         seq: index + 1
       }))
-      // 简单处理：直接更新本地显示
-      ElMessage.success('排序已保存')
+      try {
+        await batchUpdateSeq('martialArts', updates)
+        ElMessage.success('排序已保存')
+      } catch (err) {
+        ElMessage.error('保存排序失败')
+      }
     }
   })
 }

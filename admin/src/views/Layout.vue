@@ -73,7 +73,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection, Postcard } from '@element-plus/icons-vue'
-import { clearCredentials, getCurrentUser, logout, saveUser } from '@/utils/auth'
+import { getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
 const router = useRouter()
@@ -156,7 +156,6 @@ onMounted(async () => {
       menuOrder.value = allKeys.filter(key => menuLabels[key])
     }
   } catch (err) {
-    console.error('加载菜单配置失败:', err)
   }
 })
 

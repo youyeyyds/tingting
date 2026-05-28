@@ -128,7 +128,6 @@ async function loadCourses() {
       courses.value = res.data
     }
   } catch (err) {
-    console.error('加载课程失败:', err)
   }
 }
 

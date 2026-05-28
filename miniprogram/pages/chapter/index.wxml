@@ -39,21 +39,13 @@
       <view class="course-title">{{course.title}}</view>
       <view class="course-author">{{course.author}}</view>
       <view class="course-meta">{{course.categoryName}} · {{course.chapterCount}}章 · {{course.progressText}}</view>
-      <!-- 播放按钮组：两个重叠的按钮 -->
-      <view class="play-btn-group">
-        <!-- play-btn1 (bottom): 只显示三角形，创建完整播放列表（不受筛选影响） -->
-        <view class="play-btn play-btn-1 {{!hasPlaylist ? 'active' : ''}}" bindtap="handleCreatePlaylist">
-          <view class="play-icon"></view>
-          <text class="play-btn-text">继续播放</text>
+      <!-- 播放按钮 -->
+      <view class="play-btn active" bindtap="handlePlay">
+        <view class="play-icon {{isPlaying ? 'pause' : ''}}">
+          <view class="pause-bar" wx:if="{{isPlaying}}"></view>
+          <view class="pause-bar" wx:if="{{isPlaying}}"></view>
         </view>
-        <!-- play-btn2 (top): 播放/暂停切换，与mini-player风格一致 -->
-        <view class="play-btn play-btn-2 {{hasPlaylist ? 'active' : ''}}" bindtap="handleTogglePlay">
-          <view class="play-icon {{isPlaying ? 'pause' : ''}}">
-            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
-            <view class="pause-bar" wx:if="{{isPlaying}}"></view>
-          </view>
-          <text class="play-btn-text">{{isPlaying ? '暂停播放' : '继续播放'}}</text>
-        </view>
+        <text class="play-btn-text">{{isPlaying ? '暂停播放' : (hasPlaylist ? '继续播放' : '开始播放')}}</text>
       </view>
     </view>
   </view>
@@ -89,14 +81,14 @@
       </view>
       <view class="chapter-actions">
         <block wx:if="{{item.isPlaying}}">
-          <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onPlayTap">
+          <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onChapterTap">
             <view class="audio-bar audio-bar-1"></view>
             <view class="audio-bar audio-bar-2"></view>
             <view class="audio-bar audio-bar-3"></view>
           </view>
         </block>
         <block wx:else>
-          <image class="action-icon" src="/icons/svg/play.svg" mode="aspectFit" data-id="{{item._id}}" catchtap="onPlayTap" />
+          <image class="action-icon" src="/icons/svg/play.svg" mode="aspectFit" data-id="{{item._id}}" catchtap="onChapterTap" />
         </block>
         <image class="action-icon" src="{{item.isFavorite ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" data-id="{{item._id}}" catchtap="onFavoriteTap" />
       </view>

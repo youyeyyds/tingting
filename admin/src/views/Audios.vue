@@ -258,7 +258,6 @@ async function loadAudios() {
       ElMessage.error('加载音频失败: ' + res.error)
     }
   } catch (err) {
-    console.error('加载音频失败:', err)
     ElMessage.error('加载音频失败')
   } finally {
     loading.value = false
@@ -273,7 +272,6 @@ async function loadCourses() {
       courses.value = res.data
     }
   } catch (err) {
-    console.error('加载课程失败:', err)
   }
 }
 
@@ -285,7 +283,6 @@ async function loadChapters() {
       chapters.value = res.data.data || res.data
     }
   } catch (err) {
-    console.error('加载章节失败:', err)
   }
 }
 
@@ -422,7 +419,6 @@ async function handleBatchUpload() {
       batchUploadDialogVisible.value = false
       batchUploadRef.value?.clearFiles()
       batchFiles.value = []
-      try { await loadAudios() } catch (e) { console.error('刷新音频失败', e) }
     } else {
       loading.close()
       ElMessage.error('导入失败: ' + (res.error || '未知错误'))
@@ -457,8 +453,6 @@ async function handleEditSave() {
     if (res.success) {
       ElMessage.success('保存成功')
       editDialogVisible.value = false
-      try { await loadChapters() } catch (e) { console.error('刷新章节失败', e) }
-      try { await loadAudios() } catch (e) { console.error('刷新音频失败', e) }
     } else {
       ElMessage.error('保存失败: ' + res.error)
     }

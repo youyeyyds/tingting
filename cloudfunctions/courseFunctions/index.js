@@ -74,17 +74,14 @@ const getCategories = async () => {
 // 获取版本列表
 const getVersions = async () => {
   try {
-    console.log('[getVersions] trying to fetch versions collection');
     const res = await db.collection("versions")
       .orderBy("seq", "desc")
       .get();
-    console.log('[getVersions] result:', JSON.stringify(res));
     return {
       success: true,
       data: res.data
     };
   } catch (e) {
-    console.error('[getVersions] error:', e.message || e);
     return {
       success: false,
       errMsg: e.message || e
@@ -216,7 +213,6 @@ const getMinimalCourses = async (event) => {
 const getHeadlines = async (event = {}) => {
   try {
     const page = event.page || 'index'; // page: 'index', 'favorite', 'login', 'mine'
-    console.log('getHeadlines 调用参数:', event, 'page:', page);
 
     // 获取头条列表
     const headlinesRes = await db.collection("headlines")
@@ -224,17 +220,14 @@ const getHeadlines = async (event = {}) => {
       .limit(10)
       .get();
 
-    console.log('头条原始数据:', headlinesRes.data.length, '条');
 
     // 根据页面位置过滤头条
     let filteredHeadlines = headlinesRes.data.filter(h => {
       const positions = h.positions || ['index', 'favorite', 'login', 'mine'];
       const included = positions.includes(page);
-      console.log('头条:', h.title, 'positions:', positions, '是否包含', page, ':', included);
       return included;
     });
 
-    console.log('过滤后头条:', filteredHeadlines.length, '条');
 
     // 获取轮播配置
     let speed = 3; // 默认3秒
@@ -244,7 +237,6 @@ const getHeadlines = async (event = {}) => {
         speed = configRes.data[0].value.speed || 3;
       }
     } catch (e) {
-      console.error('获取轮播配置失败:', e);
     }
 
     return {
@@ -253,7 +245,6 @@ const getHeadlines = async (event = {}) => {
       speed: speed
     };
   } catch (e) {
-    console.error('getHeadlines 错误:', e);
     return {
       success: false,
       errMsg: e.message || e
@@ -284,7 +275,9 @@ const getCourseDetail = async (event) => {
       if (catRes.data) {
         categoryName = catRes.data.name;
       }
-    } catch (e) {}
+    } catch (e) {
+      // 忽略分类查询错误
+    }
 
     // 获取章节列表
     const chaptersRes = await db.collection("chapters")
@@ -360,7 +353,6 @@ const updateChapterProgress = async (event) => {
     const { chapterId, courseId, lastPlayTime, finished, userId } = event;
     const currentUserId = getUserId(event);
 
-    console.log('updateChapterProgress 收到参数:', { chapterId, courseId, lastPlayTime, finished, userId, currentUserId });
 
     // 获取章节信息
     const chapterRes = await db.collection("chapters").doc(chapterId).get();
@@ -376,7 +368,6 @@ const updateChapterProgress = async (event) => {
       .limit(1)
       .get();
 
-    console.log('查询 userProgress:', currentUserId, chapterId, '找到', progressRes.data?.length, '条');
 
     const existingProgress = progressRes.data[0];
     const currentFinished = existingProgress?.finished || false;
@@ -770,7 +761,6 @@ const getCards = async (event) => {
         }
       }
     } catch (e) {
-      console.error('获取默认卡面失败', e.message);
     }
 
     return {
@@ -792,7 +782,6 @@ const getCards = async (event) => {
 const getMartialArts = async (event) => {
   try {
     const { limit = 50 } = event;
-    console.log('[getMartialArts] limit:', limit);
     // 获取武功列表，随机排序
     const martialArtsRes = await db.collection("martialArts")
       .aggregate()
@@ -800,7 +789,6 @@ const getMartialArts = async (event) => {
       .end();
 
     const martialArts = martialArtsRes.list || [];
-    console.log('[getMartialArts] martialArts count:', martialArts.length);
 
     if (martialArts.length === 0) {
       return { success: true, data: [] };
@@ -856,13 +844,11 @@ const getMartialArts = async (event) => {
       users: characterRelationMap[m._id] || []
     }));
 
-    console.log('[getMartialArts] returning data count:', data.length);
     return {
       success: true,
       data
     };
   } catch (e) {
-    console.error('[getMartialArts] error:', e);
     return {
       success: false,
       errMsg: e.message || e

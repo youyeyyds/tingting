@@ -219,7 +219,6 @@ async function loadBannerSpeed() {
       bannerSpeed.value = res.data.speed || 3
     }
   } catch (err) {
-    console.error('加载配置失败:', err)
   }
 }
 
@@ -232,7 +231,6 @@ async function loadCopyright() {
       icpNumber.value = res.data.icpNumber || ''
     }
   } catch (err) {
-    console.error('加载版权信息失败:', err)
   }
 }
 

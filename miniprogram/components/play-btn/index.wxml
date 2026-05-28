@@ -1,9 +1,0 @@
-<!--play-btn/index.wxml-->
-<view class="play-btn {{isActive ? 'active' : ''}}" bindtap="onTap" style="position:absolute;right:0;bottom:0;width:56rpx;height:56rpx;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;border-radius:0;padding:0;opacity:{{isActive?1:0}};pointer-events:{{isActive?'auto':'none'}}">
-  <view class="play-icon-wrap" style="display:flex;align-items:center;justify-content:center;">
-    <view class="{{isPlaying ? 'pause-icon' : 'play-icon'}}" style="{{isPlaying ? 'width:20rpx;height:22rpx;display:flex;justify-content:space-between;align-items:center;background:transparent;' : 'width:0;height:0;border-top:12rpx solid transparent;border-bottom:12rpx solid transparent;border-left:18rpx solid #999;margin-left:5rpx;'}}">
-      <view wx:if="{{isPlaying}}" class="pause-bar" style="width:6rpx;height:22rpx;background:#999;border-radius:2rpx;"></view>
-      <view wx:if="{{isPlaying}}" class="pause-bar" style="width:6rpx;height:22rpx;background:#999;border-radius:2rpx;"></view>
-    </view>
-  </view>
-</view>

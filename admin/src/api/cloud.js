@@ -50,7 +50,6 @@ export async function testConnection(credentials = null) {
     const response = await api.post('/auth/test', credentials || {})
     return response.data
   } catch (error) {
-    console.error('连接测试失败:', error)
     return { success: false, error: error.message || '连接失败' }
   }
 }
@@ -66,7 +65,6 @@ export async function loginByPhone(phone, password) {
     const response = await api.post('/auth/login', { phone, password })
     return response.data
   } catch (error) {
-    console.error('登录失败:', error)
     return { success: false, error: error.message || '登录失败' }
   }
 }
@@ -80,7 +78,6 @@ export async function getAccountInfo() {
     const response = await api.get('/auth/account')
     return response.data
   } catch (error) {
-    console.error('获取账号信息失败:', error)
     return { success: false, error: error.message || '获取失败' }
   }
 }

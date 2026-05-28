@@ -277,7 +277,6 @@ async function loadEnvConfig() {
       form.secretKey = result.data.secretKey || ''
     }
   } catch (err) {
-    console.error('加载环境配置失败:', err)
   }
 }
 
@@ -293,7 +292,6 @@ async function loadMenuConfig() {
     }
     initMenuSortable()
   } catch (err) {
-    console.error('加载菜单配置失败:', err)
   }
 }
 
@@ -607,11 +605,6 @@ async function handleReset() {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.card-face-preview {
-  width: 200px;
-  height: 350px;
 }
 
 .cover-placeholder {

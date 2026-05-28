@@ -27,7 +27,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="seq" label="序号" width="80" />;
+        <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="title" label="标题" min-width="150" />
         <el-table-column prop="publishDate" label="发布时间" width="120">
           <template #default="{ row }">

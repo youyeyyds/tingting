@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCourses, getChapters, getAudios, getUsers, testConnection } from '@/api/cloud'
 
@@ -172,7 +172,6 @@ async function loadStats() {
     }
 
   } catch (err) {
-    console.error('加载统计数据失败:', err)
   } finally {
     loading.value = false
   }
@@ -202,11 +201,19 @@ function updateTime() {
   currentTime.value = new Date().toLocaleString('zh-CN')
 }
 
+let timeInterval = null
+
 onMounted(async () => {
   await checkConnection()
   await loadStats()
   updateTime()
-  setInterval(updateTime, 1000)
+  timeInterval = setInterval(updateTime, 1000)
+})
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
 })
 </script>
 

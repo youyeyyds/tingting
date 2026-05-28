@@ -145,7 +145,6 @@ async function loadMenuConfig() {
       menuOrder.value = result.data.menuOrder.filter(key => permissionLabels[key])
     }
   } catch (err) {
-    console.error('加载菜单配置失败:', err)
   }
 }
 

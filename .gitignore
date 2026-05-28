@@ -20,4 +20,5 @@ node_modules/
 
 # 上传文件
 admin/server/uploads/
+audios/
 

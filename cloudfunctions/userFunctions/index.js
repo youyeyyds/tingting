@@ -37,8 +37,9 @@ const login = async (event) => {
     if (user.password && user.password.startsWith('$2')) {
       passwordMatch = await bcrypt.compare(password, user.password);
     } else {
-      // 兼容旧数据：明文比对
-      passwordMatch = user.password === password;
+      // 不再兼容明文密码比对，明文存储的密码无法登录
+      // 如果用户忘记密码，需要管理员重置
+      passwordMatch = false;
     }
 
     if (!passwordMatch) {
@@ -59,7 +60,7 @@ const login = async (event) => {
           avatarUrl = tempUrlRes.fileList[0].tempFileURL;
         }
       } catch (e) {
-        console.error('获取头像临时URL失败:', e);
+        // 忽略头像 URL 获取错误
       }
     }
 
@@ -104,7 +105,7 @@ const getUserInfo = async (event) => {
           avatarUrl = tempUrlRes.fileList[0].tempFileURL;
         }
       } catch (e) {
-        console.error('获取头像临时URL失败:', e);
+        // 忽略头像 URL 获取错误
       }
     }
 
