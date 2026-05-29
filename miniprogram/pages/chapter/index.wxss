@@ -96,6 +96,7 @@
 .play-btn-text {
   font-size: 28rpx;
   color: #fff;
+  font-weight: 600;
   margin-left: 10rpx;
 }
 
@@ -153,9 +154,26 @@
 .chapter-card {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 32rpx 24rpx;
   position: relative;
+}
+
+.chapter-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+}
+
+.last-played-badge {
+  font-size: 20rpx;
+  color: #FF6B00;
+  background: #fff2ef;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  margin-top: -24rpx;
+  font-weight: 600;
 }
 
 .chapter-divider {

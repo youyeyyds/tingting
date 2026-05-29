@@ -214,6 +214,7 @@ Page({
       durationText: duration > 0 ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '--',
       isPlaying: app.globalData.playingChapter?._id === chapter._id,
       isFavorite: chapter.isFavorite || false,
+      isLastPlayed: chapter._id === this.data.lastPlayedChapterId,
       // 注入课程信息，供 mini-player 使用
       courseTitle: chapter.courseTitle || this.data.course.title || '',
       courseCover: chapter.courseCover || this.data.course.cover || '',
@@ -227,13 +228,22 @@ Page({
       app.togglePlayPause();
     } else {
       // 创建完整播放列表（使用全部章节，不受筛选影响）
-      const { courseId, chapters, course } = this.data;
+      const { courseId, chapters, course, lastPlayedChapterId } = this.data;
       if (!courseId || !chapters.length) {
         return wx.showToast({ title: '暂无章节', icon: 'none' });
       }
 
-      // 找到第一个未完成的章节
-      let chapterToPlay = chapters.find(ch => ch.progress < 100) || chapters[0];
+      // 优先从上次学到的章节开始播放，其次找未完成的章节，最后选第一个
+      let chapterToPlay = null;
+      if (lastPlayedChapterId) {
+        chapterToPlay = chapters.find(ch => ch._id === lastPlayedChapterId);
+      }
+      if (!chapterToPlay) {
+        chapterToPlay = chapters.find(ch => ch.progress < 100);
+      }
+      if (!chapterToPlay) {
+        chapterToPlay = chapters[0];
+      }
 
       // 调用 miniPlayer.play 来显示 mini-player UI 并开始播放
       const miniPlayer = this.selectComponent('#miniPlayer');
@@ -290,10 +300,26 @@ Page({
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
-    this.setData({ chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })) });
-    this.applyFilterAndSort();
-    // 保存最近播放的章节ID
-    this.saveCourseSettings({ lastPlayedChapterId: chapterId });
+
+    // 更新章节状态和上次播放标记
+    const updatedChapters = this.data.chapters.map(ch => ({
+      ...ch,
+      isPlaying: ch._id === chapterId,
+      isLastPlayed: ch._id === chapterId
+    }));
+
+    // 直接重新计算 filteredChapters
+    let filteredChapters = [...updatedChapters];
+    if (this.data.showUnfinishedOnly) {
+      filteredChapters = filteredChapters.filter(ch => ch.progress < 100);
+    }
+    filteredChapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
+
+    this.setData({
+      lastPlayedChapterId: chapterId,
+      chapters: updatedChapters,
+      filteredChapters
+    });
   },
 
   onBack() {

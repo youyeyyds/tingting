@@ -79,18 +79,21 @@
           <text class="chapter-duration">{{item.durationText}}</text>
         </view>
       </view>
-      <view class="chapter-actions">
-        <block wx:if="{{item.isPlaying}}">
-          <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onChapterTap">
-            <view class="audio-bar audio-bar-1"></view>
-            <view class="audio-bar audio-bar-2"></view>
-            <view class="audio-bar audio-bar-3"></view>
-          </view>
-        </block>
-        <block wx:else>
-          <image class="action-icon" src="/icons/svg/play.svg" mode="aspectFit" data-id="{{item._id}}" catchtap="onChapterTap" />
-        </block>
-        <image class="action-icon" src="{{item.isFavorite ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" data-id="{{item._id}}" catchtap="onFavoriteTap" />
+      <view class="chapter-card-right">
+        <text class="last-played-badge" wx:if="{{item.isLastPlayed}}">上次学到</text>
+        <view class="chapter-actions">
+          <block wx:if="{{item.isPlaying}}">
+            <view class="audio-icon playing" data-id="{{item._id}}" catchtap="onChapterTap">
+              <view class="audio-bar audio-bar-1"></view>
+              <view class="audio-bar audio-bar-2"></view>
+              <view class="audio-bar audio-bar-3"></view>
+            </view>
+          </block>
+          <block wx:else>
+            <image class="action-icon" src="/icons/svg/play.svg" mode="aspectFit" data-id="{{item._id}}" catchtap="onChapterTap" />
+          </block>
+          <image class="action-icon" src="{{item.isFavorite ? '/icons/svg/favorite-active.svg' : '/icons/svg/favorite.svg'}}" mode="aspectFit" data-id="{{item._id}}" catchtap="onFavoriteTap" />
+        </view>
       </view>
       <view class="chapter-divider" wx:if="{{index < filteredChapters.length}}"></view>
     </view>
