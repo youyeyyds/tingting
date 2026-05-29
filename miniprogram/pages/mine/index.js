@@ -165,24 +165,25 @@ Page({
     }
   },
 
-  // 刷新头像临时URL（仅在 avatarFileID 变化时更新），在 onLoad 中调用一次
+  // 刷新头像临时URL（缓存5分钟，过期后重新获取）
   async refreshAvatarTempUrl(userParam) {
     const user = userParam || app.globalData.userInfo;
     if (!user) return;
     if (user.avatarFileID && user.avatarFileID.startsWith('cloud://')) {
-      const cachedFileID = app.globalData.cachedAvatarFileID;
-      const cachedTempUrl = app.globalData.cachedAvatarTempUrl;
-      if (cachedFileID === user.avatarFileID && cachedTempUrl) {
-        // avatarFileID 没变，用缓存，不触发 setData 避免闪烁
+      // 检查缓存是否过期（5分钟）
+      const cacheAge = Date.now() - (app.globalData.cachedAvatarTime || 0);
+      if (app.globalData.cachedAvatarFileID === user.avatarFileID &&
+          app.globalData.cachedAvatarTempUrl &&
+          cacheAge < 5 * 60 * 1000) {
         return;
       }
-      // avatarFileID 变了或无缓存，获取新临时URL
       try {
         const tempUrlRes = await wx.cloud.getTempFileURL({ fileList: [user.avatarFileID] });
         if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
           const newTempUrl = tempUrlRes.fileList[0].tempFileURL;
           app.globalData.cachedAvatarFileID = user.avatarFileID;
           app.globalData.cachedAvatarTempUrl = newTempUrl;
+          app.globalData.cachedAvatarTime = Date.now();
           this.setData({ avatarUrl: newTempUrl });
         }
       } catch (e) {
