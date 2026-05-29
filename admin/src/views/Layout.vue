@@ -179,7 +179,14 @@ window.addEventListener('menu-order-updated', (e) => {
 })
 
 // 当前激活的菜单
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  const path = route.path
+  // 课程章节页特殊处理：高亮课程管理
+  if (path.startsWith('/courses/') && path.includes('/chapters')) {
+    return '/courses'
+  }
+  return path
+})
 
 // 面包屑
 const breadcrumb = computed(() => {
