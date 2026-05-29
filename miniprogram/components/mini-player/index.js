@@ -387,7 +387,8 @@ Component({
         chapters, course, currentChapter: chapter, currentIndex: index,
         courseCover, courseName: course.title || '',
         playlistSortOrder: order, isFavoriteList: false, coverLoadTime,
-        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0,
+        isPlaying: true
       });
 
       Object.assign(app.globalData, {
