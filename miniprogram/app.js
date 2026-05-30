@@ -189,6 +189,15 @@ App({
     bgAudio.onStop(() => {
       this.notifyCallbacks('onStop', {});
     });
+
+    // 系统播放面板上一曲/下一曲事件
+    bgAudio.onNext(() => {
+      this.playNext();
+    });
+
+    bgAudio.onPrev(() => {
+      this.playPrev();
+    });
   },
 
   // 音频播完处理
