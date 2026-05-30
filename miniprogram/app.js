@@ -34,10 +34,7 @@ App({
   },
 
   onShow() {
-    // 重新进入小程序时，关闭音频并隐藏mini-player
-    if (this.bgAudioManager && this.globalData.miniPlayerActive) {
-      this.resetPlayState();
-    }
+    // 切回前台时，不主动关闭音频，让音频继续播放
   },
 
   // 加载默认封面
