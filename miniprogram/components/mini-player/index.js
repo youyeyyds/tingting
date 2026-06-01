@@ -110,6 +110,14 @@ Component({
         },
         onError: () => this.setData({ isPlaying: false }),
         onStop: () => this.setData({ isPlaying: false }),
+        onSystemStop: () => {
+          // 系统小控件关闭：mini-player 同步淡出并重置，与 in-app close 时序一致
+          this.setData({ fadeInClass: 'fade-out' });
+          setTimeout(() => {
+            // 如果在 300ms 内用户又触发了新播放（miniPlayerActive 重新被置 true），不要冲掉新状态
+            if (!app.globalData.miniPlayerActive) this._resetState();
+          }, 300);
+        },
         onClose: () => {
           // 关闭事件由 app.notifyCallbacks('onClose', ...) 广播，所有 tabBar 页的 mini-player 实例都会收到。
           // 收到后立即同步本实例的可见状态，避免在其它页面实例的 data.visible 仍为 true，

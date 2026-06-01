@@ -215,16 +215,23 @@ App({
     bgAudio.onCanplay(() => {
       bgAudio.playbackRate = 2;
       const duration = bgAudio.duration;
+      // 清除切歌标志（onCanplay 一定在 onPlay 之前到达，到这里说明新 src 已就绪）
+      this._switchingChapter = false;
       this.notifyCallbacks('onCanplay', {
         duration: duration || 0
       });
     });
 
     bgAudio.onPlay(() => {
+      // 同步全局播放状态：覆盖系统小控件触发的播放（不会走 app.togglePlayPause）
+      this.globalData.playingStatus = true;
+      this._switchingChapter = false;
       this.notifyCallbacks('onPlay', {});
     });
 
     bgAudio.onPause(() => {
+      // 同步全局播放状态：覆盖系统小控件触发的暂停（不会走 app.togglePlayPause）
+      this.globalData.playingStatus = false;
       this.notifyCallbacks('onPause', {});
     });
 
@@ -248,7 +255,44 @@ App({
     });
 
     bgAudio.onStop(() => {
-      this.notifyCallbacks('onStop', {});
+      // onStop 的来源有四种：
+      // 1) 应用内关闭：onClose 已把 miniPlayerActive 置 false，普通广播即可
+      // 2) 切歌中转（iOS 切 src 时旧音频 onStop）：_switchingChapter 为 true，跳过
+      // 3) 最后一章播完：onAudioEnded 主动 stop，_lastChapterEnded 为 true，跳过关闭逻辑
+      // 4) 系统小控件关闭：剩下的情况，同步关闭 mini-player
+      if (this._switchingChapter) {
+        this._switchingChapter = false;
+        this.notifyCallbacks('onStop', {});
+        return;
+      }
+      if (this._lastChapterEnded) {
+        this._lastChapterEnded = false;
+        this.notifyCallbacks('onStop', {});
+        return;
+      }
+      if (!this.globalData.miniPlayerActive) {
+        this.notifyCallbacks('onStop', {});
+        return;
+      }
+      // 系统小控件关闭：同步关闭 mini-player
+      this.globalData.playingStatus = false;
+      this.globalData.miniPlayerActive = false;
+      this.globalData.miniPlayerIndexFadedIn = false;
+      // 通知所有 mini-player 实例开始淡出
+      this.notifyCallbacks('onSystemStop', {});
+      // 300ms 后做完整清理（与 in-app close 时序一致）
+      setTimeout(() => {
+        Object.assign(this.globalData, {
+          playingCourse: null, playingChapter: null, playingSeq: null,
+          playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
+        });
+        wx.removeStorageSync('playingCourse');
+        wx.removeStorageSync('playingChapter');
+        wx.removeStorageSync('playingSeq');
+        wx.removeStorageSync('playlistSortOrder');
+        wx.removeStorageSync('playMode');
+        this.notifyCallbacks('onClose', {});
+      }, 300);
     });
 
     // 系统播放面板上一曲/下一曲事件
@@ -279,6 +323,7 @@ App({
 
     const currentId = currentChapter?._id;
     if (!currentId || !chapters.length) {
+      this._lastChapterEnded = true;
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
       this._audioEndedProcessing = false;
@@ -287,6 +332,7 @@ App({
 
     const currentIndex = chapters.findIndex(ch => ch._id === currentId);
     if (currentIndex === -1) {
+      this._lastChapterEnded = true;
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
       this._audioEndedProcessing = false;
@@ -311,6 +357,7 @@ App({
       this.playChapter(chapters[0]._id, chapters);
     } else {
       wx.showToast({ title: '已经是最后一条', icon: 'none' });
+      this._lastChapterEnded = true;
       this.bgAudioManager.stop();
       this.notifyCallbacks('onLastChapterEnded', {});
     }
@@ -453,6 +500,8 @@ App({
     const course = this.globalData.playingCourse || {};
     // 先更新播放状态，确保 onPlay 回调能读到正确的值
     this.globalData.playingStatus = true;
+    // 标记正在切歌，iOS 切 src 时 onStop 会先于 onCanplay 触发，onStop 处理要跳过这个 stop
+    this._switchingChapter = true;
 
     bgAudio.title = chapter.title || '音频课程';
     bgAudio.epname = course.title || '';
