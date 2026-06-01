@@ -342,7 +342,10 @@ Component({
 
       this._savePlayStateCache(course, chapter, 'asc', 'sequence');
       app.playChapter(chapter._id, chapters);
-      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() }, () => {
+      // 仅在之前不可见时设置 fadeInClass，避免切歌时无脑重放淡入动画导致闪烁
+      const showData = { visible: true, playerBottom: this._calcPosition() };
+      if (!this.data.visible) showData.fadeInClass = 'fade-in';
+      this.setData(showData, () => {
         if (this.data.isPlaying) this._startMiniRotation();
         else this._stopMiniRotation();
       });
@@ -406,7 +409,10 @@ Component({
 
       this._savePlayStateCache(course, chapter, order, app.globalData.playMode);
       app.playChapter(chapter._id, chapters);
-      this.setData({ visible: true, fadeInClass: 'fade-in', playerBottom: this._calcPosition() }, () => {
+      // 仅在 mini-player 之前不可见时设置 fadeInClass，避免跨页面切歌时无脑重放淡入动画导致闪烁
+      const showData = { visible: true, playerBottom: this._calcPosition() };
+      if (!this.data.visible) showData.fadeInClass = 'fade-in';
+      this.setData(showData, () => {
         if (this.data.isPlaying) this._startMiniRotation();
         else this._stopMiniRotation();
       });
