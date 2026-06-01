@@ -42,11 +42,8 @@
 }
 
 .detail-date::before {
-  content: '';
-  width: 32rpx;
-  height: 2rpx;
-  background: rgba(255, 255, 255, 0.5);
-  margin-right: 12rpx;
+  content: '发布日期：';
+  margin-right: 4rpx;
 }
 
 .detail-desc {
