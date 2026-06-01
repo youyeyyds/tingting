@@ -558,9 +558,10 @@ App({
   // ========== 公共工具方法 ==========
 
   // 处理图片URL（带时间戳的picsum稳定化）
+  // type ∈ {'banner', 'cover'}，loadTime 不传则从 globalData 取对应 type 的时间戳
   processImageUrl(url, type = 'cover', loadTime) {
     if (!url) return url;
-    const t = loadTime || this.globalData.coverLoadTime || Date.now();
+    const t = loadTime || this.globalData[(type || 'cover') + 'LoadTime'] || Date.now();
 
     // 固定图片不处理
     if (url.match(/picsum\.photos\/seed\/fixed_/) || url.includes('seed/fixed_')) {
@@ -568,13 +569,14 @@ App({
     }
 
     // 已带时间戳格式的seed，直接替换时间戳
-    const timestampedMatch = url.match(/seed\/(\d+)_cover_([^\/]+)\/(\d+(\/\d+)?)/);
+    const timestampedMatch = url.match(/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
     if (timestampedMatch) {
       const oldTime = timestampedMatch[1];
-      const seed = timestampedMatch[2];
-      const size = timestampedMatch[3];
-      if (oldTime != t) {
-        return `https://picsum.photos/seed/${t}_cover_${seed}/${size}`;
+      const oldType = timestampedMatch[2];
+      const seed = timestampedMatch[3];
+      const size = timestampedMatch[4];
+      if (oldTime != t || oldType !== type) {
+        return `https://picsum.photos/seed/${t}_${type}_${seed}/${size}`;
       }
       return url;
     }
@@ -584,7 +586,7 @@ App({
     if (seedMatch) {
       const seed = seedMatch[1];
       const size = seedMatch[2];
-      return `https://picsum.photos/seed/${t}_cover_${seed}/${size}`;
+      return `https://picsum.photos/seed/${t}_${type}_${seed}/${size}`;
     }
 
     // 旧格式: picsum.photos/400/400?random=1
@@ -593,10 +595,11 @@ App({
     if (sizeMatch) {
       const size = sizeMatch[1];
       const random = randomMatch ? randomMatch[1] : '0';
-      return `https://picsum.photos/seed/${t}_cover_${random}/${size}`;
+      return `https://picsum.photos/seed/${t}_${type}_${random}/${size}`;
     }
 
-    return url;
+    // 非 picsum URL，追加时间戳防缓存
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   // 保存播放进度（云端）

@@ -27,7 +27,7 @@ Page({
 
     // 有缓存则用当前时间戳重建 URL
     const headlines = cachedHeadlines.length > 0
-      ? cachedHeadlines.map(h => ({ ...h, image: this.processImageUrl(h.image, loadTime) }))
+      ? cachedHeadlines.map(h => ({ ...h, image: app.processImageUrl(h.image, 'banner', loadTime) }))
       : [];
 
     this.setData({
@@ -59,7 +59,7 @@ Page({
     const bt = app.globalData.bannerLoadTime;
     const headlines = this.data.headlines.map(h => ({
       ...h,
-      image: this.processImageUrl(h.image, bt)
+      image: app.processImageUrl(h.image, 'banner', bt)
     }));
     this.setData({ loadTime: bt, headlines });
     app.globalData.homePageHeadlines = headlines;
@@ -73,7 +73,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.processImageUrl(h.image, this.data.loadTime)
+          image: app.processImageUrl(h.image, 'banner', this.data.loadTime)
         }));
         app.globalData.homePageHeadlines = headlines;
         this.setData({ headlines, bannerSpeed: (res.result.speed || 5) * 1000 });
@@ -94,31 +94,6 @@ Page({
         this.setData({ copyrightLines, icpNumber: data.icpNumber || '' });
       }
     }).catch(err => console.error('获取版权信息失败', err));
-  },
-
-  processImageUrl(url, loadTime) {
-    if (!url) return url;
-    if (url.includes('seed/fixed_')) return url;
-
-    const timeMatch = url.match(/seed\/(\d+)_banner_(.+\/\d+\/\d+)$/);
-    if (timeMatch) {
-      return timeMatch[1] != loadTime
-        ? url.replace(/seed\/\d+_banner_/, `seed/${loadTime}_banner_`)
-        : url;
-    }
-
-    const seedMatch = url.match(/seed\/([^\/]+)\/(\d+\/\d+)$/);
-    if (seedMatch) {
-      return `https://picsum.photos/seed/${loadTime}_banner_${seedMatch[1]}/${seedMatch[2]}`;
-    }
-
-    const sizeMatch = url.match(/picsum\.photos\/(\d+\/\d+)/);
-    if (sizeMatch) {
-      const r = url.match(/random=(\d+)/)?.[1] || '0';
-      return `https://picsum.photos/seed/${loadTime}_banner_${r}/${sizeMatch[1]}`;
-    }
-
-    return url.includes('?') ? `${url}&t=${loadTime}` : `${url}?t=${loadTime}`;
   },
 
   onPhoneInput(e) { this.setData({ phone: e.detail.value }); },

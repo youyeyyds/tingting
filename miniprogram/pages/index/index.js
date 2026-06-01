@@ -51,7 +51,7 @@ Page({
           this.loadHeadlines();
           const courses = this.data.courses.map(c => ({
             ...c,
-            cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+            cover: app.processImageUrl(c.cover, 'cover', this.data.coverTime)
           }));
           this.setData({ courses });
         });
@@ -177,30 +177,6 @@ Page({
     }
   },
 
-  processUrl(url, time, type) {
-    if (!url || url.includes('seed/fixed_')) return url;
-    const t = time || this.data[type === 'banner' ? 'bannerTime' : 'coverTime'];
-
-    // 时间戳格式已存在
-    const m1 = url.match(/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
-    if (m1) {
-      return m1[1] != t ? url.replace(/seed\/\d+_(banner|cover)_/, `seed/${t}_${type}_`) : url;
-    }
-
-    // seed格式添加时间戳
-    const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-    if (m2) return `https://picsum.photos/seed/${t}_${type}_${m2[1]}/${m2[2]}`;
-
-    // 无seed格式
-    const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-    if (m3) {
-      const r = url.match(/random=(\d+)/)?.[1] || '0';
-      return `https://picsum.photos/seed/${t}_${type}_${r}/${m3[1]}`;
-    }
-
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
-  },
-
   onRefresh() {
     const t = Date.now();
     app.globalData.bannerLoadTime = t;
@@ -227,7 +203,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.processUrl(h.image, this.data.bannerTime, 'banner')
+          image: app.processImageUrl(h.image, 'banner', this.data.bannerTime)
         }));
         app.globalData.homePageHeadlines = headlines;
         wx.setStorageSync('indexHeadlines', headlines);
@@ -244,7 +220,7 @@ Page({
       if (res.result.success) {
         const courses = res.result.data.map(c => ({
           ...c,
-          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+          cover: app.processImageUrl(c.cover, 'cover', this.data.coverTime)
         }));
         this._realCourses = courses;
         app.globalData.homePageCourses = courses;
@@ -306,7 +282,7 @@ Page({
     const masked = app.globalData.homePageMaskedCourses || {};
     const ct = this.data.coverTime;
     Object.keys(masked).forEach(id => {
-      masked[id] = { ...masked[id], cover: this.processUrl(masked[id].cover, ct, 'cover') };
+      masked[id] = { ...masked[id], cover: app.processImageUrl(masked[id].cover, 'cover', ct) };
     });
     return masked;
   },
@@ -324,7 +300,7 @@ Page({
       if (res.result.success) {
         this._realCourses = res.result.data.map(c => ({
           ...c,
-          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+          cover: app.processImageUrl(c.cover, 'cover', this.data.coverTime)
         }));
         this.maskCourses();
       } else {

@@ -23,7 +23,7 @@ Page({
     if (cachedHeadlines.length > 0) {
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner', loadTime)
+        image: app.processImageUrl(h.image, 'banner', loadTime)
       }));
     }
 
@@ -53,52 +53,11 @@ Page({
     if (bt !== this.data.loadTime) {
       const headlines = this.data.headlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner', bt)
+        image: app.processImageUrl(h.image, 'banner', bt)
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
     }
-  },
-
-  fixImageUrl(url, type = 'banner', loadTime) {
-    if (!url) return url;
-    if (url.match(/picsum\.photos\/seed\/fixed_/)) {
-      return url;
-    }
-    if (loadTime === undefined) {
-      loadTime = this.data.loadTime;
-    }
-    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_banner_/)) {
-      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_banner_([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const oldTime = seedMatch[1];
-        const originalSeed = seedMatch[2];
-        const size = seedMatch[3];
-        if (oldTime != loadTime) {
-          const newSeed = `${loadTime}_banner_${originalSeed}`;
-          return `https://picsum.photos/seed/${newSeed}/${size}`;
-        }
-        return url;
-      }
-    }
-    if (url.includes('picsum.photos')) {
-      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const originalSeed = seedMatch[1];
-        const size = seedMatch[2];
-        const newSeed = `${loadTime}_${type}_${originalSeed}`;
-        return `https://picsum.photos/seed/${newSeed}/${size}`;
-      }
-      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-      const randomMatch = url.match(/random=(\d+)/);
-      if (sizeMatch) {
-        const size = sizeMatch[1];
-        const originalRandom = randomMatch ? randomMatch[1] : '0';
-        const seed = `${loadTime}_${type}_${originalRandom}`;
-        return `https://picsum.photos/seed/${seed}/${size}`;
-      }
-    }
-    return url.includes('?') ? `${url}&t=${loadTime}` : `${url}?t=${loadTime}`;
   },
 
   loadHeadlines() {
@@ -109,7 +68,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.fixImageUrl(h.image, 'banner', this.data.loadTime)
+          image: app.processImageUrl(h.image, 'banner', this.data.loadTime)
         }));
         app.globalData.mineHeadlines = headlines;
         this.setData({

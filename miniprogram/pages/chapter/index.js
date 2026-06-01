@@ -94,7 +94,7 @@ Page({
         if (coverLoadTime && coverLoadTime !== this.data.coverLoadTime) {
           this.setData({ coverLoadTime });
           if (this.data.course.cover) {
-            this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
+            this.setData({ course: { ...this.data.course, cover: app.processImageUrl(this.data.course.cover, 'cover', coverLoadTime) } });
           }
         }
       }
@@ -128,7 +128,7 @@ Page({
     if (ct && ct !== this.data.coverLoadTime) {
       this.setData({ coverLoadTime: ct });
       if (this.data.course.cover) {
-        this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
+        this.setData({ course: { ...this.data.course, cover: app.processImageUrl(this.data.course.cover, 'cover', ct) } });
       }
     }
   },
@@ -165,7 +165,7 @@ Page({
       }).then(res => {
         if (res.result.success) {
           const course = res.result.course;
-          course.cover = this.processImageUrl(course.cover);
+          course.cover = app.processImageUrl(course.cover, 'cover', this.data.coverLoadTime);
           const chapters = res.result.chapters.map(ch => this.formatChapter(ch));
           this.setData({
             course,
@@ -187,19 +187,6 @@ Page({
       wx.showToast({ title: '加载失败', icon: 'none' });
       this.setData({ loading: false });
     });
-  },
-
-  processImageUrl(url) {
-    if (!url || url.includes('seed/fixed_')) return url;
-    const t = app.globalData.coverLoadTime || this.data.coverLoadTime;
-    if (!t) return url; // 时间戳未初始化时不处理
-    const m1 = url.match(/seed\/(\d+)_cover_/);
-    if (m1) return m1[1] != t ? url.replace(/seed\/\d+_cover_/, `seed/${t}_cover_`) : url;
-    const m2 = url.match(/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-    if (m2) return `https://picsum.photos/seed/${t}_cover_${m2[1]}/${m2[2]}`;
-    const m3 = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-    if (m3) return `https://picsum.photos/seed/${t}_cover_${url.match(/random=(\d+)/)?.[1] || 0}/${m3[1]}`;
-    return url;
   },
 
   formatChapter(chapter) {

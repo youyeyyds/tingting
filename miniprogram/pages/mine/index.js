@@ -42,7 +42,7 @@ Page({
     if (cachedHeadlines.length > 0) {
       cachedHeadlines = cachedHeadlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner', loadTime)
+        image: app.processImageUrl(h.image, 'banner', loadTime)
       }));
     }
 
@@ -100,7 +100,7 @@ Page({
     if (bt !== this.data.loadTime) {
       const headlines = this.data.headlines.map(h => ({
         ...h,
-        image: this.fixImageUrl(h.image, 'banner', bt)
+        image: app.processImageUrl(h.image, 'banner', bt)
       }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.mineHeadlines = headlines;
@@ -191,7 +191,7 @@ Page({
       if (res.result.success) {
         const headlines = res.result.data.map(h => ({
           ...h,
-          image: this.fixImageUrl(h.image, 'banner', this.data.loadTime)
+          image: app.processImageUrl(h.image, 'banner', this.data.loadTime)
         }));
         // 缓存到全局变量
         app.globalData.mineHeadlines = headlines;
@@ -202,77 +202,6 @@ Page({
       }
     })
     .catch(err => console.error('获取头条失败', err));
-  },
-
-  // 固定图片URL，使用picsum的seed格式保证稳定但刷新时变化
-  // 横幅图片使用 bannerLoadTime
-  // loadTime 可选，默认从 this.data 获取
-  fixImageUrl(url, type = 'banner', loadTime) {
-    if (!url) return url;
-
-    // 检查是否为固定图片（seed以fixed_开头），不替换时间戳
-    if (url.match(/picsum\.photos\/seed\/fixed_/)) {
-      return url; // 固定图片，直接返回
-    }
-
-    // 如果没有传入 loadTime，则从 this.data 获取
-    if (loadTime === undefined) {
-      loadTime = this.data.loadTime;
-    }
-
-    // 检查URL是否已经包含时间戳格式的seed（如 123456_banner_xxx），说明已处理过
-    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_banner_/)) {
-      // 已处理过，但时间戳可能变化，需要替换新的时间戳
-      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_banner_([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const oldTime = seedMatch[1];
-        const originalSeed = seedMatch[2];
-        const size = seedMatch[3];
-        // 时间戳变化时才替换
-        if (oldTime != loadTime) {
-          const newSeed = `${loadTime}_banner_${originalSeed}`;
-          return `https://picsum.photos/seed/${newSeed}/${size}`;
-        }
-        return url;
-      }
-    }
-
-    // 处理 picsum.photos URL
-    if (url.includes('picsum.photos')) {
-      // 如果已经是seed格式（非时间戳格式），替换seed为时间戳+类型+原seed组合
-      // 格式: https://picsum.photos/seed/course1/400/400
-      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const originalSeed = seedMatch[1]; // 如 "course1"
-        const size = seedMatch[2]; // 如 "400/400" 或 "400"
-        const newSeed = `${loadTime}_${type}_${originalSeed}`;
-        return `https://picsum.photos/seed/${newSeed}/${size}`;
-      }
-
-      // 提取尺寸信息，支持两种格式：
-      // 格式1: https://picsum.photos/800/300?random=1
-      // 格式2: https://picsum.photos/400?random=1
-      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-      const randomMatch = url.match(/random=(\d+)/);
-
-      if (sizeMatch) {
-        const size = sizeMatch[1]; // 如 "800/300" 或 "400"
-        const originalRandom = randomMatch ? randomMatch[1] : '0';
-        // 组合时间戳+类型+原始random作为种子
-        const seed = `${loadTime}_${type}_${originalRandom}`;
-        return `https://picsum.photos/seed/${seed}/${size}`;
-      }
-    }
-
-    // 其他URL添加时间戳防缓存
-    return this.addTimestamp(url);
-  },
-
-  // 添加时间戳到URL
-  addTimestamp(url) {
-    if (!url) return url;
-    const t = this.data.loadTime;
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   checkLoginStatus() {

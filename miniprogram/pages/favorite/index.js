@@ -27,10 +27,10 @@ Page({
     let cachedFavorites = app.globalData.favoriteChapters || [];
 
     if (cachedHeadlines.length > 0) {
-      cachedHeadlines = cachedHeadlines.map(h => ({ ...h, image: this._fixImageUrl(h.image, 'banner', loadTime) }));
+      cachedHeadlines = cachedHeadlines.map(h => ({ ...h, image: app.processImageUrl(h.image, 'banner', loadTime) }));
     }
     if (cachedFavorites.length > 0) {
-      cachedFavorites = cachedFavorites.map(ch => ({ ...ch, courseCover: this._fixImageUrl(ch.courseCover, 'cover', coverLoadTime) }));
+      cachedFavorites = cachedFavorites.map(ch => ({ ...ch, courseCover: app.processImageUrl(ch.courseCover, 'cover', coverLoadTime) }));
     }
 
     this.setData({ loadTime, coverLoadTime, headlines: cachedHeadlines, favoriteChapters: cachedFavorites, loading: true });
@@ -105,7 +105,7 @@ Page({
     const bt = app.globalData.bannerLoadTime;
     const ct = app.globalData.coverLoadTime;
     if (bt !== this.data.loadTime) {
-      const headlines = this.data.headlines.map(h => ({ ...h, image: this._fixImageUrl(h.image, 'banner', bt) }));
+      const headlines = this.data.headlines.map(h => ({ ...h, image: app.processImageUrl(h.image, 'banner', bt) }));
       this.setData({ loadTime: bt, headlines });
       app.globalData.favoriteHeadlines = headlines;
     }
@@ -124,47 +124,11 @@ Page({
       data: { type: 'getHeadlines', page: 'favorite' }
     }).then(res => {
       if (res.result.success) {
-        const headlines = res.result.data.map(h => ({ ...h, image: this._fixImageUrl(h.image, 'banner') }));
+        const headlines = res.result.data.map(h => ({ ...h, image: app.processImageUrl(h.image, 'banner', this.data.loadTime) }));
         app.globalData.favoriteHeadlines = headlines;
         this.setData({ headlines, bannerSpeed: (res.result.speed || 5) * 1000 });
       }
     }).catch(err => console.error('获取头条失败', err));
-  },
-
-  _fixImageUrl(url, type = 'banner', loadTime) {
-    if (!url) return url;
-    if (url.match(/picsum\.photos\/seed\/fixed_/)) return url;
-
-    const t = loadTime || (type === 'banner' ? this.data.loadTime : this.data.coverLoadTime);
-
-    if (url.includes('picsum.photos/seed/') && url.match(/seed\/\d+_(banner|cover)_/)) {
-      const seedMatch = url.match(/picsum\.photos\/seed\/(\d+)_(banner|cover)_([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        const oldTime = seedMatch[1];
-        const urlType = seedMatch[2];
-        const originalSeed = seedMatch[3];
-        const size = seedMatch[4];
-        if (urlType === type && oldTime != t) {
-          return `https://picsum.photos/seed/${t}_${type}_${originalSeed}/${size}`;
-        }
-      }
-      return url;
-    }
-
-    if (url.includes('picsum.photos')) {
-      const seedMatch = url.match(/picsum\.photos\/seed\/([^\/]+)\/(\d+(\/\d+)?)/);
-      if (seedMatch) {
-        return `https://picsum.photos/seed/${t}_${type}_${seedMatch[1]}/${seedMatch[2]}`;
-      }
-      const sizeMatch = url.match(/picsum\.photos\/(\d+(\/\d+)?)/);
-      const randomMatch = url.match(/random=(\d+)/);
-      if (sizeMatch) {
-        const size = sizeMatch[1];
-        const random = randomMatch ? randomMatch[1] : '0';
-        return `https://picsum.photos/seed/${t}_${type}_${random}/${size}`;
-      }
-    }
-    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
   },
 
   checkLoginStatus() {
