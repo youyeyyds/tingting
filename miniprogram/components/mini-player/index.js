@@ -46,6 +46,7 @@ Component({
     overlayBgCoverError: false,
     overlayCoverError: false,
     overlayUsingDefaultCover: false,
+    overlayOriginalFailed: false,
     overlayOriginalCover: ''
   },
 
@@ -64,12 +65,17 @@ Component({
           if (foundChapter && foundIndex >= 0) {
             // 更新课程信息（收藏场景跨课程切换时）
             if (app.globalData.playingCourse) {
+              // 跨课程切换时，原封面 URL 也要同步换成新课程，否则 toggle 回原 URL 还是旧课程的图
+              const newOriginalCover = app.globalData.playingCourse.cover || '';
               this.setData({
                 currentChapter: foundChapter,
                 currentIndex: foundIndex,
                 course: app.globalData.playingCourse,
-                courseCover: app.globalData.playingCourse.cover || '',
-                courseName: app.globalData.playingCourse.title || ''
+                courseCover: newOriginalCover,
+                courseName: app.globalData.playingCourse.title || '',
+                overlayOriginalCover: newOriginalCover,
+                overlayOriginalFailed: false,
+                overlayUsingDefaultCover: false
               }, () => {
                 this._updateOverlayNextChapterInfo();
                 this.checkOverlayFavoriteStatus();
@@ -318,7 +324,10 @@ Component({
         chapters, course, currentChapter: chapter, currentIndex: index,
         courseCover, courseName: chapter.courseTitle || '收藏列表',
         playlistSortOrder: 'asc', isFavoriteList: true, coverLoadTime,
-        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0
+        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0,
+        overlayOriginalCover: courseCover,
+        overlayOriginalFailed: false,
+        overlayUsingDefaultCover: false
       });
 
       Object.assign(app.globalData, {
@@ -385,7 +394,10 @@ Component({
         courseCover, courseName: course.title || '',
         playlistSortOrder: order, isFavoriteList: false, coverLoadTime,
         miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0,
-        isPlaying: true
+        isPlaying: true,
+        overlayOriginalCover: courseCover,
+        overlayOriginalFailed: false,
+        overlayUsingDefaultCover: false
       });
 
       Object.assign(app.globalData, {
@@ -498,7 +510,12 @@ Component({
       const cloudCover = app.globalData.defaultCoverUrl;
       const defaultCover = localCover || cloudCover || '/icons/svg/headphones.svg';
       if (this.data.courseCover !== defaultCover) {
-        this.setData({ courseCover: defaultCover });
+        // 失败的是原封面（不是默认），记录失败状态并切到默认态
+        this.setData({
+          courseCover: defaultCover,
+          overlayOriginalFailed: true,
+          overlayUsingDefaultCover: true
+        });
       }
     },
 
@@ -551,10 +568,8 @@ Component({
         overlaySpeedIndicatorPos: speedIndicatorPos,
         overlayCoverRotationAngle: miniCoverRotationAngle
       };
-      // 只有在还没有切换到默认封面时，才更新原始封面
-      if (!this.data.overlayUsingDefaultCover) {
-        setData.overlayOriginalCover = this.data.courseCover;
-      }
+      // overlayOriginalCover 不在这里覆盖，由 play / _playFromList / onChapterChange 单一来源维护。
+      // 否则 courseCover 因为加载失败变成默认 URL 时，会把默认 URL 当成"原封面"保存，toggle 失效。
       this.setData(setData);
       if (!this.speedOptions.includes(playbackRate)) {
         this.setData({ playbackRate: 2 });
@@ -843,17 +858,29 @@ Component({
     onOverlayCoverError() {
       const localCover = app.globalData.defaultCoverLocalPath || app.globalData.fallbackCover;
       if (this.data.courseCover === localCover && localCover) {
+        // 已经是默认封面在加载还失败（兜底图也加载不出来），置空交给 WXML wx:if 不渲染
         this.setData({ overlayCoverError: true, courseCover: '' });
         return;
       }
-      this.setData({ overlayCoverError: true, courseCover: localCover || this.data.courseCover });
+      // 失败的是原封面（不是默认），记录失败状态并切到默认态
+      this.setData({
+        overlayCoverError: true,
+        courseCover: localCover || this.data.courseCover,
+        overlayOriginalFailed: true,
+        overlayUsingDefaultCover: true
+      });
     },
 
     onOverlayCoverTap() {
-      const { overlayUsingDefaultCover, overlayOriginalCover } = this.data;
+      const { overlayUsingDefaultCover, overlayOriginalCover, overlayOriginalFailed } = this.data;
       const defaultCover = app.globalData.defaultCoverLocalPath || app.globalData.fallbackCover || '';
       if (!defaultCover || !overlayOriginalCover) return;
       if (overlayUsingDefaultCover) {
+        // 当前在默认封面，要切回原封面。原封面之前加载失败过就别再切了，否则又会触发 onError
+        if (overlayOriginalFailed) {
+          wx.showToast({ title: '原封面加载失败', icon: 'none' });
+          return;
+        }
         const coverLoadTime = app.globalData.coverLoadTime || Date.now();
         this.setData({
           overlayUsingDefaultCover: false,
