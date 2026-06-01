@@ -65,9 +65,18 @@ Page({
         app.globalData.favoriteChapters = favoriteChapters;
       },
       onStop: () => {
-        const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }));
-        this.setData({ favoriteChapters });
-        app.globalData.favoriteChapters = favoriteChapters;
+        // iOS 切 src 时也会触发 onStop，此时 playingStatus 仍为 true（app.playAudio 在改 src 前置 true），
+        // 且 playingChapter 已切到新章节。这里用 playingStatus 区分"真停止"和"切歌中转"
+        const playingChapterId = app.globalData.playingChapter?._id;
+        if (app.globalData.playingStatus && playingChapterId) {
+          const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: ch._id === playingChapterId }));
+          this.setData({ favoriteChapters });
+          app.globalData.favoriteChapters = favoriteChapters;
+        } else {
+          const favoriteChapters = this.data.favoriteChapters.map(ch => ({ ...ch, isPlaying: false }));
+          this.setData({ favoriteChapters });
+          app.globalData.favoriteChapters = favoriteChapters;
+        }
       },
       onCoverRefresh: ({ coverLoadTime }) => {
         if (!coverLoadTime) return;

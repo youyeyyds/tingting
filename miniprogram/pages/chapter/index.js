@@ -31,7 +31,18 @@ Page({
       },
       onStop: ({ chapterId }) => {
         if (chapterId) this.setData({ lastPlayedChapterId: chapterId });
-        this.resetPlayingState();
+        if (!this.isCurrentCourse(this.data.courseId)) return;
+        // iOS 切 src 时也会触发 onStop，紧接着会有 onChapterChange/onPlay 把它"复活"，
+        // 这里只把"被停止的那一章"标为 false，避免误把整列清空
+        if (chapterId) {
+          this.setData({
+            chapters: this.data.chapters.map(ch =>
+              ch._id === chapterId ? { ...ch, isPlaying: false } : ch
+            )
+          });
+          this.applyFilterAndSort();
+        }
+        this.setData({ isPlaying: false, hasPlaylist: false });
       },
       onPlay: () => {
         const cur = this.isCurrentCourse(this.data.courseId);
