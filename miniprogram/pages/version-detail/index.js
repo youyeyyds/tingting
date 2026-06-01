@@ -1,4 +1,6 @@
 // version-detail/index.js
+const app = getApp();
+
 Page({
   data: {
     title: '',
@@ -7,19 +9,15 @@ Page({
     headerHeight: 0
   },
 
-  initLayout() {
-    const { statusBarHeight } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    this.setData({ headerHeight });
-  },
-
   onLoad(options) {
-    this.initLayout();
     const title = decodeURIComponent(options.title || '');
     const publishDate = decodeURIComponent(options.publishDate || '');
     const description = decodeURIComponent(options.description || '');
-    this.setData({ title, publishDate, description });
+    this.setData({
+      title,
+      publishDate,
+      description,
+      headerHeight: app.globalData.headerHeight
+    });
   }
 });

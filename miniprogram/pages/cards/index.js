@@ -15,16 +15,8 @@ Page({
   },
 
   onLoad() {
-    this.initLayout();
+    this.setData({ headerHeight: app.globalData.headerHeight });
     this.loadCards();
-  },
-
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    this.setData({ headerHeight });
   },
 
   async loadCards() {

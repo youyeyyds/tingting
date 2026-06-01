@@ -12,24 +12,12 @@ Page({
     scrollHeight: 0
   },
 
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
-    this.setData({
-      headerHeight,
-      scrollHeight: windowHeight - headerHeight - tabH
-    });
-  },
-
   onLoad() {
-    this.initLayout();
-    if (!app.globalData.bannerLoadTime) {
-      app.globalData.bannerLoadTime = Date.now();
-    }
     const loadTime = app.globalData.bannerLoadTime;
+    this.setData({
+      headerHeight: app.globalData.headerHeight,
+      scrollHeight: app.globalData.scrollHeightNoTab
+    });
     let cachedHeadlines = app.globalData.mineHeadlines || [];
 
     if (cachedHeadlines.length > 0) {
@@ -154,11 +142,7 @@ Page({
 
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
-    if (index == 2) return;
-    if (index == 0) {
-      wx.navigateTo({ url: '/pages/index/index' });
-    } else {
-      wx.navigateTo({ url: '/pages/favorite/index' });
-    }
+    if (index == 2) return; // 当前在"我的"分组，但 version 本身不是 tabBar 页面
+    app.switchTab(index);
   }
 });

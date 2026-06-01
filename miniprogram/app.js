@@ -15,6 +15,9 @@ App({
     this.miniPlayerCallbacks = [];
     this.setupAudioEvents();
 
+    // 初始化布局信息（每个 page 不再各自计算 headerHeight）
+    this.initLayout();
+
     // 初始化图片加载时间戳（从缓存读取，保持稳定）
     const cachedBannerTime = wx.getStorageSync('bannerLoadTime');
     const cachedCoverTime = wx.getStorageSync('coverLoadTime');
@@ -31,6 +34,66 @@ App({
 
     // 加载默认封面
     this.loadDefaultCover();
+  },
+
+  // 一次性计算并缓存页面布局所需的尺寸，page 只读不重算
+  initLayout() {
+    try {
+      const sys = wx.getWindowInfo();
+      const menu = wx.getMenuButtonBoundingClientRect();
+      const statusBarHeight = sys.statusBarHeight || 20;
+      const menuButtonMarginTop = menu.top - statusBarHeight;
+      const navBarHeight = menu.height + menuButtonMarginTop * 2;
+      const headerHeight = statusBarHeight + navBarHeight;
+      const windowHeight = sys.windowHeight;
+      const windowWidth = sys.windowWidth || sys.screenWidth;
+      const tabH = 100 * windowWidth / 750; // tabBar 高度，按 rpx 折算
+
+      Object.assign(this.globalData, {
+        statusBarHeight,
+        navBarHeight,
+        headerHeight,
+        windowHeight,
+        windowWidth,
+        tabBarHeight: tabH,
+        scrollHeightNoTab: windowHeight - headerHeight,
+        scrollHeightWithTab: windowHeight - headerHeight - tabH,
+        menuButtonLeftGap: windowWidth - menu.right,
+        menuButtonTop: menu.top,
+        menuButtonHeight: menu.height,
+        menuButtonWidth: menu.width
+      });
+    } catch (e) {
+      console.error('初始化布局失败:', e);
+      Object.assign(this.globalData, {
+        statusBarHeight: 20, navBarHeight: 44, headerHeight: 64,
+        windowHeight: 0, windowWidth: 375, tabBarHeight: 50,
+        scrollHeightNoTab: 0, scrollHeightWithTab: 0,
+        menuButtonLeftGap: 10, menuButtonTop: 20, menuButtonHeight: 32, menuButtonWidth: 87
+      });
+    }
+  },
+
+  // 统一的 tabBar 切换：登录校验 + 已在栈里就 navigateBack，否则 navigateTo
+  switchTab(targetIndex) {
+    const ROUTES = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'];
+    const target = ROUTES[targetIndex];
+    if (!target) return;
+    const pages = getCurrentPages();
+    // 当前已经在目标页，不处理
+    if (pages[pages.length - 1]?.route === target) return;
+    // 非首页需要登录
+    if (targetIndex !== 0 && !this.globalData.isLoggedIn) {
+      this.globalData.wasInBackground = false;
+      wx.navigateTo({ url: '/pages/login/index' });
+      return;
+    }
+    const exist = pages.find(p => p.route === target);
+    if (exist) {
+      wx.navigateBack({ delta: pages.length - pages.indexOf(exist) - 1 });
+    } else {
+      wx.navigateTo({ url: `/${target}` });
+    }
   },
 
   onShow() {

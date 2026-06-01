@@ -16,11 +16,12 @@ Page({
   },
 
   onLoad() {
-    this.initLayout();
-    if (!app.globalData.bannerLoadTime) app.globalData.bannerLoadTime = Date.now();
-    if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
     const loadTime = app.globalData.bannerLoadTime;
     const coverLoadTime = app.globalData.coverLoadTime;
+    this.setData({
+      headerHeight: app.globalData.headerHeight,
+      scrollHeight: app.globalData.scrollHeightWithTab
+    });
 
     let cachedHeadlines = app.globalData.favoriteHeadlines || [];
     let cachedFavorites = app.globalData.favoriteChapters || [];
@@ -92,18 +93,6 @@ Page({
 
   onUnload() {
     app.unregisterMiniPlayer(this.audioCallback);
-  },
-
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
-    this.setData({
-      headerHeight,
-      scrollHeight: windowHeight - headerHeight - tabH
-    });
   },
 
   onShow() {
@@ -312,16 +301,6 @@ Page({
   },
 
   onTabChange(e) {
-    const { index } = e.currentTarget.dataset;
-    if (index == 1) return;
-    const targetRoute = index == 0 ? 'pages/index/index' : 'pages/mine/index';
-    const pages = getCurrentPages();
-    const targetPage = pages.find(p => p.route === targetRoute);
-    if (targetPage) {
-      const delta = pages.length - pages.indexOf(targetPage) - 1;
-      if (delta > 0) wx.navigateBack({ delta });
-    } else {
-      wx.navigateTo({ url: `/${targetRoute}` });
-    }
+    app.switchTab(e.currentTarget.dataset.index);
   }
 });

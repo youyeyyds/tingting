@@ -17,11 +17,11 @@ Page({
   },
 
   onLoad() {
-    this.initLayout();
-    if (!app.globalData.bannerLoadTime) {
-      app.globalData.bannerLoadTime = Date.now();
-    }
     const loadTime = app.globalData.bannerLoadTime;
+    this.setData({
+      headerHeight: app.globalData.headerHeight,
+      scrollHeight: app.globalData.scrollHeightNoTab
+    });
     const cachedHeadlines = app.globalData.homePageHeadlines || [];
     const cachedCopyright = app.globalData.loginCopyright || {};
 
@@ -40,17 +40,6 @@ Page({
 
     if (!headlines.length) this.loadHeadlines();
     if (!cachedCopyright.copyrightLines) this.loadCopyright();
-  },
-
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    this.setData({
-      headerHeight,
-      scrollHeight: windowHeight - headerHeight
-    });
   },
 
   onShow() {

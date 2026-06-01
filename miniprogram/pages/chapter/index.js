@@ -19,9 +19,10 @@ Page({
   },
 
   onLoad(options) {
-    this.initLayout();
     this.setData({
-      courseId: options.id || ''
+      courseId: options.id || '',
+      headerHeight: app.globalData.headerHeight,
+      scrollHeight: app.globalData.scrollHeightNoTab
     });
 
     this.audioCallback = {
@@ -130,17 +131,6 @@ Page({
         this.setData({ course: { ...this.data.course, cover: this.processImageUrl(this.data.course.cover) } });
       }
     }
-  },
-
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    this.setData({
-      headerHeight,
-      scrollHeight: windowHeight - headerHeight
-    });
   },
 
   onUnload() {

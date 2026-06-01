@@ -28,25 +28,13 @@ Page({
     scrollHeight: 0
   },
 
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
-    this.setData({
-      headerHeight,
-      scrollHeight: windowHeight - headerHeight - tabH
-    });
-  },
-
   onLoad() {
-    this.initLayout();
     // 使用全局时间戳和数据缓存，保持图片稳定
-    if (!app.globalData.bannerLoadTime) {
-      app.globalData.bannerLoadTime = Date.now();
-    }
     const loadTime = app.globalData.bannerLoadTime;
+    this.setData({
+      headerHeight: app.globalData.headerHeight,
+      scrollHeight: app.globalData.scrollHeightWithTab
+    });
     // 检查是否有缓存的横幅数据
     let cachedHeadlines = app.globalData.mineHeadlines || [];
 
@@ -466,24 +454,6 @@ Page({
   },
 
   onTabChange(e) {
-    const { index } = e.currentTarget.dataset;
-    if (index == 2) return; // 当前页，不做处理
-    if (!app.globalData.isLoggedIn) {
-      wx.navigateTo({ url: '/pages/login/index' });
-      return;
-    }
-    const targetRoute = index == 0 ? 'pages/index/index' : 'pages/favorite/index';
-    const pages = getCurrentPages();
-    const targetPage = pages.find(p => p.route === targetRoute);
-    if (targetPage) {
-      const delta = pages.length - pages.indexOf(targetPage) - 1;
-      if (delta > 0) {
-        wx.navigateBack({ delta });
-      } else {
-        // 目标页就是当前页，不处理
-      }
-    } else {
-      wx.navigateTo({ url: `/${targetRoute}` });
-    }
+    app.switchTab(e.currentTarget.dataset.index);
   }
 });

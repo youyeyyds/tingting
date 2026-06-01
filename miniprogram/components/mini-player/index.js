@@ -161,34 +161,14 @@ Component({
 
   methods: {
     _initNavButtonData() {
-      try {
-        const systemInfo = wx.getWindowInfo();
-        const statusBarHeight = systemInfo.statusBarHeight || 20;
-        const menuButton = wx.getMenuButtonBoundingClientRect();
-        const menuButtonTop = menuButton.top;
-        const menuButtonHeight = menuButton.height;
-        const menuButtonWidth = menuButton.width;
-        const menuButtonRight = menuButton.right;
-        const menuButtonMarginTop = menuButtonTop - statusBarHeight;
-        const navContentHeight = menuButtonHeight + menuButtonMarginTop * 2;
-        const windowWidth = systemInfo.windowWidth || systemInfo.screenWidth;
-        const menuButtonLeftGap = windowWidth - menuButtonRight;
-        this.setData({
-          statusBarHeight,
-          navContentHeight,
-          menuButtonHeight,
-          menuButtonWidth,
-          menuButtonLeftGap
-        });
-      } catch (e) {
-        this.setData({
-          statusBarHeight: 20,
-          navContentHeight: 44,
-          menuButtonHeight: 32,
-          menuButtonWidth: 87,
-          menuButtonLeftGap: 10
-        });
-      }
+      const g = app.globalData;
+      this.setData({
+        statusBarHeight: g.statusBarHeight,
+        navContentHeight: g.navBarHeight,
+        menuButtonHeight: g.menuButtonHeight,
+        menuButtonWidth: g.menuButtonWidth,
+        menuButtonLeftGap: g.menuButtonLeftGap
+      });
     },
 
     _setupAudioListeners() {

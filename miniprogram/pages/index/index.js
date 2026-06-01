@@ -25,7 +25,11 @@ Page({
   },
 
   onLoad() {
-    this.initLayout();
+    this.setData({
+      headerHeight: app.globalData.headerHeight,
+      scrollHeightNoTab: app.globalData.scrollHeightNoTab,
+      scrollHeightWithTab: app.globalData.scrollHeightWithTab
+    });
     this.initTimes();
     this.loadData();
 
@@ -59,23 +63,7 @@ Page({
     });
   },
 
-  initLayout() {
-    const { statusBarHeight, windowHeight, windowWidth } = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-    const headerHeight = statusBarHeight + navBarHeight;
-    const tabH = 100 * windowWidth / 750;
-
-    this.setData({
-      headerHeight,
-      scrollHeightNoTab: windowHeight - headerHeight,
-      scrollHeightWithTab: windowHeight - headerHeight - tabH
-    });
-  },
-
   initTimes() {
-    if (!app.globalData.bannerLoadTime) app.globalData.bannerLoadTime = Date.now();
-    if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
     if (!app.globalData.martialArtsPool) app.globalData.martialArtsPool = [];
 
     this.setData({
@@ -465,21 +453,6 @@ Page({
   },
 
   onTabChange(e) {
-    const idx = e.currentTarget.dataset.index;
-    if (idx == 0) return;
-    if (!app.globalData.isLoggedIn) {
-      app.globalData.wasInBackground = false;
-      wx.navigateTo({ url: '/pages/login/index' });
-      return;
-    }
-    const urls = ['', 'favorite', 'mine'];
-    const target = `pages/${urls[idx]}/index`;
-    const pages = getCurrentPages();
-    const exist = pages.find(p => p.route === target);
-    if (exist) {
-      wx.navigateBack({ delta: pages.length - pages.indexOf(exist) - 1 });
-    } else {
-      wx.navigateTo({ url: `/pages/${urls[idx]}/index` });
-    }
+    app.switchTab(e.currentTarget.dataset.index);
   }
 });
