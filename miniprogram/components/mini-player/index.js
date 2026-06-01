@@ -110,6 +110,12 @@ Component({
         },
         onError: () => this.setData({ isPlaying: false }),
         onStop: () => this.setData({ isPlaying: false }),
+        onClose: () => {
+          // 关闭事件由 app.notifyCallbacks('onClose', ...) 广播，所有 tabBar 页的 mini-player 实例都会收到。
+          // 收到后立即同步本实例的可见状态，避免在其它页面实例的 data.visible 仍为 true，
+          // 切回时 pageLifetimes.show 触发瞬间渲染出旧的可见状态再被 show() 修正造成闪现
+          this.setData({ visible: false, fadeInClass: '' });
+        },
         onReset: () => {
           this.setData({ fadeInClass: 'fade-out' });
           setTimeout(() => this._resetState(), 300);
@@ -425,13 +431,26 @@ Component({
 
     onClose() {
       const lastChapterId = this.data.currentChapter?._id || app.globalData.playingChapter?._id;
+      // 立即把全局标志置 false：避免用户在 300ms 淡出动画期间切到其它 tab 页时，
+      // 那个页面 mini-player 实例的 show() 仍按 miniPlayerActive=true 把自己显示出来，造成闪现
+      app.globalData.miniPlayerActive = false;
+      app.globalData.miniPlayerIndexFadedIn = false;
+      // 立即把其它 tabBar 页面的 mini-player 实例的 data.visible 同步置 false，
+      // 确保用户在这 300ms 内立即切到其它 tab 页时，目标页渲染时读到的就是 false，没有闪现
+      const pages = getCurrentPages();
+      const currentRoute = pages[pages.length - 1]?.route;
+      for (const page of pages) {
+        if (page.route === currentRoute) continue;
+        if (!['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(page.route)) continue;
+        const miniPlayer = page.selectComponent('#miniPlayer');
+        if (miniPlayer) miniPlayer.setData({ visible: false, fadeInClass: '' });
+      }
       this.setData({ fadeInClass: 'fade-out' });
       setTimeout(() => {
         this._doSaveProgress().then(() => {
           app.stop();
           this._resetState();
           Object.assign(app.globalData, {
-            miniPlayerActive: false, miniPlayerIndexFadedIn: false,
             playingCourse: null, playingChapter: null, playingSeq: null,
             playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
           });
