@@ -105,6 +105,7 @@ App({
     userInfo: null,
     isLoggedIn: false,
     userId: null,
+    wasInBackground: false, // 是否从后台切回（用于登录态恢复流程）
     playingCourse: null,
     playingChapter: null,
     playingIndex: 0,
@@ -115,21 +116,18 @@ App({
     playMode: 'sequence', // 'sequence' | 'loop' | 'single'
     playlistChaptersData: [], // 完整的播放列表数据
     playlistSortOrder: 'asc', // 'asc' | 'desc'
-    loginPageLoadTime: null, // 登录页图片加载时间戳，保持稳定
-    homePageLoadTime: null, // 首页图片加载时间戳，保持稳定
-    homePageMaskedAuthors: null, // 首页伪装课程映射（已废弃，保留字段兼容）
     homePageMaskedCourses: {}, // 首页伪装课程-武功映射
     bannerLoadTime: null, // 横幅加载时间戳，保持稳定
     coverLoadTime: null, // 封面加载时间戳，保持稳定
     defaultCoverUrl: null, // 默认封面URL
     defaultCoverLocalPath: null, // 默认封面本地路径（下载的）
     fallbackCover: '/images/default_cover.png', // 内置兜底封面
-    loginHeadlines: [], // 登录页横幅缓存
     favoriteHeadlines: [], // 收藏页横幅缓存
     mineHeadlines: [], // 我的页横幅缓存
     favoriteChapters: [], // 收藏章节缓存
     cachedAvatarFileID: null, // 头像云文件ID缓存
-    cachedAvatarTempUrl: null // 头像临时URL缓存
+    cachedAvatarTempUrl: null, // 头像临时URL缓存
+    cachedAvatarTime: 0 // 头像临时URL缓存时间戳
   },
 
   restoreLoginState() {

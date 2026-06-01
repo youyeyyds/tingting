@@ -87,17 +87,6 @@ Component({
         const windowWidth = systemInfo.windowWidth || systemInfo.screenWidth;
         const menuButtonLeftGap = windowWidth - menuButtonRight;
 
-        console.log('导航栏数据:', {
-          statusBarHeight,
-          menuButtonTop,
-          menuButtonHeight,
-          menuButtonWidth,
-          menuButtonRight,
-          windowWidth,
-          menuButtonLeftGap,
-          navContentHeight
-        });
-
         this.setData({
           statusBarHeight,
           navContentHeight,
