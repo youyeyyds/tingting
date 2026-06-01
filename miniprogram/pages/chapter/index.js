@@ -58,9 +58,14 @@ Page({
         const cur = this.isCurrentCourse(this.data.courseId);
         const miniPlayerActive = app.globalData.miniPlayerActive;
         this.setData({
-          chapters: this.data.chapters.map(ch => ({ ...ch, isPlaying: ch._id === chapterId })),
+          chapters: this.data.chapters.map(ch => ({
+            ...ch,
+            isPlaying: ch._id === chapterId,
+            isLastPlayed: ch._id === chapterId
+          })),
           hasPlaylist: cur && miniPlayerActive,
-          isPlaying: isPlaying !== undefined ? isPlaying : (cur && miniPlayerActive)
+          isPlaying: isPlaying !== undefined ? isPlaying : (cur && miniPlayerActive),
+          lastPlayedChapterId: chapterId
         });
         this.applyFilterAndSort();
         this.saveCourseSettings({ lastPlayedChapterId: chapterId });
@@ -288,26 +293,8 @@ Page({
     if (miniPlayer) {
       miniPlayer.play(chapterId, this.data.filteredChapters, this.data.course, this.data.sortOrder);
     }
-
-    // 更新章节状态和上次播放标记
-    const updatedChapters = this.data.chapters.map(ch => ({
-      ...ch,
-      isPlaying: ch._id === chapterId,
-      isLastPlayed: ch._id === chapterId
-    }));
-
-    // 直接重新计算 filteredChapters
-    let filteredChapters = [...updatedChapters];
-    if (this.data.showUnfinishedOnly) {
-      filteredChapters = filteredChapters.filter(ch => ch.progress < 100);
-    }
-    filteredChapters.sort((a, b) => (this.data.sortOrder === 'asc' ? (a.seq || 0) - (b.seq || 0) : (b.seq || 0) - (a.seq || 0)));
-
-    this.setData({
-      lastPlayedChapterId: chapterId,
-      chapters: updatedChapters,
-      filteredChapters
-    });
+    // chapters/isPlaying/isLastPlayed/filteredChapters 的更新由
+    // onChapterChange 回调统一处理（miniPlayer.play 内部会触发）
   },
 
   onBack() {
