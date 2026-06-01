@@ -479,21 +479,11 @@ App({
     this.miniPlayerCallbacks.forEach(cb => {
       if (cb[event]) cb[event](data);
     });
-    if (this._callbacks && this._callbacks[event]) {
-      this._callbacks[event].forEach(cb => cb(data));
-    }
   },
 
   // 注册 mini-player 回调
   registerMiniPlayer(callback) {
     this.miniPlayerCallbacks.push(callback);
-  },
-
-  // 注册通用回调
-  registerCallback(event, callback) {
-    if (!this._callbacks) this._callbacks = {};
-    if (!this._callbacks[event]) this._callbacks[event] = [];
-    this._callbacks[event].push(callback);
   },
 
   // 移除 mini-player 回调

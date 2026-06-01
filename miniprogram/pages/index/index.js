@@ -35,25 +35,23 @@ Page({
     }
 
     // 监听其他页面刷新图片
-    app.registerCallback?.('onCoverRefresh', (data) => {
-      app.globalData.coverLoadTime = data.coverLoadTime;
-      app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
-      app.globalData.homePageHeadlines = [];
-      this.setData({
-        bannerTime: app.globalData.bannerLoadTime,
-        coverTime: app.globalData.coverLoadTime
-      }, () => {
-        this.loadHeadlines();
-        const courses = this.data.courses.map(c => ({
-          ...c,
-          cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
-        }));
-        this.setData({ courses });
-      });
-    });
-
-    // 监听播放进度更新
-    app.registerMiniPlayer?.({
+    app.registerMiniPlayer({
+      onCoverRefresh: (data) => {
+        app.globalData.coverLoadTime = data.coverLoadTime;
+        app.globalData.bannerLoadTime = data.bannerLoadTime || data.coverLoadTime;
+        app.globalData.homePageHeadlines = [];
+        this.setData({
+          bannerTime: app.globalData.bannerLoadTime,
+          coverTime: app.globalData.coverLoadTime
+        }, () => {
+          this.loadHeadlines();
+          const courses = this.data.courses.map(c => ({
+            ...c,
+            cover: this.processUrl(c.cover, this.data.coverTime, 'cover')
+          }));
+          this.setData({ courses });
+        });
+      },
       onProgressUpdate: ({ chapterId, lastPlayTime, finished }) => {
         // 清除课程缓存，首页下次显示时会重新加载最新进度（课程平均进度）
         app.globalData.homePageCourses = [];
