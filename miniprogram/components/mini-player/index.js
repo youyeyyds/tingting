@@ -1,5 +1,10 @@
 // mini-player/index.js
 const app = getApp();
+// 文件加载时计算初始角度，让 wxml 首次渲染就在目标角度上，
+// 避免 setData 从 0deg 改到 Xdeg 时被 playing 类的 transition 动画出来。
+// 文件只加载一次，所以这个值是在"组件首次被引用时"取的 globalData，
+// 之后实例复用时 data 已经被前面的 setData 更新过，不会再用这个初始值。
+const initialAngle = (app && app.globalData && app.globalData.miniCoverRotationAngle) || 0;
 
 Component({
   properties: {
@@ -33,8 +38,8 @@ Component({
     // Overlay state
     playerOverlayVisible: false,
     overlayFadeClass: '',
-    overlayCoverRotationAngle: 0,
-    miniCoverRotationAngle: 0,
+    overlayCoverRotationAngle: initialAngle,
+    miniCoverRotationAngle: initialAngle,
     overlaySpeedIndicatorPos: 70,
     overlayCurrentTimeText: '0:00',
     overlayRemainingTimeText: '-0:00',
@@ -57,6 +62,44 @@ Component({
       this._overlayRotationTimer = null;
       this._miniRotationTimer = null;
       this._initNavButtonData();
+      // 用 setData 把 data 里所有缺字段补齐（data 对象在某些 WeChat 版本下会被
+      // 优化掉没访问到的 key，导致 miniCoverRotationAngle/currentChapter 等缺失，
+      // 第一次 setData 时被当成"从 undefined 改到 X"触发 transition 跳变）。
+      // 这里在 created 阶段就补齐，且初始角度直接从 globalData 读。
+      const _initAngle = (app.globalData.miniCoverRotationAngle || 0);
+      this.setData({
+        playerBottom: 15,
+        currentChapter: {},
+        currentIndex: 0,
+        courseCover: '',
+        courseName: '',
+        course: {},
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        progressPercent: 0,
+        playbackRate: 2,
+        chapters: [],
+        playlistSortOrder: 'asc',
+        isFavoriteList: false,
+        playMode: 'sequence',
+        playerOverlayVisible: false,
+        overlayFadeClass: '',
+        overlayCoverRotationAngle: _initAngle,
+        miniCoverRotationAngle: _initAngle,
+        overlaySpeedIndicatorPos: 70,
+        overlayCurrentTimeText: '0:00',
+        overlayRemainingTimeText: '-0:00',
+        overlayShowTotalTime: false,
+        overlayNextChapterSeq: '',
+        overlayNextChapterTitle: '',
+        overlayIsFavorite: false,
+        overlayBgCoverLoaded: false,
+        overlayBgCoverError: false,
+        overlayCoverError: false,
+        overlayUsingDefaultCover: false,
+        overlayOriginalCover: ''
+      });
       this.audioCallback = {
         onChapterChange: ({ chapterId, chapter, index }) => {
           if (!chapterId) return;
@@ -97,7 +140,7 @@ Component({
           else this._stopMiniRotation();
         },
         onPause: () => {
-          if (this.data.currentChapter._id && app.globalData.playingStatus === false) {
+          if (this.data.currentChapter?._id && app.globalData.playingStatus === false) {
             this._doSaveProgress();
           }
           this.setData({ isPlaying: app.globalData.playingStatus });
@@ -115,7 +158,12 @@ Component({
           this.setData({ isPlaying: false, currentTime: 0, duration: 0, progressPercent: 0 });
         },
         onError: () => this.setData({ isPlaying: false }),
-        onStop: () => this.setData({ isPlaying: false }),
+        onStop: () => {
+          this.setData({ isPlaying: false });
+          // 立即停掉旋转，避免 onStop 事件延迟期间角度继续递增（与 onPlayPause 同因）
+          this._stopOverlayRotation();
+          this._stopMiniRotation();
+        },
         onSystemStop: () => {
           // 系统小控件关闭：mini-player 同步淡出并重置，与 in-app close 时序一致
           this.setData({ fadeInClass: 'fade-out' });
@@ -154,6 +202,11 @@ Component({
       this._setupAudioListeners();
     },
     detached() {
+      // 组件被销毁时必须清掉 setInterval——WeChat 的 setInterval 在 JS 全局环境里，
+      // 不随组件实例销毁，未清理的话"幽灵 timer"会继续写 app.globalData，
+      // 污染跨页面/跨实例的角度状态
+      this._stopOverlayRotation();
+      this._stopMiniRotation();
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
       if (this._onCanplay && this.bgAudioManager.offCanplay) this.bgAudioManager.offCanplay(this._onCanplay);
       app.unregisterMiniPlayer(this.audioCallback);
@@ -298,7 +351,7 @@ Component({
       const { index, chapters } = data;
       if (!chapters || chapters.length === 0 || index < 0) return;
 
-      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
+      if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
         this._doSaveProgress();
       }
 
@@ -356,7 +409,7 @@ Component({
 
     // 播放章节（外部调用入口）
     play(chapterId, playlistChapters, courseData, sortOrder) {
-      if (this.data.currentChapter._id && this.bgAudioManager.currentTime > 0) {
+      if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
         this._doSaveProgress();
       }
 
@@ -438,7 +491,13 @@ Component({
       this._playPauseLock = true;
       setTimeout(() => { this._playPauseLock = false; }, 300);
       app.togglePlayPause();
-      this.setData({ isPlaying: this.bgAudioManager.paused ? false : true });
+      const isPaused = this.bgAudioManager.paused;
+      this.setData({ isPlaying: isPaused ? false : true });
+      if (isPaused) {
+        // 立即停掉 mini 旋转：onPause 事件延迟到达期间角度会继续递增，
+        // 跨页面时（A→B→C）会看到角度跳变。再次播放由 onPlay 回调重新启动。
+        this._stopMiniRotation();
+      }
     },
 
     togglePlayPause() { this.onPlayPause(); },
@@ -481,7 +540,7 @@ Component({
     },
 
     _doSaveProgress(isFinished = false) {
-      const chapterId = this.data.currentChapter._id;
+      const chapterId = this.data.currentChapter?._id;
       if (!chapterId || !this.bgAudioManager.currentTime) return Promise.resolve();
       const lastPlayTime = this.bgAudioManager.currentTime;
       const duration = this.bgAudioManager.duration || 0;
@@ -489,7 +548,7 @@ Component({
       // 已完成的章节不允许被标记为未完成
       // 只有自然结束(isFinished=true)或真正播完(lastPlayTime>=duration-10)才更新为true
       let finished;
-      if (this.data.currentChapter.finished === true) {
+      if (this.data.currentChapter?.finished === true) {
         // 章节之前已完成，重播时不允许覆盖finished=true
         // 但要更新lastPlayTime（通过传入undefined，让云端只更新lastPlayTime不修改finished）
         finished = (isFinished || lastPlayTime >= duration - 10) ? true : undefined;
@@ -544,7 +603,7 @@ Component({
     },
 
     checkOverlayFavoriteStatus() {
-      const chapterId = this.data.currentChapter._id;
+      const chapterId = this.data.currentChapter?._id;
       if (!chapterId || !app.globalData.userId) return;
       wx.cloud.callFunction({
         name: 'courseFunctions',
@@ -598,6 +657,17 @@ Component({
     },
 
     _startMiniRotation() {
+      // 关键：只让当前可见页面启动 timer。
+      // audioCallback.onPlay 会广播到所有已注册实例（包括后台 chapter），
+      // 若不加这道闸，后台实例也会启动 timer 写 globalData，
+      // 下次当前实例 _startMiniRotation 用 globalData 覆盖 data 时角度就会跳。
+      if (this.currentPageRoute) {
+        const pages = getCurrentPages();
+        const currentRoute = pages[pages.length - 1]?.route || '';
+        if (currentRoute !== this.currentPageRoute) {
+          return;
+        }
+      }
       if (this._miniRotationTimer) {
         clearInterval(this._miniRotationTimer);
         this._miniRotationTimer = null;
@@ -677,12 +747,12 @@ Component({
     },
 
     overlayPlayPrev() {
-      if (this.data.currentChapter._id) this._doSaveProgress();
+      if (this.data.currentChapter?._id) this._doSaveProgress();
       app.playPrev();
     },
 
     overlayPlayNext() {
-      if (this.data.currentChapter._id) this._doSaveProgress();
+      if (this.data.currentChapter?._id) this._doSaveProgress();
       app.playNext();
     },
 
@@ -747,7 +817,7 @@ Component({
     },
 
     toggleOverlayFavorite() {
-      const chapterId = this.data.currentChapter._id;
+      const chapterId = this.data.currentChapter?._id;
       if (!chapterId || !app.globalData.userId) return;
       wx.cloud.callFunction({
         name: 'courseFunctions',
@@ -790,8 +860,8 @@ Component({
 
     onOverlayPlaylistPlay(e) {
       const { chapterId, index } = e.detail;
-      if (chapterId === this.data.currentChapter._id) { app.togglePlayPause(); return; }
-      if (this.data.currentChapter._id && this.data.isPlaying) this._doSaveProgress();
+      if (chapterId === this.data.currentChapter?._id) { app.togglePlayPause(); return; }
+      if (this.data.currentChapter?._id && this.data.isPlaying) this._doSaveProgress();
       app.playChapter(chapterId, this.data.chapters);
       const chapter = this.data.chapters.find(ch => ch._id === chapterId);
       if (chapter) {
@@ -811,7 +881,7 @@ Component({
       const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
       this.setData({ chapters });
       app.globalData.playlistChaptersData = chapters;
-      if (chapterId === this.data.currentChapter._id) {
+      if (chapterId === this.data.currentChapter?._id) {
         if (this.data.isPlaying) this._doSaveProgress();
         const nextIndex = this.data.currentIndex;
         if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
@@ -835,7 +905,7 @@ Component({
 
     onOverlayPlaylistSyncSort(e) {
       const { chapters, sortOrder } = e.detail;
-      const currentId = this.data.currentChapter._id;
+      const currentId = this.data.currentChapter?._id;
       const newIndex = chapters.findIndex(ch => ch._id === currentId);
       this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder }, () => this._updateOverlayNextChapterInfo());
       app.globalData.playingIndex = newIndex;
@@ -911,7 +981,7 @@ Component({
 
     onPlaylistClear() {
       const lastChapterId = this.data.currentChapter?._id;
-      if (this.data.currentChapter._id) this._doSaveProgress();
+      if (this.data.currentChapter?._id) this._doSaveProgress();
       app.stop();
       Object.assign(app.globalData, {
         miniPlayerActive: false, miniPlayerIndexFadedIn: false,
@@ -925,7 +995,7 @@ Component({
 
     onPlaylistSyncSort(e) {
       const { chapters, sortOrder } = e.detail;
-      const currentId = this.data.currentChapter._id;
+      const currentId = this.data.currentChapter?._id;
       const newIndex = chapters.findIndex(ch => ch._id === currentId);
       const currentChapter = chapters[newIndex];
       this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder, miniCoverRotationAngle: app.globalData.miniCoverRotationAngle });
@@ -937,11 +1007,11 @@ Component({
 
     onPlaylistPlay(e) {
       const { chapterId, index } = e.detail;
-      if (chapterId === this.data.currentChapter._id) {
+      if (chapterId === this.data.currentChapter?._id) {
         this.onPlayPause();
         return;
       }
-      if (this.data.currentChapter._id && this.data.isPlaying) this._doSaveProgress();
+      if (this.data.currentChapter?._id && this.data.isPlaying) this._doSaveProgress();
       app.playChapter(chapterId, this.data.chapters);
       const chapter = this.data.chapters.find(ch => ch._id === chapterId);
       if (chapter) {
@@ -963,7 +1033,7 @@ Component({
       this.setData({ chapters });
       app.globalData.playlistChaptersData = chapters;
 
-      if (chapterId === this.data.currentChapter._id) {
+      if (chapterId === this.data.currentChapter?._id) {
         if (this.data.isPlaying) this._doSaveProgress();
         const nextIndex = this.data.currentIndex;
         if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
