@@ -232,13 +232,16 @@ Component({
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
       }
-      // 如果当前是暂停状态，启一个 sync 间隔把本实例的 data 持续同步到 globalData。
-      // 旋转 timer 已经停了（封面静止），但用户切到其他页播放时 globalData 会被推高，
-      // 回切时本实例的 data 是冻结的旧值，showMiniPlayer setData 会触发 transition 跳变。
-      // sync 间隔只在页面被隐藏时跑，data 跟 globalData 同步后被 wxml 渲染。
-      // 此时 isPlaying=false，playing 类没应用，transition 是关的，1.5°/50ms 的微跳肉眼基本看不出。
+      // 关键：切走时停掉本实例的旋转 timer。
+      // 不管是暂停还是播放状态，都走 sync 机制来保持 data 跟 globalData 同步。
+      // 否则播放时切走，home 的 timer + 其他页的 timer 都会写 globalData，
+      // 同一份 globalData 被两个 timer 各涨 1.5/tick = 3/tick，但 home 的 data
+      // 只被自己 timer 涨 1.5/tick，落后 globalData 1.5/tick。
+      // 回首页时 showMiniPlayer setData(miniCoverRotationAngle: globalData) 触发
+      // transition 跳变。
+      this._stopMiniRotation();
       this._stopDataSync();
-      if (!app.globalData.playingStatus && app.globalData.miniPlayerActive) {
+      if (app.globalData.miniPlayerActive) {
         this._startDataSync();
       }
     },
@@ -675,10 +678,19 @@ Component({
       this._stopDataSync();
       this._dataSyncTimer = setInterval(() => {
         const g = app.globalData.miniCoverRotationAngle;
-        if (this.data.miniCoverRotationAngle !== g) {
+        const ct = this.bgAudioManager.currentTime || 0;
+        const dur = this.bgAudioManager.duration || 0;
+        const pct = dur > 0 ? Math.min((ct / dur) * 100, 100) : 0;
+        if (this.data.miniCoverRotationAngle !== g
+            || this.data.currentTime !== ct
+            || this.data.duration !== dur
+            || this.data.progressPercent !== pct) {
           this.setData({
             miniCoverRotationAngle: g,
-            overlayCoverRotationAngle: g
+            overlayCoverRotationAngle: g,
+            currentTime: ct,
+            duration: dur,
+            progressPercent: pct
           });
         }
       }, 50);
