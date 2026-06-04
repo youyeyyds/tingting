@@ -226,7 +226,8 @@ App({
       // 同步全局播放状态：覆盖系统小控件触发的播放（不会走 app.togglePlayPause）
       this.globalData.playingStatus = true;
       this._switchingChapter = false;
-      this.notifyCallbacks('onPlay', {});
+      // 只广播给当前可见页面，避免隐藏页启动旋转 timer 写 globalData
+      this.notifyCallbacks('onPlay', {}, { onlyVisible: true });
     });
 
     bgAudio.onPause(() => {
@@ -282,7 +283,7 @@ App({
       this.notifyCallbacks('onSystemStop', {});
       // 300ms 后做完整清理（与 in-app close 时序一致）
       setTimeout(() => {
-        Object.assign(this.globalData, {
+        this.setPlayingState({
           playingCourse: null, playingChapter: null, playingSeq: null,
           playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
         });
@@ -455,7 +456,8 @@ App({
       chapterId: chapter._id,
       chapter: chapter,
       index: index,
-      isPlaying: true
+      isPlaying: true,
+      playingCourse: this.globalData.playingCourse
     });
 
     // 加载并播放音频
@@ -587,10 +589,21 @@ App({
   },
 
   // 通知所有 mini-player 回调
-  notifyCallbacks(event, data) {
+  // opts.onlyVisible = true 时只发给当前可见路由的实例（避免隐藏页触发旋转 timer 写 globalData）
+  notifyCallbacks(event, data, opts) {
+    const currentRoute = opts && opts.onlyVisible
+      ? (getCurrentPages().slice(-1)[0]?.route || '')
+      : null;
     this.miniPlayerCallbacks.forEach(cb => {
+      if (currentRoute !== null && cb._ownerRoute !== currentRoute) return;
       if (cb[event]) cb[event](data);
     });
+  },
+
+  // 统一写入播放状态。取代散落的 Object.assign(this.globalData, {...})，
+  // 避免漏字段、字段顺序错乱。
+  setPlayingState(partial) {
+    Object.assign(this.globalData, partial);
   },
 
   // 注册 mini-player 回调

@@ -62,60 +62,22 @@ Component({
       this._overlayRotationTimer = null;
       this._miniRotationTimer = null;
       this._initNavButtonData();
-      // 用 setData 把 data 里所有缺字段补齐（data 对象在某些 WeChat 版本下会被
-      // 优化掉没访问到的 key，导致 miniCoverRotationAngle/currentChapter 等缺失，
-      // 第一次 setData 时被当成"从 undefined 改到 X"触发 transition 跳变）。
-      // 这里在 created 阶段就补齐，且初始角度直接从 globalData 读。
-      const _initAngle = (app.globalData.miniCoverRotationAngle || 0);
-      this.setData({
-        playerBottom: 15,
-        currentChapter: {},
-        currentIndex: 0,
-        courseCover: '',
-        courseName: '',
-        course: {},
-        isPlaying: false,
-        currentTime: 0,
-        duration: 0,
-        progressPercent: 0,
-        playbackRate: 2,
-        chapters: [],
-        playlistSortOrder: 'asc',
-        isFavoriteList: false,
-        playMode: 'sequence',
-        playerOverlayVisible: false,
-        overlayFadeClass: '',
-        overlayCoverRotationAngle: _initAngle,
-        miniCoverRotationAngle: _initAngle,
-        overlaySpeedIndicatorPos: 70,
-        overlayCurrentTimeText: '0:00',
-        overlayRemainingTimeText: '-0:00',
-        overlayShowTotalTime: false,
-        overlayNextChapterSeq: '',
-        overlayNextChapterTitle: '',
-        overlayIsFavorite: false,
-        overlayBgCoverLoaded: false,
-        overlayBgCoverError: false,
-        overlayCoverError: false,
-        overlayUsingDefaultCover: false,
-        overlayOriginalCover: ''
-      });
       this.audioCallback = {
-        onChapterChange: ({ chapterId, chapter, index }) => {
+        onChapterChange: ({ chapterId, chapter, index, playingCourse }) => {
           if (!chapterId) return;
           const foundChapter = chapter || this.data.chapters.find(ch => ch._id === chapterId);
           const foundIndex = index >= 0 ? index : this.data.chapters.findIndex(ch => ch._id === chapterId);
           if (foundChapter && foundIndex >= 0) {
-            // 更新课程信息（收藏场景跨课程切换时）
-            if (app.globalData.playingCourse) {
-              // 跨课程切换时，原封面 URL 也要同步换成新课程，否则 toggle 回原 URL 还是旧课程的图
-              const newOriginalCover = app.globalData.playingCourse.cover || '';
+            // 跨课程切换时同步新课程信息（app.playChapter 在 payload 里带 playingCourse）
+            if (playingCourse) {
+              // 原封面 URL 也要同步换成新课程，否则 toggle 回原 URL 还是旧课程的图
+              const newOriginalCover = playingCourse.cover || '';
               this.setData({
                 currentChapter: foundChapter,
                 currentIndex: foundIndex,
-                course: app.globalData.playingCourse,
+                course: playingCourse,
                 courseCover: newOriginalCover,
-                courseName: app.globalData.playingCourse.title || '',
+                courseName: playingCourse.title || '',
                 overlayOriginalCover: newOriginalCover,
                 overlayOriginalFailed: false,
                 overlayUsingDefaultCover: false
@@ -198,6 +160,9 @@ Component({
       };
     },
     attached() {
+      // 在 attached() 设置 _ownerRoute：此时新页面已进入 page stack，
+      // 比 created()（WXML 渲染时）更可靠。app.notifyCallbacks 的 onlyVisible 过滤依赖这个值。
+      this.audioCallback._ownerRoute = getCurrentPages().slice(-1)[0]?.route || '';
       app.registerMiniPlayer(this.audioCallback);
       this._setupAudioListeners();
     },
@@ -365,65 +330,20 @@ Component({
     _playFromList(data) {
       const { index, chapters } = data;
       if (!chapters || chapters.length === 0 || index < 0) return;
-
-      if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
-        this._doSaveProgress();
-      }
-
       const chapter = chapters[index];
-      if (!chapter?.audioUrl) {
-        wx.showToast({ title: '暂无音频', icon: 'none' });
-        return;
-      }
-
-      if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
-      const coverLoadTime = app.globalData.coverLoadTime;
-      const courseCover = app.processImageUrl(chapter.courseCover || '', 'cover', coverLoadTime);
-
-      const course = {
-        _id: chapter.course,
-        title: chapter.courseTitle || '收藏列表',
-        cover: courseCover,
-        author: chapter.author || '',
-        chapterCount: chapters.length
-      };
-
-      this.setData({
-        chapters, course, currentChapter: chapter, currentIndex: index,
-        courseCover, courseName: chapter.courseTitle || '收藏列表',
-        playlistSortOrder: 'asc', isFavoriteList: true, coverLoadTime,
-        miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0,
-        overlayOriginalCover: courseCover,
-        overlayOriginalFailed: false,
-        overlayUsingDefaultCover: false
-      });
-
-      Object.assign(app.globalData, {
-        playingCourse: course,
-        playingChapter: chapter,
-        playingSeq: chapter.seq,
-        playingIndex: index,
-        playlistChaptersData: chapters,
-        playlistSortOrder: 'asc',
-        playMode: 'sequence',
-        miniPlayerActive: true,
-        miniPlayerIndexFadedIn: false,
-        isFavoriteList: true
-      });
-
-      this._savePlayStateCache(course, chapter, 'asc', 'sequence');
-      app.playChapter(chapter._id, chapters);
-      // 仅在之前不可见时设置 fadeInClass，避免切歌时无脑重放淡入动画导致闪烁
-      const showData = { visible: true, playerBottom: this._calcPosition() };
-      if (!this.data.visible) showData.fadeInClass = 'fade-in';
-      this.setData(showData, () => {
-        if (this.data.isPlaying) this._startMiniRotation();
-        else this._stopMiniRotation();
+      if (!chapter?._id) return;
+      this.play(chapter._id, chapters, null, 'asc', {
+        isFavoriteList: true,
+        sortOrder: 'asc',
+        playMode: 'sequence'
       });
     },
 
     // 播放章节（外部调用入口）
-    play(chapterId, playlistChapters, courseData, sortOrder) {
+    // opts 用于内部 _playFromList 收藏场景：{ isFavoriteList, sortOrder, playMode }
+    play(chapterId, playlistChapters, courseData, sortOrder, opts = {}) {
+      const isFavoriteList = opts.isFavoriteList || false;
+
       if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
         this._doSaveProgress();
       }
@@ -440,12 +360,21 @@ Component({
       if (!app.globalData.coverLoadTime) app.globalData.coverLoadTime = Date.now();
       const coverLoadTime = app.globalData.coverLoadTime;
 
-      // 构建 course 对象：收藏场景 courseData 为 null，从 chapter 提取课程信息
+      // 构建 course 对象
       let course = courseData || this.properties.initialCourse;
-      if (!course || (!course._id && !course.title)) {
+      if (isFavoriteList) {
+        // 收藏场景：没有真实 course 对象，从 chapter 构造
         course = {
           _id: chapter.course || '',
           title: chapter.courseTitle || '收藏列表',
+          cover: chapter.courseCover || '',
+          author: chapter.author || '',
+          chapterCount: chapters.length
+        };
+      } else if (!course || (!course._id && !course.title)) {
+        course = {
+          _id: chapter.course || '',
+          title: chapter.courseTitle || '',
           cover: chapter.courseCover || '',
           author: chapter.author || ''
         };
@@ -453,14 +382,15 @@ Component({
       const courseCover = app.processImageUrl(course.cover || '', 'cover', coverLoadTime);
       course.cover = courseCover;
 
-      const order = sortOrder || app.globalData.playlistSortOrder || 'asc';
+      const order = opts.sortOrder || sortOrder || app.globalData.playlistSortOrder || 'asc';
       const currentCourseId = app.globalData.playingCourse?._id;
       const isNewPlaylist = !app.globalData.miniPlayerActive || currentCourseId !== course._id;
+      const playMode = opts.playMode || (isNewPlaylist ? 'sequence' : app.globalData.playMode);
 
       this.setData({
         chapters, course, currentChapter: chapter, currentIndex: index,
         courseCover, courseName: course.title || '',
-        playlistSortOrder: order, isFavoriteList: false, coverLoadTime,
+        playlistSortOrder: order, isFavoriteList, coverLoadTime,
         miniCoverRotationAngle: app.globalData.miniCoverRotationAngle || 0,
         isPlaying: true,
         overlayOriginalCover: courseCover,
@@ -468,20 +398,20 @@ Component({
         overlayUsingDefaultCover: false
       });
 
-      Object.assign(app.globalData, {
+      app.setPlayingState({
         playingCourse: course,
         playingChapter: chapter,
         playingSeq: chapter.seq,
         playingIndex: index,
         playlistChaptersData: chapters,
         playlistSortOrder: order,
-        playMode: isNewPlaylist ? 'sequence' : app.globalData.playMode,
+        playMode,
         miniPlayerActive: true,
         miniPlayerIndexFadedIn: false,
-        isFavoriteList: false
+        isFavoriteList
       });
 
-      this._savePlayStateCache(course, chapter, order, app.globalData.playMode);
+      this._savePlayStateCache(course, chapter, order, playMode);
       app.playChapter(chapter._id, chapters);
       // 仅在 mini-player 之前不可见时设置 fadeInClass，避免跨页面切歌时无脑重放淡入动画导致闪烁
       const showData = { visible: true, playerBottom: this._calcPosition() };
@@ -518,7 +448,14 @@ Component({
     togglePlayPause() { this.onPlayPause(); },
 
     onSpeedChange() {
-      const nextRate = this.data.playbackRate >= 2 ? 1 : 2;
+      // mini 按钮的快捷切换只对 1x/2x 有意义。用户在 overlay 上设的 0.75/1.25/1.5
+      // 走最近的 {1, 2} 收口，避免二选一逻辑把它们强制跳到 1 或 2 丢失选择。
+      const r = this.data.playbackRate;
+      let nextRate;
+      if (r === 1) nextRate = 2;
+      else if (r === 2) nextRate = 1;
+      else if (r < 1) nextRate = 1;
+      else nextRate = 2;
       this.setData({ playbackRate: nextRate });
       this.bgAudioManager.playbackRate = nextRate;
     },
@@ -544,7 +481,7 @@ Component({
         this._doSaveProgress().then(() => {
           app.stop();
           this._resetState();
-          Object.assign(app.globalData, {
+          app.setPlayingState({
             playingCourse: null, playingChapter: null, playingSeq: null,
             playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
           });
@@ -704,17 +641,6 @@ Component({
     },
 
     _startMiniRotation() {
-      // 关键：只让当前可见页面启动 timer。
-      // audioCallback.onPlay 会广播到所有已注册实例（包括后台 chapter），
-      // 若不加这道闸，后台实例也会启动 timer 写 globalData，
-      // 下次当前实例 _startMiniRotation 用 globalData 覆盖 data 时角度就会跳。
-      if (this.currentPageRoute) {
-        const pages = getCurrentPages();
-        const currentRoute = pages[pages.length - 1]?.route || '';
-        if (currentRoute !== this.currentPageRoute) {
-          return;
-        }
-      }
       // 旋转 timer 跑起来就不需要 sync 间隔了（数据自然在涨），停掉
       this._stopDataSync();
       if (this._miniRotationTimer) {
@@ -886,7 +812,7 @@ Component({
       const currentId = currentChapter?._id;
       const newIndex = reversed.findIndex(ch => ch._id === currentId);
       const newCurrentChapter = reversed[newIndex];
-      Object.assign(app.globalData, { playlistSortOrder: newOrder, playlistChaptersData: reversed, playingIndex: newIndex >= 0 ? newIndex : 0 });
+      app.setPlayingState({ playlistSortOrder: newOrder, playlistChaptersData: reversed, playingIndex: newIndex >= 0 ? newIndex : 0 });
       this.setData({
         playlistSortOrder: newOrder,
         chapters: reversed,
@@ -907,44 +833,6 @@ Component({
       app.globalData.playMode = e.detail.playMode;
     },
 
-    onOverlayPlaylistPlay(e) {
-      const { chapterId, index } = e.detail;
-      if (chapterId === this.data.currentChapter?._id) { app.togglePlayPause(); return; }
-      if (this.data.currentChapter?._id && this.data.isPlaying) this._doSaveProgress();
-      app.playChapter(chapterId, this.data.chapters);
-      const chapter = this.data.chapters.find(ch => ch._id === chapterId);
-      if (chapter) {
-        const lastPlayTime = Number(chapter.lastPlayTime) || 0;
-        const chapterDuration = Number(chapter.duration) || 0;
-        this._syncingChapter = true;
-        this.setData({
-          currentChapter: chapter,
-          currentIndex: index >= 0 ? index : this.data.currentIndex,
-          isPlaying: false, currentTime: lastPlayTime, duration: chapterDuration, progressPercent: chapterDuration > 0 ? (lastPlayTime / chapterDuration) * 100 : 0
-        });
-      }
-    },
-
-    onOverlayPlaylistDelete(e) {
-      const { chapterId } = e.detail;
-      const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
-      this.setData({ chapters });
-      app.globalData.playlistChaptersData = chapters;
-      if (chapterId === this.data.currentChapter?._id) {
-        if (this.data.isPlaying) this._doSaveProgress();
-        const nextIndex = this.data.currentIndex;
-        if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
-          app.playChapter(chapters[nextIndex]._id, chapters);
-        } else {
-          app.stop();
-          this.setData({ visible: false, isPlaying: false });
-        }
-      }
-      this._updateOverlayNextChapterInfo();
-    },
-
-    onOverlayPlaylistCollapse() {},
-
     onOverlayPlaylistClear() {
       this._doSaveProgress();
       app.stop();
@@ -952,26 +840,11 @@ Component({
       this.closePlayerOverlay();
     },
 
-    onOverlayPlaylistSyncSort(e) {
-      const { chapters, sortOrder } = e.detail;
-      const currentId = this.data.currentChapter?._id;
-      const newIndex = chapters.findIndex(ch => ch._id === currentId);
-      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder }, () => this._updateOverlayNextChapterInfo());
-      app.globalData.playingIndex = newIndex;
-      app.globalData.playlistChaptersData = chapters;
-      app.globalData.playlistSortOrder = sortOrder;
-    },
-
     toggleOverlayPlayMode() {
       const nextMode = app.togglePlayMode();
       this.setData({ playMode: nextMode });
       this._updateOverlayNextChapterInfo();
       wx.showToast({ title: nextMode === 'sequence' ? '顺序播放' : nextMode === 'loop' ? '列表循环' : '单曲循环', icon: 'none' });
-    },
-
-    onOverlayPlaylistModeChange(e) {
-      this.setData({ playMode: e.detail.playMode });
-      app.globalData.playMode = e.detail.playMode;
     },
 
     onOverlayCoverError() {
@@ -1032,7 +905,7 @@ Component({
       const lastChapterId = this.data.currentChapter?._id;
       if (this.data.currentChapter?._id) this._doSaveProgress();
       app.stop();
-      Object.assign(app.globalData, {
+      app.setPlayingState({
         miniPlayerActive: false, miniPlayerIndexFadedIn: false,
         playingCourse: null, playingChapter: null, playingSeq: null,
         playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
@@ -1043,25 +916,35 @@ Component({
     },
 
     onPlaylistSyncSort(e) {
+      const isOverlay = e.currentTarget.dataset.source === 'overlay';
       const { chapters, sortOrder } = e.detail;
       const currentId = this.data.currentChapter?._id;
       const newIndex = chapters.findIndex(ch => ch._id === currentId);
-      const currentChapter = chapters[newIndex];
-      this.setData({ chapters, currentIndex: newIndex, playlistSortOrder: sortOrder, miniCoverRotationAngle: app.globalData.miniCoverRotationAngle });
+      const data = { chapters, currentIndex: newIndex, playlistSortOrder: sortOrder };
+      if (!isOverlay) data.miniCoverRotationAngle = app.globalData.miniCoverRotationAngle;
+      this.setData(data, () => {
+        if (isOverlay) this._updateOverlayNextChapterInfo();
+      });
       app.globalData.playingIndex = newIndex;
-      app.globalData.playingSeq = currentChapter?.seq;
+      if (!isOverlay) app.globalData.playingSeq = chapters[newIndex]?.seq;
       app.globalData.playlistChaptersData = chapters;
       app.globalData.playlistSortOrder = sortOrder;
     },
 
     onPlaylistPlay(e) {
+      const isOverlay = e.currentTarget.dataset.source === 'overlay';
       const { chapterId, index } = e.detail;
       if (chapterId === this.data.currentChapter?._id) {
-        this.onPlayPause();
+        if (isOverlay) app.togglePlayPause();
+        else this.onPlayPause();
         return;
       }
       if (this.data.currentChapter?._id && this.data.isPlaying) this._doSaveProgress();
       app.playChapter(chapterId, this.data.chapters);
+      this._playChapterFromPlaylist(chapterId, index);
+    },
+
+    _playChapterFromPlaylist(chapterId, index) {
       const chapter = this.data.chapters.find(ch => ch._id === chapterId);
       if (chapter) {
         const lastPlayTime = Number(chapter.lastPlayTime) || 0;
@@ -1077,6 +960,7 @@ Component({
     },
 
     onPlaylistDelete(e) {
+      const isOverlay = e.currentTarget.dataset.source === 'overlay';
       const { chapterId } = e.detail;
       const chapters = this.data.chapters.filter(ch => ch._id !== chapterId);
       this.setData({ chapters });
@@ -1088,14 +972,21 @@ Component({
         if (nextIndex < chapters.length && chapters[nextIndex]?.audioUrl) {
           const nextChapter = chapters[nextIndex];
           app.playChapter(nextChapter._id, chapters);
-          const lastPlayTime = Number(nextChapter.lastPlayTime) || 0;
-          const chapterDuration = Number(nextChapter.duration) || 0;
-          const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
-          this._syncingChapter = true;
-          this.setData({
-            currentChapter: nextChapter, currentIndex: nextIndex,
-            currentTime: lastPlayTime, duration: chapterDuration, progressPercent
-          });
+          if (!isOverlay) {
+            // mini 同步设 data；overlay 走 onChapterChange 异步更新
+            const lastPlayTime = Number(nextChapter.lastPlayTime) || 0;
+            const chapterDuration = Number(nextChapter.duration) || 0;
+            const progressPercent = chapterDuration > 0 ? Math.min((lastPlayTime / chapterDuration) * 100, 100) : 0;
+            this._syncingChapter = true;
+            this.setData({
+              currentChapter: nextChapter, currentIndex: nextIndex,
+              currentTime: lastPlayTime, duration: chapterDuration, progressPercent
+            });
+          }
+        } else if (isOverlay) {
+          // overlay 简化清理：只停播放
+          app.stop();
+          this.setData({ visible: false, isPlaying: false });
         } else {
           const lastChapterId = this.data.currentChapter?._id;
           app.stop();
@@ -1106,6 +997,7 @@ Component({
           app.notifyCallbacks('onStop', { chapterId: lastChapterId });
         }
       }
+      if (isOverlay) this._updateOverlayNextChapterInfo();
     }
   }
 });

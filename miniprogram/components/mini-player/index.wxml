@@ -53,7 +53,7 @@
 </view>
 
 <!-- 播放列表面板 -->
-<playlist-panel id="playlistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
+<playlist-panel id="playlistPanel" data-source="mini" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
                 bind:play="onPlaylistPlay" bind:togglePlayPause="togglePlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
 
 <!-- Player Overlay -->
@@ -171,6 +171,6 @@
   </view>
 
   <!-- 播放列表面板 -->
-  <playlist-panel id="overlayPlaylistPanel" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
-                  bind:play="onOverlayPlaylistPlay" bind:togglePlayPause="onPlayPause" bind:delete="onOverlayPlaylistDelete" bind:collapse="onOverlayPlaylistCollapse" bind:clear="onOverlayPlaylistClear" bind:syncSort="onOverlayPlaylistSyncSort" bind:modeChange="onOverlayPlaylistModeChange" />
+  <playlist-panel id="overlayPlaylistPanel" data-source="overlay" chapters="{{chapters}}" course="{{course}}" currentIndex="{{currentIndex}}" currentChapterId="{{currentChapter._id || ''}}" initialSortOrder="{{playlistSortOrder}}" isFavoriteList="{{isFavoriteList}}"
+                  bind:play="onPlaylistPlay" bind:togglePlayPause="onPlayPause" bind:delete="onPlaylistDelete" bind:collapse="onPlaylistCollapse" bind:clear="onOverlayPlaylistClear" bind:syncSort="onPlaylistSyncSort" bind:modeChange="onPlaylistModeChange" />
 </view>
