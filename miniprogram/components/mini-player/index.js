@@ -207,6 +207,7 @@ Component({
       // 污染跨页面/跨实例的角度状态
       this._stopOverlayRotation();
       this._stopMiniRotation();
+      this._stopDataSync();
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
       if (this._onCanplay && this.bgAudioManager.offCanplay) this.bgAudioManager.offCanplay(this._onCanplay);
       app.unregisterMiniPlayer(this.audioCallback);
@@ -215,6 +216,8 @@ Component({
 
   pageLifetimes: {
     show() {
+      // 页面被显示：先停掉后台的 sync 间隔（如果还在跑），避免它继续写 data
+      this._stopDataSync();
       const pages = getCurrentPages();
       this.currentPageRoute = pages[pages.length - 1]?.route || '';
       const isTabBarPage = ['pages/index/index', 'pages/favorite/index', 'pages/mine/index'].includes(this.currentPageRoute);
@@ -228,6 +231,15 @@ Component({
     hide() {
       if (!app.globalData.miniPlayerActive) {
         this.setData({ visible: false, fadeInClass: '' });
+      }
+      // 如果当前是暂停状态，启一个 sync 间隔把本实例的 data 持续同步到 globalData。
+      // 旋转 timer 已经停了（封面静止），但用户切到其他页播放时 globalData 会被推高，
+      // 回切时本实例的 data 是冻结的旧值，showMiniPlayer setData 会触发 transition 跳变。
+      // sync 间隔只在页面被隐藏时跑，data 跟 globalData 同步后被 wxml 渲染。
+      // 此时 isPlaying=false，playing 类没应用，transition 是关的，1.5°/50ms 的微跳肉眼基本看不出。
+      this._stopDataSync();
+      if (!app.globalData.playingStatus && app.globalData.miniPlayerActive) {
+        this._startDataSync();
       }
     },
   },
@@ -656,6 +668,29 @@ Component({
       }
     },
 
+    // 数据同步器：页面被隐藏且暂停时跑，把本实例的 data 持续同步到 globalData。
+    // 旋转 timer 负责视觉旋转（暂停时停），sync 负责数据同步（暂停时跑），两个分开。
+    // 旋转 timer 跑时没必要 sync（数据自然在涨）；旋转 timer 停后用 sync 把 data 拉到 globalData。
+    _startDataSync() {
+      this._stopDataSync();
+      this._dataSyncTimer = setInterval(() => {
+        const g = app.globalData.miniCoverRotationAngle;
+        if (this.data.miniCoverRotationAngle !== g) {
+          this.setData({
+            miniCoverRotationAngle: g,
+            overlayCoverRotationAngle: g
+          });
+        }
+      }, 50);
+    },
+
+    _stopDataSync() {
+      if (this._dataSyncTimer) {
+        clearInterval(this._dataSyncTimer);
+        this._dataSyncTimer = null;
+      }
+    },
+
     _startMiniRotation() {
       // 关键：只让当前可见页面启动 timer。
       // audioCallback.onPlay 会广播到所有已注册实例（包括后台 chapter），
@@ -668,6 +703,8 @@ Component({
           return;
         }
       }
+      // 旋转 timer 跑起来就不需要 sync 间隔了（数据自然在涨），停掉
+      this._stopDataSync();
       if (this._miniRotationTimer) {
         clearInterval(this._miniRotationTimer);
         this._miniRotationTimer = null;
