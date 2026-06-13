@@ -120,7 +120,11 @@ Component({
           this.setData({ isPlaying: false, currentTime: 0, duration: 0, progressPercent: 0 });
         },
         onError: () => this.setData({ isPlaying: false }),
-        onStop: () => {
+        onStop: ({ isSwitching } = {}) => {
+          // 切歌中转（iOS 切 src）触发的 onStop 是瞬态停止，随后的 onPlay 会续上状态。
+          // 不在这里重置 isPlaying/停旋转，避免 mini-player 按钮出现 pause → play → pause 闪烁，
+          // 与章节页 play-btn 在同一场景下保持一致
+          if (isSwitching) return;
           this.setData({ isPlaying: false });
           // 立即停掉旋转，避免 onStop 事件延迟期间角度继续递增（与 onPlayPause 同因）
           this._stopOverlayRotation();

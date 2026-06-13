@@ -26,11 +26,12 @@ Page({
     });
 
     this.audioCallback = {
+      _ownerRoute: this.route || 'pages/chapter/index',
       onClose: ({ chapterId }) => {
         if (chapterId) this.setData({ lastPlayedChapterId: chapterId });
         this.resetPlayingState();
       },
-      onStop: ({ chapterId }) => {
+      onStop: ({ chapterId, isSwitching }) => {
         if (chapterId) this.setData({ lastPlayedChapterId: chapterId });
         if (!this.isCurrentCourse(this.data.courseId)) return;
         // iOS 切 src 时也会触发 onStop，紧接着会有 onChapterChange/onPlay 把它"复活"，
@@ -43,7 +44,9 @@ Page({
           });
           this.applyFilterAndSort();
         }
-        this.setData({ isPlaying: false, hasPlaylist: false });
+        // 切歌触发的 onStop（isSwitching=true）会由 onChapterChange 续上 isPlaying=true，
+        // 这里不要重置，否则 play-btn 显示为 play 而 mini-player 是 pause，二者不同步
+        if (!isSwitching) this.setData({ isPlaying: false, hasPlaylist: false });
       },
       onPlay: () => {
         const cur = this.isCurrentCourse(this.data.courseId);

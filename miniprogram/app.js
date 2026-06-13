@@ -263,7 +263,10 @@ App({
       // 4) 系统小控件关闭：剩下的情况，同步关闭 mini-player
       if (this._switchingChapter) {
         this._switchingChapter = false;
-        this.notifyCallbacks('onStop', {});
+        // 切歌场景：iOS 切 src 触发的 onStop 没有 chapterId，
+        // 章节页的 onStop 据此跳过页级 isPlaying/hasPlaylist 重置，
+        // 避免把 onChapterChange 设的 true 冲掉，造成 play-btn 与 mini-player 不同步
+        this.notifyCallbacks('onStop', { isSwitching: true });
         return;
       }
       if (this._lastChapterEnded) {
