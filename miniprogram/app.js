@@ -299,13 +299,16 @@ App({
       }, 300);
     });
 
-    // 系统播放面板上一曲/下一曲事件
+    // 系统播放面板（息屏/锁屏）上一曲/下一曲事件：
+    // 改为快进/快退（长音频场景用户更常用），in-app overlay 的章节切换走 playPrev/playNext
     bgAudio.onNext(() => {
-      this.playNext();
+      this.bgAudioManager.seek(
+        Math.min(this.bgAudioManager.duration || 0, (this.bgAudioManager.currentTime || 0) + 30)
+      );
     });
 
     bgAudio.onPrev(() => {
-      this.playPrev();
+      this.bgAudioManager.seek(Math.max(0, (this.bgAudioManager.currentTime || 0) - 15));
     });
   },
 
