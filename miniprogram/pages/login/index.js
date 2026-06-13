@@ -164,12 +164,22 @@ Page({
 
   onKeyboardHeightChange(e) {
     const { height } = e.detail;
+    this._clearBannerTimer();
     if (height > 0) {
+      // 键盘弹起：立即隐藏 banner，避免遮挡登录按钮
       if (this.data.headlines.length > 0 && !this.data.bannerHidden) {
         this.setData({ bannerHidden: true });
       }
     } else if (this.data.bannerHidden) {
-      setTimeout(() => this.setData({ bannerHidden: false }), 100);
+      // 键盘收起：100ms 延后显示，过滤 iOS 切焦点时键盘高度的短暂抖动
+      this._bannerTimer = setTimeout(() => this.setData({ bannerHidden: false }), 100);
+    }
+  },
+
+  _clearBannerTimer() {
+    if (this._bannerTimer) {
+      clearTimeout(this._bannerTimer);
+      this._bannerTimer = null;
     }
   }
 });
