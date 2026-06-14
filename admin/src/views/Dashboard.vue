@@ -329,29 +329,37 @@ const trendOption = computed(() => {
   }
 })
 
-// 课程分类：标准饼图 + 切片标签（分类名 + 百分比）
-const CATEGORY_PALETTE = ['#FF6B00', '#FFB36B', '#409EFF', '#67C23A', '#9C27B0', '#E6A23C', '#F56C6C', '#00BCD4']
+// 课程分类：标准饼图 + 切片标签（分类名 + 百分比），最大切片向外推出强调
+const CATEGORY_PALETTE = ['#FF6B00', '#FFB36B', '#FFD9A8', '#409EFF', '#67C23A', '#9C27B0', '#E6A23C', '#F56C6C']
 const categoryChartOption = computed(() => {
   const data = categoryDistribution.value.map((c, i) => ({
     name: c.name,
     value: c.count,
+    selected: i === 0,   // 最大切片自动 selected，配合 selectedOffset 外推
     itemStyle: {
       color: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length],
       borderColor: '#fff',
-      borderWidth: 2
+      borderWidth: 3,
+      shadowBlur: i === 0 ? 16 : 0,
+      shadowColor: 'rgba(255, 107, 0, 0.25)'
     }
   }))
   return {
     tooltip: {
       trigger: 'item',
+      backgroundColor: 'rgba(50, 50, 50, 0.92)',
+      borderWidth: 0,
+      textStyle: { color: '#fff', fontSize: 12 },
       formatter: p => `${p.name}<br/>${p.value} 门课程 · <b>${p.percent}%</b>`
     },
     legend: { show: false },
     series: [{
       type: 'pie',
-      radius: '78%',
+      radius: ['38%', '78%'],
       center: ['50%', '52%'],
-      itemStyle: { borderRadius: 6 },
+      selectedMode: 'single',
+      selectedOffset: 12,
+      itemStyle: { borderRadius: 8 },
       label: {
         show: true,
         position: 'outside',
@@ -361,69 +369,94 @@ const categoryChartOption = computed(() => {
         fontWeight: 600,
         lineHeight: 16,
         textBorderColor: '#fff',
-        textBorderWidth: 2
+        textBorderWidth: 3
       },
       labelLine: {
         show: true,
         length: 10,
-        length2: 14,
-        lineStyle: { color: '#c0c4cc', width: 1 }
+        length2: 16,
+        lineStyle: { color: '#dcdfe6', width: 1 }
       },
       labelLayout: { hideOverlap: true },
       emphasis: {
         scale: true,
-        scaleSize: 5,
-        itemStyle: { shadowBlur: 14, shadowColor: 'rgba(255,107,0,0.3)' }
+        scaleSize: 6,
+        itemStyle: { shadowBlur: 18, shadowColor: 'rgba(255,107,0,0.35)' }
       },
       data
     }]
   }
 })
 
-// 课程排行 TOP 5（横向柱状图）
+// 课程排行 TOP 5（横向柱状图，#1 强调）
 const topCoursesChartOption = computed(() => {
   const items = [...topCourses.value].slice(0, 5)
-  // 柱状图：y 轴是分类（课程名），x 轴是数值（播放量），所以交换一下
   const names = items.map(i => i.title)
   const values = items.map(i => i.playCount)
+  // #1 用深橙渐变，其他用浅暖橙
+  const makeColor = (idx) => idx === 0
+    ? {
+        type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+        colorStops: [
+          { offset: 0, color: '#FF8C3A' },
+          { offset: 1, color: '#FF6B00' }
+        ]
+      }
+    : {
+        type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+        colorStops: [
+          { offset: 0, color: '#FFD9A8' },
+          { offset: 1, color: '#FFB36B' }
+        ]
+      }
   return {
-    grid: { left: 100, right: 40, top: 16, bottom: 24 },
+    grid: { left: 92, right: 56, top: 8, bottom: 24 },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
       formatter: params => {
         const p = params[0]
-        return `${p.name}<br/>播放量 <b>${p.value}</b>`
+        return `${p.name}<br/>播放量 <b>${p.value} 次</b>`
       }
     },
     xAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#f0f0f0' } },
-      axisLabel: { color: '#909399', fontSize: 11 }
+      splitLine: { lineStyle: { color: '#f5f5f5', type: 'dashed' } },
+      axisLabel: { color: '#c0c4cc', fontSize: 11 },
+      axisLine: { show: false },
+      axisTick: { show: false }
     },
     yAxis: {
       type: 'category',
       data: names,
-      inverse: true,  // 降序数据 array 渲染时翻转，最大值在顶部
+      inverse: true,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#606266', fontSize: 12 }
+      axisLabel: {
+        color: '#303133',
+        fontSize: 13,
+        fontWeight: 600,
+        formatter: (val, idx) => `${idx + 1}.  ${val}`
+      }
     },
     series: [{
       type: 'bar',
-      data: values,
-      barWidth: 14,
-      itemStyle: {
-        borderRadius: [0, 4, 4, 0],
-        color: {
-          type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-          colorStops: [
-            { offset: 0, color: '#FFB36B' },
-            { offset: 1, color: '#FF6B00' }
-          ]
+      data: values.map((v, idx) => ({
+        value: v,
+        itemStyle: {
+          borderRadius: [0, 8, 8, 0],
+          color: makeColor(idx)
         }
-      },
-      label: { show: true, position: 'right', color: '#909399', fontSize: 11 }
+      })),
+      barWidth: 18,
+      label: {
+        show: true,
+        position: 'right',
+        color: '#FF6B00',
+        fontSize: 12,
+        fontWeight: 700,
+        formatter: '{c} 次'
+      }
     }]
   }
 })
@@ -762,7 +795,7 @@ onUnmounted(() => {
 /* === 图表卡（饼图 / 横向柱状图）=== */
 .chart-card { margin-bottom: 0; }
 .chart-sub { font-size: 12px; color: #909399; }
-.category-chart { width: 100%; height: 320px; }
+.category-chart { width: 100%; height: 360px; }
 .rank-chart { width: 100%; height: 280px; }
 
 /* === 趋势图 === */
