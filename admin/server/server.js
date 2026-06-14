@@ -457,7 +457,8 @@ app.post('/api/auth/login', async (req, res) => {
     const userResult = await db.collection('users').where({ phone }).limit(1).get();
 
     if (userResult.data.length === 0) {
-      return res.json(error('手机号未注册'));
+      // 用户不存在与密码错误统一提示，避免泄露账号存在性
+      return res.json(error('手机号或密码错误'));
     }
 
     const user = userResult.data[0];
@@ -468,7 +469,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return res.json(error('密码错误'));
+      return res.json(error('手机号或密码错误'));
     }
 
     // 更新最后登录时间
