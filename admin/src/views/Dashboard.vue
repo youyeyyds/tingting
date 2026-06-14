@@ -164,7 +164,7 @@
     </el-row>
 
     <!-- 课程分类（饼图） + 最近活动 -->
-    <el-row :gutter="20" class="middle-row" align="stretch">
+    <el-row :gutter="20" class="middle-row">
       <el-col :xs="24" :md="10">
         <el-card class="chart-card" shadow="never">
           <template #header>
@@ -780,7 +780,10 @@ onUnmounted(() => {
 }
 
 /* === 中间区 === */
-.middle-row { margin-bottom: 20px; }
+.middle-row {
+  margin-bottom: 20px;
+  align-items: stretch;  /* el-row 的 align prop 不支持 stretch，改用 CSS */
+}
 .card-header {
   display: flex;
   align-items: center;

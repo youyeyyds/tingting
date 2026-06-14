@@ -2362,6 +2362,9 @@ app.put('/api/user-progress', async (req, res) => {
     if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
     if (playCount !== undefined && !shouldAutoFinish) updateData.playCount = playCount;
 
+    // 显式维护时间戳（@cloudbase/node-sdk 也不保证自动写 _updateTime）
+    updateData._updateTime = db.serverDate();
+
     // 更新或创建用户进度记录
     if (existing) {
       // 如果旧记录没有 courseId 或 duration，补充上
@@ -2382,7 +2385,9 @@ app.put('/api/user-progress', async (req, res) => {
         lastPlayTime: lastPlayTime || 0,
         finished: finished || shouldAutoFinish,
         isFavorite: isFavorite || false,
-        playCount: (finished || shouldAutoFinish) ? 1 : (playCount || 0)
+        playCount: (finished || shouldAutoFinish) ? 1 : (playCount || 0),
+        _createTime: db.serverDate(),
+        _updateTime: db.serverDate()
       });
     }
 

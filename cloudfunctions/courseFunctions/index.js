@@ -402,6 +402,8 @@ const updateChapterProgress = async (event) => {
       if (!existingProgress.duration && duration > 0) {
         userUpdateData.duration = duration;
       }
+      // 显式维护时间戳（wx-server-sdk 不保证自动维护）
+      userUpdateData._updateTime = db.serverDate();
       await db.collection("userProgress").doc(existingProgress._id).update({ data: userUpdateData });
     } else {
       await db.collection("userProgress").add({
@@ -413,7 +415,9 @@ const updateChapterProgress = async (event) => {
           lastPlayTime: lastPlayTime,
           finished: false,
           playCount: 0,
-          isFavorite: false
+          isFavorite: false,
+          _createTime: db.serverDate(),
+          _updateTime: db.serverDate()
         }
       });
     }
@@ -473,6 +477,8 @@ const toggleFavorite = async (event) => {
       if (!existingProgress.courseId && (courseId || chapter.course)) {
         updateData.courseId = courseId || chapter.course;
       }
+      // 显式维护时间戳
+      updateData._updateTime = db.serverDate();
       await db.collection("userProgress").doc(existingProgress._id).update({ data: updateData });
     } else {
       await db.collection("userProgress").add({
@@ -485,7 +491,9 @@ const toggleFavorite = async (event) => {
           finished: false,
           playCount: 0,
           isFavorite: newIsFavorite,
-          favoriteTime: newIsFavorite ? Date.now() : null
+          favoriteTime: newIsFavorite ? Date.now() : null,
+          _createTime: db.serverDate(),
+          _updateTime: db.serverDate()
         }
       });
     }
