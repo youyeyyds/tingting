@@ -44,6 +44,15 @@
             <span class="breadcrumb">{{ breadcrumb }}</span>
           </div>
           <div class="header-right">
+            <el-tooltip :content="isDark ? '切换为亮色' : '切换为暗色'" placement="bottom">
+              <el-button
+                :icon="isDark ? Sunny : Moon"
+                circle
+                size="default"
+                @click="toggleDark"
+                class="theme-toggle"
+              />
+            </el-tooltip>
             <span class="user-info">
               <el-avatar :src="getAvatarUrl(user?.avatarUrl)" :size="24">
                 <el-icon :size="14"><UserFilled /></el-icon>
@@ -72,7 +81,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection, Postcard } from '@element-plus/icons-vue'
+import { HomeFilled, Reading, Document, Headset, Folder, User, Lock, Setting, SwitchButton, UserFilled, Tickets, InfoFilled, Collection, Postcard, Moon, Sunny } from '@element-plus/icons-vue'
 import { getCurrentUser, logout, saveUser } from '@/utils/auth'
 import { getMenuConfig } from '@/api/cloud'
 
@@ -82,6 +91,18 @@ const route = useRoute()
 // 当前登录用户（响应式）
 const storedUser = getCurrentUser()
 const user = ref(storedUser)
+
+// 暗色模式：从 localStorage 读取 + 应用到 html.dark
+const isDark = ref(localStorage.getItem('tingting_admin_dark') === '1')
+function applyDark(dark) {
+  document.documentElement.classList.toggle('dark', dark)
+  localStorage.setItem('tingting_admin_dark', dark ? '1' : '0')
+}
+function toggleDark() {
+  isDark.value = !isDark.value
+  applyDark(isDark.value)
+}
+applyDark(isDark.value)
 
 // 是否是管理员
 const isAdmin = computed(() => user.value?.roleCode === 'admin')
@@ -296,6 +317,8 @@ async function handleLogout() {
   font-size: 14px;
   color: #333;
 }
+
+.theme-toggle { margin-right: 4px; }
 
 .layout-content {
   background-color: #f5f5f5;

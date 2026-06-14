@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import VChart from 'vue-echarts'
+import 'echarts'
 import router from './router'
 import App from './App.vue'
 import './styles/index.css'
@@ -34,4 +36,6 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 app.use(ElementPlus)
 app.use(router)
+// 全局注册 v-chart 组件
+app.component('v-chart', VChart)
 app.mount('#app')

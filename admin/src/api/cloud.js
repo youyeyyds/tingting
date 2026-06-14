@@ -543,6 +543,34 @@ export async function getCurrentUserInfo() {
   return response.data
 }
 
+// ========== Dashboard 统计 API ==========
+
+/**
+ * 获取 Dashboard 聚合数据
+ * @returns {Promise<{success: boolean, data?: {counts, todos, health}}>}
+ */
+export async function getDashboardStats() {
+  try {
+    const response = await api.get('/stats/dashboard')
+    return response.data
+  } catch (error) {
+    return { success: false, error: error.message || '获取统计失败' }
+  }
+}
+
+/**
+ * 获取服务健康状态
+ * @returns {Promise<{success: boolean, data?: {status, uptime, memory, errors, ...}}>}
+ */
+export async function getServerHealth() {
+  try {
+    const response = await api.get('/health')
+    return response.data
+  } catch (error) {
+    return { success: false, error: error.message || '获取健康状态失败' }
+  }
+}
+
 // ========== 默认封面 API ==========
 
 /**

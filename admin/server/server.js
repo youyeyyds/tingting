@@ -10,6 +10,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const musicMetadata = require('music-metadata');
 const cloudbase = require('@cloudbase/node-sdk');
 const tencentcloud = require('tencentcloud-sdk-nodejs');
@@ -299,6 +300,36 @@ function error(msg) {
   return { success: false, error: msg };
 }
 
+// ========== 运行状态追踪 ==========
+
+const SERVER_START_TIME = Date.now();
+let lastError = null;
+let lastErrorAt = null;
+let errorCount = 0;
+
+// 全局错误捕获：未捕获异常和 unhandledRejection 都记录
+process.on('uncaughtException', (err) => {
+  lastError = err.message || String(err);
+  lastErrorAt = new Date().toISOString();
+  errorCount++;
+  console.error('[uncaughtException]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  lastError = (reason && reason.message) || String(reason);
+  lastErrorAt = new Date().toISOString();
+  errorCount++;
+  console.error('[unhandledRejection]', reason);
+});
+
+// Express 错误中间件
+app.use((err, req, res, next) => {
+  lastError = err.message || String(err);
+  lastErrorAt = new Date().toISOString();
+  errorCount++;
+  console.error('[express error]', err);
+  res.status(500).json(error(err.message || '服务器内部错误'));
+});
+
 // ========== 认证 API ==========
 
 // 连通测试（可接收新凭证进行测试）
@@ -336,6 +367,64 @@ app.post('/api/auth/test', async (req, res) => {
   } catch (err) {
     res.json(error(err.message || '连接失败'));
   }
+});
+
+// 服务健康检查（不需要鉴权）
+app.get('/api/health', (req, res) => {
+  const mem = process.memoryUsage();
+  const uptime = Math.floor((Date.now() - SERVER_START_TIME) / 1000);
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const cpuModel = (os.cpus() && os.cpus()[0] && os.cpus()[0].model) || '';
+  const loadavg = os.loadavg(); // [1, 5, 15 分钟]；Windows 恒为 [0, 0, 0]
+  res.json(success({
+    status: 'ok',
+    uptime,
+    startedAt: new Date(SERVER_START_TIME).toISOString(),
+    memory: {
+      rss: mem.rss,           // 常驻内存（字节）
+      heapTotal: mem.heapTotal,
+      heapUsed: mem.heapUsed,
+      external: mem.external
+    },
+    memoryHuman: {
+      rss: `${(mem.rss / 1024 / 1024).toFixed(1)} MB`,
+      heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(1)} MB`,
+      heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(1)} MB`
+    },
+    errors: {
+      count: errorCount,
+      last: lastError,
+      lastAt: lastErrorAt
+    },
+    nodeVersion: process.version,
+    env: ENV_ID,
+    // 服务器 / 操作系统信息
+    system: {
+      hostname: os.hostname(),
+      platform: os.platform(),       // linux / darwin / win32
+      arch: os.arch(),              // x64 / arm64 / arm
+      release: os.release(),        // 内核版本
+      type: os.type()               // Linux / Darwin / Windows_NT
+    },
+    cpu: {
+      count: (os.cpus() || []).length,
+      model: cpuModel,
+      loadavg: {
+        '1m': loadavg[0],
+        '5m': loadavg[1],
+        '15m': loadavg[2]
+      }
+    },
+    systemMemory: {
+      total: totalMem,
+      free: freeMem,
+      usedPercent: totalMem > 0 ? Math.round(((totalMem - freeMem) / totalMem) * 100) : 0,
+      totalHuman: `${(totalMem / 1024 / 1024 / 1024).toFixed(2)} GB`,
+      freeHuman: `${(freeMem / 1024 / 1024 / 1024).toFixed(2)} GB`
+    },
+    systemUptime: Math.floor(os.uptime())
+  }));
 });
 
 // 手机号登录
@@ -593,6 +682,314 @@ app.post('/api/batch-update-seq', async (req, res) => {
     }
 
     res.json(success({ updated: updates.length }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// ========== Dashboard 统计 API ==========
+
+// 获取 Dashboard 聚合数据
+// 一次性返回：counts、todos、health、trends（近 30 天）、topPlayed/TopFavorited、activity
+// 避免前端并发多个请求拼装 dashboard
+app.get('/api/stats/dashboard', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+
+    const db = tcb.database();
+
+    // 1. 总量统计
+    const [coursesCountRes, chaptersCountRes, usersCountRes] = await Promise.all([
+      db.collection('courses').count(),
+      db.collection('chapters').count(),
+      db.collection('users').count()
+    ]);
+
+    // 2. 全量 courses / chapters / categories（用于聚合分析）
+    const [coursesRes, chaptersRes, categoriesRes] = await Promise.all([
+      db.collection('courses').limit(10000).get(),
+      db.collection('chapters').limit(20000).get(),
+      db.collection('categories').limit(1000).get()
+    ]);
+
+    // 3. 总播放量
+    const totalPlays = chaptersRes.data.reduce(
+      (sum, ch) => sum + (Number(ch.playCount) || 0),
+      0
+    );
+
+    // 4. 章节按课程聚合
+    const chapterStatusByCourse = {};
+    chaptersRes.data.forEach(ch => {
+      if (!chapterStatusByCourse[ch.course]) {
+        chapterStatusByCourse[ch.course] = { total: 0, withAudio: 0 };
+      }
+      chapterStatusByCourse[ch.course].total++;
+      if (ch.audioUrl) chapterStatusByCourse[ch.course].withAudio++;
+    });
+
+    // 5. 待办
+    const missingCoversAll = coursesRes.data.filter(c => !c.cover || c.cover === '');
+    const missingAudiosAll = chaptersRes.data.filter(ch => !ch.audioUrl || ch.audioUrl === '');
+    const missingCovers = missingCoversAll.slice(0, 5).map(c => ({
+      _id: c._id, title: c.title, author: c.author
+    }));
+    const missingAudios = missingAudiosAll.slice(0, 5).map(ch => ({
+      _id: ch._id, title: ch.title, seq: ch.seq, courseId: ch.course
+    }));
+
+    // 6. 内容健康度
+    let empty = 0, partial = 0, complete = 0;
+    coursesRes.data.forEach(course => {
+      const hasCover = !!(course.cover && course.cover !== '');
+      const status = chapterStatusByCourse[course._id];
+      if (!hasCover) {
+        empty++;
+      } else if (status && status.total > 0 && status.withAudio === status.total) {
+        complete++;
+      } else {
+        partial++;
+      }
+    });
+
+    // 7. 趋势：近 30 天用户活跃（DAU / 播放互动 / 学完数）
+    //    课程/章节/用户创建是一次性事件，参考价值低；改用 userProgress 的 _updateTime
+    //    （每次播放都会更新）来反映真实用户活跃度
+    const trendDays = 30;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const threshold = new Date(startOfToday.getTime() - (trendDays - 1) * 86400000);
+
+    // 30 天日期骨架
+    const dateKeys = [];
+    for (let i = trendDays - 1; i >= 0; i--) {
+      const d = new Date(startOfToday.getTime() - i * 86400000);
+      dateKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    }
+
+    // 拉取有 favoriteTime 的 userProgress
+    // 注意：这张表的 _id 不是标准 ObjectId 时间戳（解出来是 2102 等荒谬年份），
+    // 且 schema 没有 _createTime/_updateTime 字段；只有 favoriteTime（收藏时写入）是真实时间戳
+    // 缺点：只能反映"收藏"这个动作的时间分布，播放数据被忽略
+    const trendThresholdMs = threshold.getTime();
+    const trendProgressRes = await db.collection('userProgress')
+      .where({ favoriteTime: db.command.gte(trendThresholdMs) })
+      .limit(50000)
+      .get();
+
+    // 关联章节以拿到 duration
+    const progressChapterIds = [...new Set(trendProgressRes.data.map(p => p.chapterId).filter(Boolean))];
+    const progressChaptersRes = progressChapterIds.length > 0
+      ? await db.collection('chapters').where({ _id: db.command.in(progressChapterIds) }).limit(5000).get()
+      : { data: [] };
+    const chapterDurationMap = {};
+    progressChaptersRes.data.forEach(c => { chapterDurationMap[c._id] = Number(c.duration) || 0; });
+
+    // 按天分桶：每日播放时长 = 当天有记录的 (user, chapter) 对应章节 duration 总和
+    const minutesMap = {};
+    const dauMap = {};
+    dateKeys.forEach(k => { minutesMap[k] = new Set(); dauMap[k] = new Set(); });
+    trendProgressRes.data.forEach(p => {
+      if (!p.favoriteTime) return;
+      const d = new Date(Number(p.favoriteTime));
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!(k in minutesMap)) return;
+      if (p.chapterId) minutesMap[k].add(p.chapterId);
+      if (p.userId) dauMap[k].add(p.userId);
+    });
+    const minutesTrend = dateKeys.map(k => {
+      const chapters = minutesMap[k];
+      let totalSeconds = 0;
+      chapters.forEach(cid => { totalSeconds += chapterDurationMap[cid] || 0; });
+      return { date: k, count: Math.round(totalSeconds / 60) };
+    });
+    const dauTrend = dateKeys.map(k => ({ date: k, count: dauMap[k].size }));
+
+    // 同时也保留内容创建趋势（用户活跃数据空时作为 fallback）
+    const [recentCoursesRes, recentChaptersRes, recentUsersRes] = await Promise.all([
+      db.collection('courses').where({ _createTime: db.command.gte(threshold) }).limit(10000).get(),
+      db.collection('chapters').where({ _createTime: db.command.gte(threshold) }).limit(20000).get(),
+      db.collection('users').where({ _createTime: db.command.gte(threshold) }).limit(10000).get()
+    ]);
+    const bucketize = (records, timeField) => {
+      const map = {};
+      dateKeys.forEach(k => { map[k] = 0; });
+      records.forEach(r => {
+        const t = r[timeField];
+        if (!t) return;
+        const d = new Date(t);
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (k in map) map[k]++;
+      });
+      return dateKeys.map(k => ({ date: k, count: map[k] }));
+    };
+    const coursesTrend = bucketize(recentCoursesRes.data, '_createTime');
+    const chaptersTrend = bucketize(recentChaptersRes.data, '_createTime');
+    const usersTrend = bucketize(recentUsersRes.data, '_createTime');
+
+    // 8. TOP 5 热门内容（按 playCount / favoriteCount）
+    const courseTitleMap = {};
+    coursesRes.data.forEach(c => { courseTitleMap[c._id] = c.title || '(已删除)'; });
+    const topPlayed = [...chaptersRes.data]
+      .filter(ch => Number(ch.playCount) > 0)
+      .sort((a, b) => (Number(b.playCount) || 0) - (Number(a.playCount) || 0))
+      .slice(0, 5)
+      .map(ch => ({
+        _id: ch._id, title: ch.title, seq: ch.seq,
+        courseId: ch.course, courseTitle: courseTitleMap[ch.course] || '(已删除)',
+        playCount: Number(ch.playCount) || 0
+      }));
+    const topFavorited = [...chaptersRes.data]
+      .filter(ch => Number(ch.favoriteCount) > 0)
+      .sort((a, b) => (Number(b.favoriteCount) || 0) - (Number(a.favoriteCount) || 0))
+      .slice(0, 5)
+      .map(ch => ({
+        _id: ch._id, title: ch.title, seq: ch.seq,
+        courseId: ch.course, courseTitle: courseTitleMap[ch.course] || '(已删除)',
+        favoriteCount: Number(ch.favoriteCount) || 0
+      }));
+
+    // 8b. 课程分类分布（饼图）
+    const categoryNameMap = {};
+    categoriesRes.data.forEach(c => { categoryNameMap[c._id] = c.name; });
+    const categoryCountMap = {};
+    coursesRes.data.forEach(c => {
+      const key = c.category || '__uncategorized__';
+      categoryCountMap[key] = (categoryCountMap[key] || 0) + 1;
+    });
+    const categoryDistribution = Object.entries(categoryCountMap)
+      .map(([id, count]) => ({ name: categoryNameMap[id] || '未分类', count }))
+      .sort((a, b) => b.count - a.count);
+
+    // 8c. 课程维度 TOP 5（章节 playCount 累加）
+    const coursePlayMap = {};
+    chaptersRes.data.forEach(ch => {
+      if (!ch.course) return;
+      coursePlayMap[ch.course] = (coursePlayMap[ch.course] || 0) + (Number(ch.playCount) || 0);
+    });
+    const topCourses = Object.entries(coursePlayMap)
+      .filter(([, v]) => v > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([_id, playCount]) => ({
+        _id,
+        title: courseTitleMap[_id] || '(已删除)',
+        playCount
+      }));
+
+    // 9. 活动流：最近 20 条 userProgress（按 _updateTime 倒序）
+    const recentProgressRes = await db.collection('userProgress')
+      .orderBy('_updateTime', 'desc')
+      .limit(20)
+      .get();
+    // 关联用户和章节信息
+    const userIds = [...new Set(recentProgressRes.data.map(p => p.userId).filter(Boolean))];
+    const chapterIds = [...new Set(recentProgressRes.data.map(p => p.chapterId).filter(Boolean))];
+    const [usersRes, chaptersJoinRes] = await Promise.all([
+      userIds.length > 0
+        ? db.collection('users').where({ _id: db.command.in(userIds) }).limit(1000).get()
+        : { data: [] },
+      chapterIds.length > 0
+        ? db.collection('chapters').where({ _id: db.command.in(chapterIds) }).limit(1000).get()
+        : { data: [] }
+    ]);
+    const userMap = {};
+    usersRes.data.forEach(u => { userMap[u._id] = u; });
+    const chapterMap = {};
+    chaptersJoinRes.data.forEach(c => { chapterMap[c._id] = c; });
+    // 从 userProgress 记录里取时间戳：优先 _updateTime（CloudBase 自动维护的数据更新时间），
+    // 旧记录没这个字段就退到 favoriteTime，再不行从 _id 解码
+    const decodeDocTime = (id) => {
+      if (!id || typeof id !== 'string') return null
+      const ts = parseInt(id.slice(0, 8), 16)
+      if (!Number.isFinite(ts) || ts < 1e9 || ts > 4.5e9) return null
+      const d = new Date(ts * 1000)
+      return Number.isNaN(d.getTime()) ? null : d.toISOString()
+    }
+    const pickActivityTime = (p) => {
+      if (p._updateTime) return new Date(p._updateTime).toISOString()
+      if (p._createTime) return new Date(p._createTime).toISOString()
+      if (p.favoriteTime) return new Date(Number(p.favoriteTime)).toISOString()
+      return decodeDocTime(p._id)
+    }
+    const activity = recentProgressRes.data.map(p => {
+      const u = userMap[p.userId];
+      const c = chapterMap[p.chapterId];
+      // 类型推断：isFavorite 变更或 finished 为收藏/完成
+      let type = 'play';
+      if (p.finished) type = 'finish';
+      else if (p.isFavorite) type = 'favorite';
+      return {
+        _id: p._id,
+        type,
+        userId: p.userId,
+        userName: u?.nickName || p.userId || '匿名',
+        userAvatar: u?.avatarUrl || '',
+        chapterId: p.chapterId,
+        chapterTitle: c?.title || '',
+        chapterSeq: c?.seq || 0,
+        courseId: p.courseId,
+        courseTitle: courseTitleMap[p.courseId] || '(已删除)',
+        time: pickActivityTime(p)
+      };
+    });
+
+    res.json(success({
+      counts: {
+        courses: coursesCountRes.total || 0,
+        chapters: chaptersCountRes.total || 0,
+        users: usersCountRes.total || 0,
+        plays: totalPlays,
+        todayMinutes: minutesTrend.length > 0 ? minutesTrend[minutesTrend.length - 1].count : 0
+      },
+      todos: {
+        missingCovers,
+        missingCoversCount: missingCoversAll.length,
+        missingAudios,
+        missingAudiosCount: missingAudiosAll.length
+      },
+      health: { complete, partial, empty },
+      trends: {
+        engagement: { minutes: minutesTrend, dau: dauTrend },
+        content: { courses: coursesTrend, chapters: chaptersTrend, users: usersTrend }
+      },
+      topPlayed,
+      topFavorited,
+      activity,
+      categoryDistribution,
+      topCourses
+    }));
+  } catch (err) {
+    res.json(error(err.message));
+  }
+});
+
+// 一次性数据迁移：给 userProgress 老记录补 _updateTime / _createTime
+// userProgress 表早期没建这两个系统字段，会导致 Dashboard 活动时间显示为空
+// 新记录 CloudBase 会自动维护，无需处理
+app.post('/api/admin/migrate-progress-timestamps', async (req, res) => {
+  try {
+    const tcb = getTcbFromRequest(req);
+    if (!tcb) return res.json(error('未登录'));
+    const db = tcb.database();
+
+    const res1 = await db.collection('userProgress')
+      .where({ _updateTime: db.command.exists(false) })
+      .limit(1000)
+      .get();
+    const records = res1.data || [];
+    let updated = 0;
+    for (const r of records) {
+      // 兜底值：favoriteTime（真实时间戳） > 当前时间
+      const fallback = r.favoriteTime ? Number(r.favoriteTime) : Date.now();
+      await db.collection('userProgress').doc(r._id).update({
+        _updateTime: fallback,
+        _createTime: fallback
+      });
+      updated++;
+    }
+    res.json(success({ scanned: records.length, updated, hasMore: records.length === 1000 }));
   } catch (err) {
     res.json(error(err.message));
   }
