@@ -86,6 +86,34 @@ html.dark .el-input__inner,
 html.dark .el-textarea__inner { color: #e0e0e0; }
 html.dark .el-input__inner::placeholder { color: #666; }
 
+/* Element Plus el-input-number +/- 按钮（默认背景取自 --el-fill-color-light，暗色下为白底） */
+html.dark .el-input-number__increase,
+html.dark .el-input-number__decrease {
+  background-color: #2a2a2a;
+  color: #d0d0d0;
+  border-color: #303030;
+}
+html.dark .el-input-number__increase:hover,
+html.dark .el-input-number__decrease:hover {
+  background-color: #353535;
+  color: #FF6B00;
+}
+
+/* Element Plus el-input-group 前后置块（搜索按钮等 #append/#prepend 的容器） */
+html.dark .el-input-group__append,
+html.dark .el-input-group__prepend {
+  background-color: #2a2a2a;
+  color: #d0d0d0;
+  box-shadow: 0 1px 0 0 #303030 inset, 0 -1px 0 0 #303030 inset, -1px 0 0 0 #303030 inset;
+}
+html.dark .el-input-group__prepend {
+  box-shadow: 1px 0 0 0 #303030 inset, 0 1px 0 0 #303030 inset, 0 -1px 0 0 #303030 inset;
+}
+html.dark .el-input-group__append .el-button:hover,
+html.dark .el-input-group__prepend .el-button:hover {
+  background-color: #353535;
+}
+
 /* Element Plus 表格 */
 html.dark .el-table {
   --el-table-bg-color: #1f1f1f;
@@ -126,6 +154,20 @@ html.dark .el-message-box {
   --el-messagebox-bg-color: #1f1f1f;
   background-color: #1f1f1f;
   color: #e0e0e0;
+}
+
+/* Element Plus Tabs（顶部分类标签，未覆盖时文字为 var(--el-text-color-primary) 暗色，暗色下不可见） */
+html.dark .el-tabs__item {
+  color: #d0d0d0;
+}
+html.dark .el-tabs__item:hover {
+  color: #e0e0e0;
+}
+html.dark .el-tabs__item.is-active {
+  color: #FF6B00;
+}
+html.dark .el-tabs__nav-wrap::after {
+  background-color: #303030;
 }
 
 /* Element Plus 单选按钮组（避免 active 状态反白） */
