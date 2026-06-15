@@ -61,6 +61,10 @@ Component({
       this.speedOptions = [0.75, 1, 1.25, 1.5, 2];
       this._overlayRotationTimer = null;
       this._miniRotationTimer = null;
+      // 关闭竞态保护:每次关闭递增 _closeGen,清理回调先校验 generation 再执行,
+      // 防止 play() 在关闭动画期间被冲掉或 _doSaveProgress 链路被打断时仍残留清理副作用
+      this._closeGen = 0;
+      this._isClosing = false;
       this._initNavButtonData();
       this.audioCallback = {
         onChapterChange: ({ chapterId, chapter, index, playingCourse }) => {
@@ -96,10 +100,8 @@ Component({
         onPlay: () => {
           this._syncingChapter = false;
           this.setData({ isPlaying: app.globalData.playingStatus });
-          if (this.data.playerOverlayVisible) this._startOverlayRotation();
-          else this._stopOverlayRotation();
-          if (!this.data.playerOverlayVisible && this.data.visible) this._startMiniRotation();
-          else this._stopMiniRotation();
+          // 旋转启动延后到首次有效 onTimeUpdate:与进度条首次推进在同一 JS 轮次内 setData,
+          // WeChat 合并为单次视图更新,视觉上完全同步(之前在 onPlay 即启转,旋转早于进度条 ~250ms)
         },
         onPause: () => {
           if (this.data.currentChapter?._id && app.globalData.playingStatus === false) {
@@ -133,7 +135,14 @@ Component({
         onSystemStop: () => {
           // 系统小控件关闭：mini-player 同步淡出并重置，与 in-app close 时序一致
           this.setData({ fadeInClass: 'fade-out' });
-          setTimeout(() => {
+          this._closeGen++;
+          const myGen = this._closeGen;
+          this._isClosing = true;
+          if (this._closeTimeout) clearTimeout(this._closeTimeout);
+          this._closeTimeout = setTimeout(() => {
+            if (myGen !== this._closeGen) return;
+            this._closeTimeout = null;
+            this._isClosing = false;
             // 如果在 300ms 内用户又触发了新播放（miniPlayerActive 重新被置 true），不要冲掉新状态
             if (!app.globalData.miniPlayerActive) this._resetState();
           }, 300);
@@ -146,7 +155,16 @@ Component({
         },
         onReset: () => {
           this.setData({ fadeInClass: 'fade-out' });
-          setTimeout(() => this._resetState(), 300);
+          this._closeGen++;
+          const myGen = this._closeGen;
+          this._isClosing = true;
+          if (this._closeTimeout) clearTimeout(this._closeTimeout);
+          this._closeTimeout = setTimeout(() => {
+            if (myGen !== this._closeGen) return;
+            this._closeTimeout = null;
+            this._isClosing = false;
+            this._resetState();
+          }, 300);
         },
         onPlayFromList: (data) => this._playFromList(data),
         onCoverRefresh: ({ coverLoadTime }) => {
@@ -177,6 +195,10 @@ Component({
       this._stopOverlayRotation();
       this._stopMiniRotation();
       this._stopDataSync();
+      if (this._closeTimeout) {
+        clearTimeout(this._closeTimeout);
+        this._closeTimeout = null;
+      }
       if (this._onTimeUpdate && this.bgAudioManager.offTimeUpdate) this.bgAudioManager.offTimeUpdate(this._onTimeUpdate);
       if (this._onCanplay && this.bgAudioManager.offCanplay) this.bgAudioManager.offCanplay(this._onCanplay);
       app.unregisterMiniPlayer(this.audioCallback);
@@ -232,9 +254,20 @@ Component({
       if (!this._onTimeUpdate) {
         this._onTimeUpdate = () => {
           if (this._syncingChapter) return;
+          // 用户正在拖动 overlay slider:期间 audioManager 的 currentTime 还是旧值,
+          // 若不屏蔽,onTimeUpdate 会用旧值覆盖拖动期间的乐观 currentTime,进度条弹回
+          if (this._sliderDragging) return;
           const currentTime = this.bgAudioManager.currentTime || 0;
           const duration = this.bgAudioManager.duration || 0;
           const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+          // 首次有效 onTimeUpdate:启动旋转,与下方 setData(currentTime/duration/progressPercent)
+          // 在同一 JS 轮次内触发,WeChat 合并为单次视图更新,旋转与进度条推进完全同步
+          if (!this._miniRotationTimer && !this._overlayRotationTimer && this.data.isPlaying) {
+            if (this.data.playerOverlayVisible) this._startOverlayRotation();
+            else this._stopOverlayRotation();
+            if (!this.data.playerOverlayVisible && this.data.visible) this._startMiniRotation();
+            else this._stopMiniRotation();
+          }
           this.setData({ currentTime, duration, progressPercent });
           if (this.data.playerOverlayVisible) {
             this._updateOverlayProgress();
@@ -348,6 +381,19 @@ Component({
     play(chapterId, playlistChapters, courseData, sortOrder, opts = {}) {
       const isFavoriteList = opts.isFavoriteList || false;
 
+      // 关闭竞态保护:用 generation token 失效所有 pending close 的回调链
+      // (包括 _doSaveProgress().then(...) cloud call resolve 后的清理),
+      // 不只是 clearTimeout — 单纯清掉 setTimeout 还拦不住已经在飞的 cloud 调用 resolve 后冲掉新章节状态
+      const wasClosing = this._isClosing;
+      if (wasClosing) {
+        this._closeGen++;
+        if (this._closeTimeout) {
+          clearTimeout(this._closeTimeout);
+          this._closeTimeout = null;
+        }
+        this._isClosing = false;
+      }
+
       if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
         this._doSaveProgress();
       }
@@ -417,12 +463,24 @@ Component({
 
       this._savePlayStateCache(course, chapter, order, playMode);
       app.playChapter(chapter._id, chapters);
-      // 仅在 mini-player 之前不可见时设置 fadeInClass，避免跨页面切歌时无脑重放淡入动画导致闪烁
+      // 显示策略分两路:
+      // - 正常首次显示(!visible):fade-in 淡入
+      // - 跨页面切歌(visible 已是 true):不设 fadeInClass,保留当前动画状态,避免无脑重放淡入
+      // - 关闭动画期间点新章节(wasClosing=true):fade-out 动画正在跑(opacity 0~1 中间值),
+      //   直接 fade-in 会让 CSS animation 从 fadeOut 切到 fadeIn,opacity 从中间值跳到 0 再升到 1,
+      //   视觉上"闪一下"。用 force-visible 强制 opacity:1 + animation:none,跳过动画冲突,
+      //   下一 tick 再切回空 class,保持正常状态
       const showData = { visible: true, playerBottom: this._calcPosition() };
-      if (!this.data.visible) showData.fadeInClass = 'fade-in';
+      if (wasClosing) {
+        showData.fadeInClass = 'force-visible';
+      } else if (!this.data.visible) {
+        showData.fadeInClass = 'fade-in';
+      }
       this.setData(showData, () => {
-        if (this.data.isPlaying) this._startMiniRotation();
-        else this._stopMiniRotation();
+        if (wasClosing) {
+          // 下一 tick 移除强制 class,mini-player 保留 opacity:1 正常状态
+          this.setData({ fadeInClass: '' });
+        }
       });
     },
 
@@ -466,6 +524,22 @@ Component({
 
     onClose() {
       const lastChapterId = this.data.currentChapter?._id || app.globalData.playingChapter?._id;
+
+      // 立即停音频：之前 app.stop() 放在 300ms setTimeout 里,导致关闭 mini-player 的瞬间
+      // 音频还在播、章节 UI 才开始复位。这会产生两个问题:
+      //   (1) 用户关掉 mini-player 但还能听见声音,听感割裂
+      //   (2) 关闭动画期间快速点新章节,play() 设 bgAudio.src=B 时旧 A 还在跑,
+      //       src 切换在某些平台/iOS 版本上事件顺序不稳定(onStop / onCanplay 谁先到不一定),
+      //       触发 app.js onStop 处理器误把切歌中转判成"系统小控件关闭",
+      //       把 miniPlayerActive 置 false → audioCallback.onClose 把 visible:false
+      //       → 用户看到的"mini-player 没弹出"
+      // _doSaveProgress 必须在 app.stop() 之前同步调用 —— 它内部读 bgAudioManager.currentTime,
+      // 一旦 app.stop() 把 currentTime 重置为 0,进度就被错存了
+      if (this.data.currentChapter?._id && this.bgAudioManager.currentTime > 0) {
+        this._doSaveProgress();
+      }
+      app.stop();
+
       // 立即把全局标志置 false：避免用户在 300ms 淡出动画期间切到其它 tab 页时，
       // 那个页面 mini-player 实例的 show() 仍按 miniPlayerActive=true 把自己显示出来，造成闪现
       app.globalData.miniPlayerActive = false;
@@ -481,17 +555,24 @@ Component({
         if (miniPlayer) miniPlayer.setData({ visible: false, fadeInClass: '' });
       }
       this.setData({ fadeInClass: 'fade-out' });
-      setTimeout(() => {
-        this._doSaveProgress().then(() => {
-          app.stop();
-          this._resetState();
-          app.setPlayingState({
-            playingCourse: null, playingChapter: null, playingSeq: null,
-            playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
-          });
-          this._clearPlayStateCache();
-          app.notifyCallbacks('onClose', { chapterId: lastChapterId });
+      // 300ms 后只做"清理 UI 与状态",不再触碰音频(音频已经在 T=0 停了)。
+      // generation token 保留:play() 在关闭期间介入时,递增 _closeGen 让 setTimeout 回调失效,
+      // 避免冲掉 play() 已经设好的新章节状态
+      this._closeGen++;
+      const myGen = this._closeGen;
+      this._isClosing = true;
+      if (this._closeTimeout) clearTimeout(this._closeTimeout);
+      this._closeTimeout = setTimeout(() => {
+        if (myGen !== this._closeGen) return;
+        this._closeTimeout = null;
+        this._isClosing = false;
+        this._resetState();
+        app.setPlayingState({
+          playingCourse: null, playingChapter: null, playingSeq: null,
+          playingIndex: 0, playlistChaptersData: [], isFavoriteList: false
         });
+        this._clearPlayStateCache();
+        app.notifyCallbacks('onClose', { chapterId: lastChapterId });
       }, 300);
     },
 

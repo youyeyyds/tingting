@@ -21,6 +21,13 @@
   animation: fadeOut 0.3s ease forwards;
 }
 
+/* 关闭动画期间被 play() 中断时使用：强制 opacity:1 + 取消 animation,
+   避免 fade-out 与 fade-in 在同一帧切换导致 opacity 从中间值跳到 0 再升到 1(视觉"闪一下") */
+.mini-player.force-visible {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

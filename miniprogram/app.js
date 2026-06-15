@@ -215,8 +215,12 @@ App({
     bgAudio.onCanplay(() => {
       bgAudio.playbackRate = 2;
       const duration = bgAudio.duration;
-      // 清除切歌标志（onCanplay 一定在 onPlay 之前到达，到这里说明新 src 已就绪）
-      this._switchingChapter = false;
+      // 关键：不要在这里清除 _switchingChapter。
+      // 关闭 mini-player 期间点新章节,bgAudio.src 切换时事件触发顺序在不同平台/iOS 版本上
+      // 不保证 onCanplay 一定早于 onStop(旧音频的停止事件);若此处清掉标志,后续 onStop 会落进
+      // "系统小控件关闭" 分支,把 miniPlayerActive 置 false、广播 onSystemStop→onClose,
+      // 导致 audioCallback.onClose 把 visible:false——即用户看到的"mini-player 没弹出"。
+      // 改为只在 onPlay(真正开播)和 onError 时清除,让 onStop 始终能正确识别切歌中转。
       this.notifyCallbacks('onCanplay', {
         duration: duration || 0
       });
@@ -225,6 +229,7 @@ App({
     bgAudio.onPlay(() => {
       // 同步全局播放状态：覆盖系统小控件触发的播放（不会走 app.togglePlayPause）
       this.globalData.playingStatus = true;
+      // 真正开播后再清 _switchingChapter,确保出问题的 onStop(旧音频)能正确归类为切歌中转
       this._switchingChapter = false;
       // 只广播给当前可见页面，避免隐藏页启动旋转 timer 写 globalData
       this.notifyCallbacks('onPlay', {}, { onlyVisible: true });
@@ -252,6 +257,8 @@ App({
 
     bgAudio.onError((err) => {
       console.error('播放错误:', err);
+      // 异常分支也清掉切歌标志,防止 onPlay 不触发导致标志卡死,后续 onStop 永远被误判为切歌中转
+      this._switchingChapter = false;
       this.notifyCallbacks('onError', {});
     });
 
