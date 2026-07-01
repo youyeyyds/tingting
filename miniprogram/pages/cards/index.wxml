@@ -4,13 +4,8 @@
 
   <!-- 内容区域 -->
   <view class="content" style="margin-top: {{headerHeight}}px;">
-    <!-- 骨架屏 - 加载中 -->
-    <view wx:if="{{loading}}" class="skeleton-container">
-      <view class="skeleton-card"></view>
-    </view>
-
     <!-- 卡牌内容 -->
-    <view wx:else class="card-wrapper">
+    <view wx:if="{{!loading}}" class="card-wrapper">
       <!-- 卡牌翻转区域 -->
       <view class="card-flip {{isFlipped ? 'flipped' : ''}} {{cardAnimation}}" bindtap="onCardTap">
         <!-- 正面 - 卡面图片 -->
@@ -26,13 +21,13 @@
 
     <!-- 导航按钮 -->
     <view class="nav-buttons">
-      <view class="nav-btn {{currentIndex <= 0 ? 'disabled' : ''}}" bindtap="onPrev">
+      <view class="nav-btn {{!loading && currentIndex <= 0 ? 'disabled' : ''}}" bindtap="onPrev">
         <text class="nav-arrow">‹</text>
       </view>
       <view class="card-indicator">
-        <text class="indicator-text">{{currentIndex + 1}} / {{cards.length}}</text>
+        <text class="indicator-text">{{loading ? ' / ' : (currentIndex + 1) + ' / ' + cards.length}}</text>
       </view>
-      <view class="nav-btn {{currentIndex >= cards.length - 1 ? 'disabled' : ''}}" bindtap="onNext">
+      <view class="nav-btn {{!loading && currentIndex >= cards.length - 1 ? 'disabled' : ''}}" bindtap="onNext">
         <text class="nav-arrow">›</text>
       </view>
     </view>
