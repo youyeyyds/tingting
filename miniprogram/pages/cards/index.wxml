@@ -1,6 +1,6 @@
 <view class="page-container">
-  <!-- 自定义导航栏 - 透明背景白色图标 -->
-  <custom-navbar showBack="{{true}}" title="卡牌" iconColor="white" titleColor="white" transparent />
+  <!-- 自定义导航栏 - 浅色主题，与个人页一致 -->
+  <custom-navbar showBack="{{true}}" title="卡牌" />
 
   <!-- 内容区域 -->
   <view class="content" style="margin-top: {{headerHeight}}px;">
