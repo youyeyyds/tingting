@@ -12,8 +12,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* 留出画框外边距：左右 30rpx，上 20rpx，下 10rpx（底部按钮区会占空间） */
-  padding: 20rpx 30rpx 10rpx;
+  /* 画框外边距：左右 16rpx，上 10rpx，下 10rpx（底部按钮区会占空间） */
+  padding: 10rpx 16rpx 10rpx;
   box-sizing: border-box;
 }
 
@@ -27,7 +27,6 @@
   height: 100%;
   flex: 1;
   border-radius: 16rpx;
-  padding: 8rpx;
   box-sizing: border-box;
   overflow: hidden;
 }
