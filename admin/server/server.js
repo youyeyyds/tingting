@@ -769,13 +769,11 @@ app.get('/api/stats/dashboard', async (req, res) => {
       dateKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
     }
 
-    // 拉取有 favoriteTime 的 userProgress
-    // 注意：这张表的 _id 不是标准 ObjectId 时间戳（解出来是 2102 等荒谬年份），
-    // 且 schema 没有 _createTime/_updateTime 字段；只有 favoriteTime（收藏时写入）是真实时间戳
-    // 缺点：只能反映"收藏"这个动作的时间分布，播放数据被忽略
-    const trendThresholdMs = threshold.getTime();
+    // 拉取近 30 天有更新的 userProgress（_updateTime 在每次播放/进度更新时都会刷新）
+    // 注意：历史上 schema 没有系统时间字段，靠 favoriteTime 只能反映"收藏"动作，
+    // 会漏掉纯播放的记录；commit 664b1af 起所有写入点都显式写 _updateTime，可放心使用
     const trendProgressRes = await db.collection('userProgress')
-      .where({ favoriteTime: db.command.gte(trendThresholdMs) })
+      .where({ _updateTime: db.command.gte(threshold) })
       .limit(50000)
       .get();
 
@@ -792,8 +790,8 @@ app.get('/api/stats/dashboard', async (req, res) => {
     const dauMap = {};
     dateKeys.forEach(k => { minutesMap[k] = new Set(); dauMap[k] = new Set(); });
     trendProgressRes.data.forEach(p => {
-      if (!p.favoriteTime) return;
-      const d = new Date(Number(p.favoriteTime));
+      if (!p._updateTime) return;
+      const d = new Date(p._updateTime);
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       if (!(k in minutesMap)) return;
       if (p.chapterId) minutesMap[k].add(p.chapterId);
